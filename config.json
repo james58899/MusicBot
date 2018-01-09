@@ -1,0 +1,13 @@
+{
+    "audio": {
+        "save": "data",
+        "bitrate": 256,
+        "length": 600
+    },
+    "telegram": {
+        "token": ""
+    },
+    "discord": {
+        "token": ""
+    }
+}
