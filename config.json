@@ -1,6 +1,6 @@
 {
     "audio": {
-        "save": "data",
+        "save": "Data",
         "bitrate": 256,
         "length": 600
     },
