@@ -11,7 +11,7 @@ const Core = class {
     }
 
     /**
-    * add sound to detabase
+    * Add sound to detabase
     *
     * @param {string} file
     * @param {number} duration
@@ -24,7 +24,7 @@ const Core = class {
 
 
     /**
-    * check sound exist in database.
+    * Check sound exist in database.
     *
     * @param {string} file
     */
@@ -32,7 +32,7 @@ const Core = class {
         // TODO
     }
     /**
-    * add sound to playlist
+    * Add sound to playlist
     *
     * @param {string} uuid
     * @param {string} list
@@ -42,7 +42,7 @@ const Core = class {
     }
 
     /**
-    * remove sound from playlist
+    * Remove sound from playlist
     *
     * @param {string} uuid
     * @param {string} list
