@@ -8,14 +8,18 @@ const TelegramBot = require('node-telegram-bot-api');
 class telegram {
     /**
      * Creates an instance of telegram.
-     * @param {Object} config
      * @param {Object} core
      * @memberof telegram
      */
-    constructor(config, core) {
-        this.bot = new TelegramBot(config.telegram.token, {polling: true});
+    constructor(core) {
+        this.core = core;
+        core.urlParser.registerURLHandler('^tg://', this.getFile.bind(this));
+        core.urlParser.registerMetadataProvider('^tg://', this.getMetadata.bind(this));
 
-        // Command
+        // Create bot
+        this.bot = new TelegramBot(core.config.telegram.token, {polling: true});
+
+        // Handle command
         this.bot.onText(/^\/(\w+)@?(\w*)/i, (msg) => {
             // TODO
         });
@@ -24,8 +28,7 @@ class telegram {
         this.bot.on('audio', async (msg) => {
             const sender = (msg.from.username) ? msg.from.username : msg.from.id;
             if (msg.audio.title) {
-                const link = await this.bot.getFileLink(msg.audio.file_id);
-                await core.addSound(sender, link);
+                await core.addSound(sender, 'tg://' + msg.audio.file_id, await this.getFile(msg.audio.file_id));
             } else {
                 // send title request message
                 const needTitle = await this.bot.sendMessage(msg.chat.id, '這個音樂沒有標題\n請幫它添加一個！', {
@@ -43,7 +46,7 @@ class telegram {
 
                     if (title.text) {
                         const link = await this.bot.getFileLink(msg.audio.file_id);
-                        core.addSound(sender, link, title.text);
+                        core.addSound(sender, 'tg://' + msg.audio.file_id, link, {title: title.text});
                     } else {
                         this.bot.sendMessage(msg.chat.id, '這看起來不像是標題', {reply_to_message_id: title.message_id});
                     }
@@ -52,6 +55,15 @@ class telegram {
                 });
             }
         });
+    }
+
+    async getFile(fileId) {
+        fileId = fileId.replace('tg://', '');
+        return this.bot.getFileLink(fileId);
+    }
+
+    async getMetadata(fileId) {
+        return this.core.urlParser.getMetadata(await this.getFile(fileId));
     }
 }
 

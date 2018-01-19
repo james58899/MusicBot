@@ -5,19 +5,15 @@ const sequelize = new Sequelize({
 });
 
 class sqlite {
-    constructor(config) {
-        this.config = config;
+    constructor(core) {
+        this.config = core.config;
 
-        // sounds table
+        // sound table
         this.sound = sequelize.define('sound', {
             id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
                 autoIncrement: true
-            },
-            sender: {
-                type: Sequelize.TEXT,
-                allowNull: false
             },
             file: {
                 type: Sequelize.TEXT,
@@ -30,6 +26,27 @@ class sqlite {
             artist: Sequelize.TEXT,
             duration: {
                 type: Sequelize.NUMERIC,
+                allowNull: false
+            }
+        });
+
+        // source table
+        this.source = sequelize.define('source', {
+            id: {
+                type: Sequelize.INTEGER,
+                primaryKey: true,
+                autoIncrement: true
+            },
+            sender: {
+                type: Sequelize.TEXT,
+                allowNull: false
+            },
+            source: {
+                type: Sequelize.TEXT,
+                allowNull: false
+            },
+            sound: {
+                type: Sequelize.INTEGER,
                 allowNull: false
             }
         });
@@ -58,7 +75,7 @@ class sqlite {
                 primaryKey: true,
                 autoIncrement: true
             },
-            playList: Sequelize.INTEGER,
+            playlist: Sequelize.INTEGER,
             sound: Sequelize.INTEGER
         });
 
@@ -70,31 +87,45 @@ class sqlite {
     /**
      * Add sounde to database
      *
-     * @param {String} sender
      * @param {String} file
      * @param {String} title
      * @param {?String} [artist=null]
      * @param {Number} duration
-     * @return {Object}
+     * @return {Promise}
      * @memberof sqlite
      */
-    async addSound(sender, file, title, artist, duration) {
-        const sound = await this.sound.build({
-            sender: sender,
+    async addSound(file, title, artist, duration) {
+        return this.sound.build({
             file: file,
             title: title,
             artist: artist,
             duration: duration
         }).save();
-        return sound;
     }
 
-    async delSound(fileId) {
+    async delSound(id) {
         // TODO
     }
 
-    async getSound(fileId) {
+    async getSound(id) {
         // TODO
+    }
+
+    /**
+     * Set sound source
+     *
+     * @param {String} sender
+     * @param {String} source
+     * @param {Number} sound
+     * @return {Promise}
+     * @memberof sqlite
+     */
+    async addSource(sender, source, sound) {
+        return this.source.build({
+            sender: sender,
+            source: source,
+            sound: sound
+        });
     }
 
     async searchSound(keyword) {
@@ -105,7 +136,30 @@ class sqlite {
         // TODO
     }
 
-    async delList(listId) {
+    async delList(id) {
+        // TODO
+    }
+
+    /**
+     * Add sound to playlist
+     *
+     * @param {Number} list ID for List
+     * @param {Number} sound ID for sound
+     * @return {Promise}
+     * @memberof sqlite
+     */
+    async addToList(list, sound) {
+        return this.source.build({
+            list: list,
+            sound: sound
+        });
+    }
+
+    async delFromList(list, sound) {
+        // TODO
+    }
+
+    async getPlayList(list) {
         // TODO
     }
 }

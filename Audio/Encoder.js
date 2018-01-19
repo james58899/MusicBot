@@ -8,11 +8,11 @@ const ffmpeg = require('fluent-ffmpeg');
 class encoder {
     /**
      * Creates an instance of encoder.
-     * @param {Object} config
+     * @param {Object} core
      * @memberof encoder
      */
-    constructor(config) {
-        this.config = config;
+    constructor(core) {
+        this.config = core.config;
 
         // Test system ffmpeg
         try {
@@ -41,12 +41,10 @@ class encoder {
                 .format('opus')
                 .save(path.resolve(this.config.audio.save, filename))
                 .on('error', (err) => {
-                    console.log('Cannot process file: ', err.message);
                     throw err;
                 })
                 .on('end', () => {
-                    console.log('Succeedful transcoding: ', filename);
-                    resolve(path.resolve(this.config.audio.save, filename));
+                    resolve(filename);
                 });
         });
     }

@@ -1,36 +1,41 @@
 const path = require('path');
 const uuid = require('uuid/v1');
-const MediaInfo = require(path.resolve('Utils/MediaInfo'));
 
 const Core = class {
     constructor() {
         this.config = require(path.resolve('Utils/Config'));
-        this.encoder = new (require(path.resolve('Audio/Encoder')))(this.config);
-        this.database = new (require(path.resolve('Database/SQLite')))(this.config);
-        this.discord = new (require(path.resolve('Component/Discord')))(this.config, this);
-        this.telegram = new (require(path.resolve('Component/Telegram')))(this.config, this);
+        this.urlParser = new (require(path.resolve('Utils/URLParser')))(this);
+        this.encoder = new (require(path.resolve('Audio/Encoder')))(this);
+        this.database = new (require(path.resolve('Database/SQLite')))(this);
+        this.discord = new (require(path.resolve('Component/Discord')))(this);
+        this.telegram = new (require(path.resolve('Component/Telegram')))(this);
     }
 
     /**
      * Add sound to detabase
      *
      * @param {String} sender
+     * @param {String} source
      * @param {String} input
-     * @param {?String} title
-     * @param {?String} artist
-     * @param {?Number} duration
-     * @return {Object}
+     * @param {?Object} metadata
+     * @return {Promise}
      */
-    async addSound(sender, input, title, artist, duration) {
-        // I think get media info will faster then encode...
-        const mediainfo = new MediaInfo(input);
-        const file = await this.encoder.encode(input, `${sender}_${uuid()}.opus`);
+    async addSound(sender, source, input, metadata = {}) {
+        const file = this.encoder.encode(input, uuid());
+        const mediainfo = await this.urlParser.getMetadata(source);
 
-        if (!title) title = mediainfo.getTitle();
-        if (!artist) artist = mediainfo.getArtist();
-        if (!duration) duration = mediainfo.getDuration();
+        if (metadata.title) mediainfo.title = metadata.title;
+        if (metadata.artist) mediainfo.artist = metadata.artist;
+        if (metadata.duration) mediainfo.duration = metadata.duration;
 
-        return this.database.addSound(sender, file, title, artist, duration);
+        const sound = await this.database.addSound(await file, mediainfo.title, mediainfo.artist, mediainfo.duration);
+        this.database.addSource(sender, source, sound.id);
+        return sound;
+    }
+
+    async addSourdFromSource(sender, source) {
+        const link = await this.urlParser.getFile(source);
+        const metadata = await this.urlParser.getMetadata(source);
     }
 
     /**

@@ -1,8 +1,10 @@
 const Eris = require('eris');
 
 class discord {
-    constructor(config, core) {
-        this.bot = new Eris(config.discord.token);
+    constructor(core) {
+        this.config = core.config;
+
+        this.bot = new Eris(this.config.discord.token);
     }
 }
 
