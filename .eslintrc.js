@@ -8,7 +8,8 @@ module.exports = {
         sourceType: 'module'
     },
     "env": {
-        "node": true
+        "node": true,
+        es6: true
     },
     "rules": {
         "no-invalid-this": "warn",
