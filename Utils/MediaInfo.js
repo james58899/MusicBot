@@ -35,16 +35,35 @@ class mediaInfo {
 
         execFile(ffprobe, ffprobeOption, execOption, (err, stdout, stderr) => {
             if (err) throw err;
-            this.duration = stdout.match(/duration=(.*)/i)[1];
-            this.title = stdout.match(/TAG:title=(.*)/i)[1];
-            this.artist = stdout.match(/TAG:artist=(.*)/i)[1];
+
+            const durationMatch = stdout.match(/duration=(.*)/i);
+            const titleMatch = stdout.match(/TAG:title=(.*)/i);
+            const artistMatch = stdout.match(/TAG:artist=(.*)/i);
+
+            if (!durationMatch || durationMatch === 'N/A') {
+                this.duration = null;
+            } else {
+                this.duration = durationMatch[1];
+            }
+
+            if (!titleMatch) {
+                this.title = null;
+            } else {
+                this.title = titleMatch[1];
+            }
+
+            if (!artistMatch) {
+                this.artist = null;
+            } else {
+                this.artist = artistMatch[1];
+            }
         });
     }
 
     /**
      * Get duration
      *
-     * @return {Number|String}
+     * @return {Number}
      * @memberof mediaInfo
      */
     getDuration() {
