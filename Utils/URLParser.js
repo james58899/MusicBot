@@ -2,7 +2,7 @@ const path = require('path');
 const mediaInfo = require(path.resolve('Utils/MediaInfo'));
 
 class urlParser {
-    constructor() {
+    constructor(core) {
         this.urlHandler = new Map();
         this.metadataProvider = new Map();
     }

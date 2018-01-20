@@ -1,23 +1,22 @@
 const Sequelize = require('sequelize');
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: 'database.sqlite3'
-});
+const Op = Sequelize.Op;
 
 class sqlite {
     constructor(core) {
         this.config = core.config;
 
+        this.sequelize = new Sequelize({
+            dialect: 'sqlite',
+            storage: 'database.sqlite3',
+            operatorsAliases: false
+        });
+
         // sound table
-        this.sound = sequelize.define('sound', {
+        this.sound = this.sequelize.define('sound', {
             id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
                 autoIncrement: true
-            },
-            file: {
-                type: Sequelize.TEXT,
-                allowNull: false
             },
             title: {
                 type: Sequelize.TEXT,
@@ -27,15 +26,6 @@ class sqlite {
             duration: {
                 type: Sequelize.NUMERIC,
                 allowNull: false
-            }
-        });
-
-        // source table
-        this.source = sequelize.define('source', {
-            id: {
-                type: Sequelize.INTEGER,
-                primaryKey: true,
-                autoIncrement: true
             },
             sender: {
                 type: Sequelize.TEXT,
@@ -43,16 +33,19 @@ class sqlite {
             },
             source: {
                 type: Sequelize.TEXT,
-                allowNull: false
+                allowNull: false,
+                unique: true
             },
-            sound: {
-                type: Sequelize.INTEGER,
-                allowNull: false
+            file: {
+                type: Sequelize.TEXT,
+                unique: true
             }
+        }, {
+            updatedAt: false
         });
 
         // list table
-        this.list = sequelize.define('list', {
+        this.list = this.sequelize.define('list', {
             id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
@@ -66,18 +59,23 @@ class sqlite {
                 type: Sequelize.TEXT,
                 allowNull: false
             }
+        }, {
+            updatedAt: false
         });
 
         // playlist table
-        this.playList = sequelize.define('playlist', {
+        this.playList = this.sequelize.define('playlist', {
             id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
                 autoIncrement: true
-            },
-            playlist: Sequelize.INTEGER,
-            sound: Sequelize.INTEGER
+            }
+        }, {
+            timestamps: false
         });
+
+        this.playList.belongsTo(this.list);
+        this.sound.hasMany(this.playList);
 
         this.sound.sync();
         this.list.sync();
@@ -87,19 +85,23 @@ class sqlite {
     /**
      * Add sounde to database
      *
-     * @param {String} file
      * @param {String} title
-     * @param {?String} [artist=null]
+     * @param {String} artist
      * @param {Number} duration
+     * @param {String} sender
+     * @param {String} source
+     * @param {String} file
      * @return {Promise}
      * @memberof sqlite
      */
-    async addSound(file, title, artist, duration) {
+    async addSound(title, artist, duration, sender, source, file) {
         return this.sound.build({
-            file: file,
             title: title,
             artist: artist,
-            duration: duration
+            duration: duration,
+            sender: sender,
+            source: source,
+            file: file
         }).save();
     }
 
@@ -112,24 +114,30 @@ class sqlite {
     }
 
     /**
-     * Set sound source
+     * Search sound
      *
-     * @param {String} sender
-     * @param {String} source
-     * @param {Number} sound
+     * @param {String|Object} keyword keyword or metadata object
      * @return {Promise}
      * @memberof sqlite
      */
-    async addSource(sender, source, sound) {
-        return this.source.build({
-            sender: sender,
-            source: source,
-            sound: sound
-        });
-    }
-
     async searchSound(keyword) {
-        // TODO
+        if (typeof keyword === 'object' ) {
+            return this.sound.findAndCountAll({
+                where: keyword
+            });
+        } else if (typeof keyword === 'string') {
+            return this.sound.findAndCountAll({
+                where: {
+                    [Op.or]: [
+                        {title: keyword},
+                        {artist: keyword},
+                        {sender: keyword}
+                    ]
+                }
+            });
+        } else {
+            throw new Error('Wrong keyword');
+        }
     }
 
     async createList(name, owner) {
@@ -152,7 +160,7 @@ class sqlite {
         return this.source.build({
             list: list,
             sound: sound
-        });
+        }).save();
     }
 
     async delFromList(list, sound) {

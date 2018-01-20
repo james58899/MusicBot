@@ -1,5 +1,4 @@
 const path = require('path');
-const uuid = require('uuid/v1');
 
 const Core = class {
     constructor() {
@@ -16,26 +15,40 @@ const Core = class {
      *
      * @param {String} sender
      * @param {String} source
-     * @param {String} input
-     * @param {?Object} metadata
+     * @param {?Metadata} metadata
      * @return {Promise}
      */
-    async addSound(sender, source, input, metadata = {}) {
-        const file = this.encoder.encode(input, uuid());
+    async addSound(sender, source, metadata = {}) {
+        if (await this.checkExist(source)) throw new Error('Sound already exists');
+
         const mediainfo = await this.urlParser.getMetadata(source);
+        const input = this.urlParser.getFile(source);
 
         if (metadata.title) mediainfo.title = metadata.title;
         if (metadata.artist) mediainfo.artist = metadata.artist;
         if (metadata.duration) mediainfo.duration = metadata.duration;
 
-        const sound = await this.database.addSound(await file, mediainfo.title, mediainfo.artist, mediainfo.duration);
-        this.database.addSource(sender, source, sound.id);
-        return sound;
+        const sound = await this.database.addSound(mediainfo.title, mediainfo.artist, mediainfo.duration, sender, source);
+
+        try {
+            const file = this.encoder.encode(await input, sound.id);
+            sound.file = await file;
+        } catch (error) {
+            sound.destroy();
+            throw error;
+        }
+
+        return sound.save();
     }
 
-    async addSourdFromSource(sender, source) {
-        const link = await this.urlParser.getFile(source);
-        const metadata = await this.urlParser.getMetadata(source);
+    /**
+     * Check sound exist
+     *
+     * @param {any} source
+     * @return {Boolean}
+     */
+    async checkExist(source) {
+        return (await this.database.searchSound({source: source})).count !== 0;
     }
 
     /**
