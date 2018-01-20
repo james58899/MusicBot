@@ -31,6 +31,7 @@ class encoder {
      * @memberof encoder
      */
     async encode(input, filename) {
+        filename = filename + '.opus';
         return new Promise((resolve, reject) => {
             ffmpeg(input)
                 .withNoVideo()
