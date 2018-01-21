@@ -23,7 +23,7 @@ async function mediaInfo(file) {
 
     return new Promise((resolve, reject) => {
         execFile(ffprobe, ffprobeOption, execOption, (err, stdout, stderr) => {
-            if (err) throw err;
+            if (err) reject(err);
 
             // Match output
             const durationMatch = stdout.match(/duration=(.*)/i);

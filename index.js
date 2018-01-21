@@ -12,6 +12,7 @@ const Core = class {
 
         if (!fs.existsSync(path.resolve(this.config.audio.save))) fs.mkdirSync(path.resolve(this.config.audio.save));
 
+        this.database.cleanInvalid();
         this.cleanFiles();
     }
 
@@ -24,36 +25,47 @@ const Core = class {
      * @return {Promise}
      */
     async addSound(sender, source, metadata = {}) {
-        if (await this.checkExist(source)) throw new Error('Sound already exists');
+        if (sender == null) throw new Error('Missing sender');
+        if (source == null) throw new Error('Missing source');
 
-        const mediainfo = await this.urlParser.getMetadata(source);
-        const input = this.urlParser.getFile(source);
-
-        if (metadata.title) mediainfo.title = metadata.title;
-        if (metadata.artist) mediainfo.artist = metadata.artist;
-        if (metadata.duration) mediainfo.duration = metadata.duration;
-
-        const sound = await this.database.addSound(mediainfo.title, mediainfo.artist, mediainfo.duration, sender, source);
+        const checkExist = await this.checkExist(source);
+        if (checkExist) return checkExist;
 
         try {
-            const file = this.encoder.encode(await input, sound.id);
-            sound.file = await file;
+            const input = this.urlParser.getFile(source);
+            const mediaInfo = this.urlParser.getMetadata(source);
+
+            if (!metadata.title) metadata.title = (await mediaInfo).title;
+            if (!metadata.artist) metadata.artist = (await mediaInfo).artist;
+            if (!metadata.duration) metadata.duration = (await mediaInfo).duration;
+
+            if (metadata.title == null) throw new Error('Missing title');
+
+            const sound = await this.database.addSound(metadata.title, metadata.artist, metadata.duration, sender, source);
+
+            try {
+                const file = this.encoder.encode(await input, sound.id);
+                sound.file = await file;
+            } catch (error) {
+                sound.destroy();
+                console.log(error.message);
+                throw new Error('Encode failed');
+            }
+
+            return sound.save();
         } catch (error) {
-            sound.destroy();
             throw error;
         }
-
-        return sound.save();
     }
 
     /**
      * Check sound exist
      *
-     * @param {any} source
-     * @return {Boolean}
+     * @param {String} source
+     * @return {Object}
      */
     async checkExist(source) {
-        return (await this.database.searchSound({source: source})).count !== 0;
+        return (await this.database.searchSound({source: source})).rows[0];
     }
 
     /**
@@ -62,7 +74,7 @@ const Core = class {
      * @param {String} file file ID
      */
     async delSound(file) {
-        // TODO
+        this.database.delSound(file);
     }
 
     /**
@@ -91,11 +103,15 @@ const Core = class {
      */
     async cleanFiles() {
         fs.readdir(path.resolve(this.config.audio.save), (err, files) => {
-            files.forEach((file) => {
+            for (const file of files) {
                 this.database.searchSound({file: file}).then((result) => {
-                    if (result.count === 0) fs.unlink(path.resolve(this.config.audio.save, file), () => {});
+                    if (result.count === 0) {
+                        fs.unlink(path.resolve(this.config.audio.save, file), () => {
+                            console.log('Deleted not exist file: ', file);
+                        });
+                    }
                 });
-            });
+            }
         });
     }
 };

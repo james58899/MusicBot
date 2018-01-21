@@ -21,6 +21,8 @@ class urlParser {
                 return handler(url);
             }
         }
+
+        return url;
     }
 
     async getMetadata(url) {

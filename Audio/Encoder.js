@@ -41,9 +41,7 @@ class encoder {
                 .duration(this.config.audio.length)
                 .format('opus')
                 .save(path.resolve(this.config.audio.save, filename))
-                .on('error', (err) => {
-                    throw err;
-                })
+                .on('error', reject)
                 .on('end', () => {
                     resolve(filename);
                 });

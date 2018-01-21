@@ -8,7 +8,8 @@ class sqlite {
         this.sequelize = new Sequelize({
             dialect: 'sqlite',
             storage: 'database.sqlite3',
-            operatorsAliases: false
+            operatorsAliases: false,
+            logging: false
         });
 
         // sound table
@@ -106,11 +107,12 @@ class sqlite {
     }
 
     async delSound(id) {
-        // TODO
+        const sound = await this.sound.findById(id);
+        return sound.destroy();
     }
 
     async getSound(id) {
-        // TODO
+        return this.sound.findById(id);
     }
 
     /**
@@ -137,6 +139,19 @@ class sqlite {
             });
         } else {
             throw new Error('Wrong keyword');
+        }
+    }
+
+    /**
+     * Clean invaild data
+     *
+     * @memberof sqlite
+     */
+    async cleanInvalid() {
+        const sound = await this.sound.findAll({where: {file: null}});
+
+        for (const i of sound) {
+            i.destroy();
         }
     }
 
