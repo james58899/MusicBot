@@ -33,11 +33,11 @@ const Core = class {
 
         try {
             const input = this.urlParser.getFile(source);
-            const mediaInfo = this.urlParser.getMetadata(source);
+            const mediaInfo = await this.urlParser.getMetadata(source);
 
-            if (!metadata.title) metadata.title = (await mediaInfo).title;
-            if (!metadata.artist) metadata.artist = (await mediaInfo).artist;
-            if (!metadata.duration) metadata.duration = (await mediaInfo).duration;
+            if (!metadata.title) metadata.title = mediaInfo.title;
+            if (!metadata.artist) metadata.artist = mediaInfo.artist;
+            if (!metadata.duration) metadata.duration = mediaInfo.duration;
 
             if (metadata.title == null) throw new Error('Missing title');
 
