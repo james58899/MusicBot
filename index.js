@@ -44,8 +44,8 @@ const Core = class {
             const sound = await this.database.addSound(metadata.title, metadata.artist, metadata.duration, sender, source);
 
             try {
-                const file = this.encoder.encode(await input, sound.id);
-                sound.file = await file;
+                const file = await this.encoder.encode(await input, sound.id);
+                sound.file = file;
             } catch (error) {
                 sound.destroy();
                 console.log(error.message);

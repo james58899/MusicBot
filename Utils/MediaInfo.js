@@ -21,9 +21,12 @@ async function mediaInfo(file) {
         windowsHide: true
     };
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         execFile(ffprobe, ffprobeOption, execOption, (err, stdout, stderr) => {
-            if (err) reject(err);
+            if (err) {
+                console.log(err);
+                resolve({});
+            }
 
             // Match output
             const durationMatch = stdout.match(/duration=(.*)/i);
