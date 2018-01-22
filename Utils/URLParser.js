@@ -24,7 +24,8 @@ class UrlParser {
 
     async getFile(url) {
         for (const [match, handler] of this.urlHandler) {
-            if (url.match(new RegExp(match, 'ig'))) {
+            const regexp = (typeof match === 'object') ? match : new RegExp(match, 'gi');
+            if (url.match(regexp)) {
                 return handler(url);
             }
         }
