@@ -1,7 +1,9 @@
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const Queue = require('promise-queue');
 
-const Core = class {
+class Core {
     constructor() {
         this.config = require(path.resolve('Utils/Config'));
         this.urlParser = new (require(path.resolve('Utils/URLParser')))(this);
@@ -9,6 +11,8 @@ const Core = class {
         this.database = new (require(path.resolve('Database/SQLite')))(this);
         this.discord = new (require(path.resolve('Component/Discord')))(this);
         this.telegram = new (require(path.resolve('Component/Telegram')))(this);
+
+        this.queue = new Queue(os.cpus().length);
 
         if (!fs.existsSync(path.resolve(this.config.audio.save))) fs.mkdirSync(path.resolve(this.config.audio.save));
 
@@ -33,18 +37,19 @@ const Core = class {
 
         try {
             const input = this.urlParser.getFile(source);
-            const mediaInfo = await this.urlParser.getMetadata(source);
+            const mediaInfo = await this.queue.add(() => this.urlParser.getMetadata(source));
 
             if (!metadata.title) metadata.title = mediaInfo.title;
             if (!metadata.artist) metadata.artist = mediaInfo.artist;
             if (!metadata.duration) metadata.duration = mediaInfo.duration;
 
-            if (metadata.title == null) throw new Error('Missing title');
+            if (!metadata.duration) throw new Error('Invalid file');
+            if (!metadata.title) throw new Error('Missing title');
 
             const sound = await this.database.addSound(metadata.title, metadata.artist, metadata.duration, sender, source);
 
             try {
-                const file = await this.encoder.encode(await input, sound.id);
+                const file = await this.queue.add(async () => this.encoder.encode(await input, sound.id));
                 sound.file = file;
             } catch (error) {
                 sound.destroy();
@@ -54,6 +59,7 @@ const Core = class {
 
             return sound.save();
         } catch (error) {
+            console.log(error.message);
             throw error;
         }
     }
@@ -114,6 +120,6 @@ const Core = class {
             }
         });
     }
-};
+}
 
 new Core();
