@@ -5,7 +5,7 @@ const TelegramBot = require('node-telegram-bot-api');
  *
  * @class telegram
  */
-class telegram {
+class Telegram {
     /**
      * Creates an instance of telegram.
      *
@@ -24,7 +24,7 @@ class telegram {
 
         // Register listener
         this.bot.getMe().then((me) => {
-            this.username = me.username;
+            this.me = me;
             this._listener();
         });
     }
@@ -43,7 +43,8 @@ class telegram {
 
         // Link
         this.bot.on('text', (msg) => {
-            if (msg.entities) {
+            if (msg.entities.some((entity) => entity.type.match(/url|text_link/ig))) {
+                this._sendProcessing(msg);
                 for (const entity of msg.entities) {
                     if (entity.type === 'url') {
                         this._processLink(msg, msg.text.substr(entity.offset, entity.length));
@@ -61,22 +62,27 @@ class telegram {
         const sender = (msg.from.username) ? msg.from.username : msg.from.id;
         const file = 'tg://' + msg.audio.file_id;
 
+        const replyMessage = this._sendProcessing(msg);
+
         if (msg.audio.title) {
             try {
-                await this.core.addSound(sender, file, {
+                const sound = await this.core.addSound(sender, file, {
                     title: msg.audio.title,
                     artist: msg.audio.performer,
                     duration: msg.audio.duration
                 });
+                this._sendDone(await replyMessage, sound);
             } catch (e) {
-                this._sendError(msg, '添加歌曲錯誤：' + e.message);
+                this._sendError(await replyMessage, '添加歌曲錯誤：' + e.message);
             }
         } else {
-            this.core.addSound(sender, file, {
-                title: await this._retrySendNeedTitle(msg),
+            const title = await this._retrySendNeedTitle(msg);
+            const sound = this.core.addSound(sender, file, {
+                title: title,
                 artist: msg.audio.performer,
                 duration: msg.audio.duration
             });
+            this._sendDone(await replyMessage, sound);
         }
     }
 
@@ -84,37 +90,68 @@ class telegram {
         const sender = (msg.from.username) ? msg.from.username : msg.from.id;
         const file = 'tg://' + msg.document.file_id;
 
+        const replyMessage = this._sendProcessing(msg);
+
         try {
-            await this.core.addSound(sender, file, metadata);
+            const sound = await this.core.addSound(sender, file, metadata);
+            this._sendDone(await replyMessage, sound);
         } catch (e) {
             if (e.message === 'Missing title') {
                 const title = await this._retrySendNeedTitle(msg);
-                this._processFile(msg, file, {title: title});
+                this._processFile(msg, {title: title});
             } else {
-                this._sendError(msg, '檔案處理失敗：'+ e.message);
+                this._sendError(replyMessage, '檔案處理失敗：' + e.message);
             }
         }
     }
 
-    async _processLink(msg, link, metadata = []) {
+    async _processLink(msg, link, metadata = {}) {
         const sender = (msg.from.username) ? msg.from.username : msg.from.id;
 
         try {
-            await this.core.addSound(sender, link, metadata);
+            const sound = await this.core.addSound(sender, link, metadata);
+            this._sendDone(msg, sound);
         } catch (e) {
             if (e.message === 'Missing title') {
                 const title = await this._retrySendNeedTitle(msg);
                 this._processLink(msg, link, {title: title});
             } else {
-                this._sendError(msg, '連結處理失敗：'+ e.message);
+                this._sendError(msg, `連結 ${link} 處理失敗：${e.message}`);
             }
         }
     }
 
-    async _sendError(msg, errorMessage) {
-        return this.bot.sendMessage(msg.chat.id, errorMessage, {
+    async _sendProcessing(msg) {
+        return this.bot.sendMessage(msg.chat.id, '處理中...', {
             reply_to_message_id: msg.message_id
         });
+    }
+
+    async _sendDone(msg, sound) {
+        const message = `歌曲編號: ${sound.id}\n歌名： ${sound.title}`;
+        if (msg.from.id === this.me.id) {
+            return this.bot.editMessageText(message, {
+                chat_id: msg.chat.id,
+                message_id: msg.message_id
+            });
+        } else {
+            return this.bot.sendMessage(msg.chat.id, message, {
+                reply_to_message_id: msg.message_id
+            });
+        }
+    }
+
+    async _sendError(msg, errorMessage) {
+        if (msg.from.id === this.me.id) {
+            return this.bot.editMessageText(errorMessage, {
+                chat_id: msg.chat.id,
+                message_id: msg.message_id
+            });
+        } else {
+            return this.bot.sendMessage(msg.chat.id, errorMessage, {
+                reply_to_message_id: msg.message_id
+            });
+        }
     }
 
     /**
@@ -128,11 +165,14 @@ class telegram {
     async _retrySendNeedTitle(msg, time = 5) {
         for (let i = 1; i <= time; i++) {
             try {
-                return await this._sendNeedTitle(msg);
+                const title = await this._sendNeedTitle(msg);
+                return title;
             } catch (e) {
                 // Send error if try 5 time
-                if (i === time) this._sendError(msg, '設定標題錯誤：' + e.message);
-                throw e;
+                if (i === time) {
+                    this._sendError(msg, '設定標題錯誤：' + e.message);
+                    throw e;
+                }
             }
         }
     }
@@ -181,4 +221,4 @@ class telegram {
     }
 }
 
-module.exports = telegram;
+module.exports = Telegram;
