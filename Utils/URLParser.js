@@ -1,10 +1,17 @@
 const path = require('path');
+const fs = require('fs');
 const mediaInfo = require(path.resolve('Utils/MediaInfo'));
 
-class urlParser {
+class UrlParser {
     constructor(core) {
         this.urlHandler = new Map();
         this.metadataProvider = new Map();
+
+        fs.readdir(path.resolve(__dirname, 'URLHandler'), (err, files) => {
+            for (const file of files) {
+                new (require(path.resolve(__dirname, 'URLHandler', file)))(this);
+            }
+        });
     }
 
     registerURLHandler(match, handler) {
@@ -32,8 +39,8 @@ class urlParser {
             }
         }
 
-        return mediaInfo(url);
+        return mediaInfo.getInfo(url);
     }
 }
 
-module.exports = urlParser;
+module.exports = UrlParser;

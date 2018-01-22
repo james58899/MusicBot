@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
-class sqlite {
+class SQLite {
     constructor(core) {
         this.config = core.config;
 
@@ -187,4 +187,4 @@ class sqlite {
     }
 }
 
-module.exports = sqlite;
+module.exports = SQLite;

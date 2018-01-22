@@ -1,6 +1,6 @@
 const Eris = require('eris');
 
-class discord {
+class Discord {
     constructor(core) {
         this.config = core.config;
 
@@ -8,4 +8,4 @@ class discord {
     }
 }
 
-module.exports = discord;
+module.exports = Discord;

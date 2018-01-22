@@ -5,7 +5,7 @@ const ffmpeg = require('fluent-ffmpeg');
  *
  * @class encoder
  */
-class encoder {
+class Encoder {
     /**
      * Creates an instance of encoder.
      * @param {Object} core
@@ -27,7 +27,7 @@ class encoder {
      *
      * @param {String} input
      * @param {String} filename
-     * @return {String} Transcoded file path
+     * @return {Promise<String>} Transcoded file path
      * @memberof encoder
      */
     async encode(input, filename) {
@@ -42,11 +42,9 @@ class encoder {
                 .format('opus')
                 .save(path.resolve(this.config.audio.save, filename))
                 .on('error', reject)
-                .on('end', () => {
-                    resolve(filename);
-                });
+                .on('end', () => resolve(filename));
         });
     }
 }
 
-module.exports = encoder;
+module.exports = Encoder;
