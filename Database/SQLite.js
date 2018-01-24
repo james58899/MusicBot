@@ -7,7 +7,7 @@ class SQLite {
 
         this.sequelize = new Sequelize({
             dialect: 'sqlite',
-            storage: 'database.sqlite3',
+            storage: this.config.database,
             operatorsAliases: false,
             logging: false
         });
@@ -55,10 +55,6 @@ class SQLite {
             name: {
                 type: Sequelize.TEXT,
                 allowNull: false
-            },
-            owner: {
-                type: Sequelize.TEXT,
-                allowNull: false
             }
         }, {
             updatedAt: false
@@ -75,12 +71,31 @@ class SQLite {
             timestamps: false
         });
 
+        this.user = this.sequelize.define('user', {
+            id: {
+                type: Sequelize.INTEGER,
+                primaryKey: true,
+                autoIncrement: true
+            },
+            username: {
+                type: Sequelize.TEXT,
+                allowNull: false,
+                unique: true
+            },
+            password: {
+                type: Sequelize.TEXT,
+                allowNull: false
+            }
+        });
+
+        this.list.belongsTo(this.user, {foreignKey: 'owner'});
         this.playList.belongsTo(this.list);
         this.sound.hasMany(this.playList);
 
         this.sound.sync();
         this.list.sync();
         this.playList.sync();
+        this.user.sync();
     }
 
     /**
