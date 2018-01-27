@@ -100,7 +100,7 @@ class Telegram {
                 const title = await this._retrySendNeedTitle(msg);
                 this._processFile(msg, {title: title});
             } else {
-                this._sendError(replyMessage, '檔案處理失敗：' + e.message);
+                this._sendError(await replyMessage, '檔案處理失敗：' + e.message);
             }
         }
     }
@@ -128,7 +128,7 @@ class Telegram {
     }
 
     async _sendDone(msg, sound) {
-        const message = `歌曲編號: ${sound.id}\n歌名： ${sound.title}`;
+        const message = `編號: ${sound._id}\n標題： ${sound.title}`;
         if (msg.from.id === this.me.id) {
             return this.bot.editMessageText(message, {
                 chat_id: msg.chat.id,

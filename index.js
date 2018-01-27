@@ -2,22 +2,24 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const Queue = require('promise-queue');
+const crypto = require('crypto');
 
 class Core {
     constructor() {
-        this.config = require(path.resolve('Utils/Config'));
-        this.urlParser = new (require(path.resolve('Utils/URLParser')))(this);
-        this.encoder = new (require(path.resolve('Audio/Encoder')))(this);
-        this.database = new (require(path.resolve('Database/SQLite')))(this);
-        this.discord = new (require(path.resolve('Component/Discord')))(this);
-        this.telegram = new (require(path.resolve('Component/Telegram')))(this);
+        this.config = require(path.resolve('Utils', 'Config'));
+        this.urlParser = new (require(path.resolve('Utils', 'URLParser')))(this);
+        this.encoder = new (require(path.resolve('Audio', 'Encoder')))(this);
+        this.database = new (require(path.resolve('Database', 'MongoDB')))(this);
+        this.discord = new (require(path.resolve('Component', 'Discord')))(this);
+        this.telegram = new (require(path.resolve('Component', 'Telegram')))(this);
 
         this.queue = new Queue(os.cpus().length);
 
         if (!fs.existsSync(path.resolve(this.config.audio.save))) fs.mkdirSync(path.resolve(this.config.audio.save));
 
-        this.database.cleanInvalid();
-        this.cleanFiles();
+        // Wait DB connect
+        setTimeout(this.cleanFiles.bind(this), 1000);
+        setInterval(this.deDuplicate.bind(this), 600000);
     }
 
     /**
@@ -32,8 +34,8 @@ class Core {
         if (sender == null) throw new Error('Missing sender');
         if (source == null) throw new Error('Missing source');
 
-        const checkExist = await this.checkExist(source);
-        if (checkExist) return checkExist;
+        const exist = await this.getExist(source);
+        if (exist) return exist;
 
         try {
             const input = this.urlParser.getFile(source);
@@ -46,18 +48,13 @@ class Core {
             if (!metadata.duration) throw new Error('Invalid file');
             if (!metadata.title) throw new Error('Missing title');
 
-            const sound = await this.database.addSound(metadata.title, metadata.artist, metadata.duration, sender, source);
-
             try {
-                const file = await this.queue.add(async () => this.encoder.encode(await input, sound.id));
-                sound.file = file;
+                const file = await this.queue.add(async () => this.encoder.encode(await input, crypto.createHash('md5').update(source).digest('hex')));
+                return (await this.database.addSound(metadata.title, metadata.artist, metadata.duration, sender, source, file)).ops[0];
             } catch (error) {
-                sound.destroy();
                 console.log(error.message);
                 throw new Error('Encode failed');
             }
-
-            return sound.save();
         } catch (error) {
             console.log(error.message);
             throw error;
@@ -68,10 +65,14 @@ class Core {
      * Check sound exist
      *
      * @param {String} source
-     * @return {Object}
+     * @return {Promise}
      */
-    async checkExist(source) {
-        return (await this.database.searchSound({source: source})).rows[0];
+    async getExist(source) {
+        return (await (this.database.searchSound({source: source}))).next();
+    }
+
+    async createList(name, owner) {
+        // TODO
     }
 
     /**
@@ -108,15 +109,34 @@ class Core {
      *
      */
     async cleanFiles() {
-        fs.readdir(path.resolve(this.config.audio.save), (err, files) => {
+        fs.readdir(path.resolve(this.config.audio.save), async (err, files) => {
             for (const file of files) {
-                this.database.searchSound({file: file}).then((result) => {
-                    if (result.count === 0) {
-                        fs.unlink(path.resolve(this.config.audio.save, file), () => {
-                            console.log('Deleted not exist file: ', file);
-                        });
-                    }
-                });
+                const cursor = await this.database.searchSound({file: file});
+                if (await cursor.count() === 0) {
+                    fs.unlink(path.resolve(this.config.audio.save, file), () => {
+                        console.log('Deleted not exist file: ', file);
+                    });
+                }
+            }
+        });
+    }
+
+    async checkMissFile() {
+        (await this.database.searchSound()).forEach((sound) => {
+            if (!fs.existsSync(path.resolve(this.config.audio.save, sound.file))) {
+                // TODO
+            }
+        });
+    }
+
+    // TODO more safety
+    async deDuplicate() {
+        fs.readdir(path.resolve(this.config.audio.save), async (err, files) => {
+            for (const file of files) {
+                const cursor = await this.database.searchSound({file: file});
+                if (await cursor.count() > 1) {
+                    this.database.delSound((await cursor.next())._id);
+                }
             }
         });
     }

@@ -6,12 +6,12 @@
   "author": "james58899 <james59988@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "bson-ext": "^1.0.5",
     "eris": "^0.8.2",
     "fluent-ffmpeg": "^2.1.2",
+    "mongodb": "^3.0.1",
     "node-telegram-bot-api": "^0.30.0",
     "promise-queue": "^2.2.3",
-    "sequelize": "^4.29.2",
-    "sqlite3": "^3.1.13",
     "ytdl-core": "^0.19.0"
   },
   "devDependencies": {

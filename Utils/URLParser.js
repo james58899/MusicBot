@@ -40,7 +40,7 @@ class UrlParser {
             }
         }
 
-        return mediaInfo.getInfo(url);
+        return mediaInfo(url);
     }
 }
 
