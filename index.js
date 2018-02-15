@@ -19,7 +19,6 @@ class Core {
 
         // Wait DB connect
         setTimeout(this.cleanFiles.bind(this), 1000);
-        setInterval(this.deDuplicate.bind(this), 600000);
     }
 
     /**
@@ -49,8 +48,8 @@ class Core {
             if (!metadata.title) throw new Error('Missing title');
 
             // check exist and write data
-            const hash = crypto.createHash('md5').update(metadata.title + metadata.artist + metadata.duration).digest('hex');
-            if (await this.checkExist(hash)) {
+            const hash = crypto.createHash('md5').update(metadata.title + metadata.artist + metadata.duration + mediaInfo.size).digest('hex');
+            if (await this._checkExist(hash)) {
                 throw new Error('Sound exist');
             }
             await this.database.editSound(id, metadata.title, metadata.artist, metadata.duration, hash);
@@ -59,14 +58,13 @@ class Core {
             try {
                 await this.queue.add(async () => this.encoder.encode(await input, hash));
             } catch (error) {
-                console.log(error.message);
                 throw new Error('Encode failed');
             }
 
             return this.database.getSound(id);
         } catch (error) {
             this.database.delSound(id);
-            console.log(error.message);
+            console.log(`[Core] Add sound fail, sender: ${sender} error: ${error.message}`);
             throw error;
         }
     }
@@ -77,7 +75,7 @@ class Core {
      * @param {String} hash
      * @return {Promise}
      */
-    async checkExist(hash) {
+    async _checkExist(hash) {
         return this.database.searchSound({
             hash: hash
         }).hasNext();
@@ -129,7 +127,7 @@ class Core {
                 });
                 if (await cursor.count() === 0) {
                     fs.unlink(path.resolve(this.config.audio.save, file), () => {
-                        console.log('Deleted not exist file: ', file);
+                        console.log('[Core] Deleted not exist file: ', file);
                     });
                 }
             }

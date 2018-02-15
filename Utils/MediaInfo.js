@@ -12,7 +12,7 @@ async function mediaInfo(file) {
     const ffprobeOption = [
         '-v', 'error',
         '-of', 'default=nw=1',
-        '-show_entries', 'stream_tags=title,artist:format_tags=title,artist:format=duration',
+        '-show_entries', 'stream_tags=title,artist:format_tags=title,artist:format=duration,size',
         file
     ];
 
@@ -30,6 +30,7 @@ async function mediaInfo(file) {
 
             // Match output
             const durationMatch = stdout.match(/duration=(.*)/i);
+            const sizeMatch = stdout.match(/size=(.*)/i);
             const titleMatch = stdout.match(/TAG:title=(.*)/i);
             const artistMatch = stdout.match(/TAG:artist=(.*)/i);
 
@@ -37,11 +38,13 @@ async function mediaInfo(file) {
             const title = (titleMatch) ? titleMatch[1] : null;
             const artist = (artistMatch) ? artistMatch[1] : null;
             const duration = (durationMatch && durationMatch !== 'N/A') ? durationMatch[1] : null;
+            const size = (sizeMatch && sizeMatch !== 'N/A') ? sizeMatch[1] : null;
 
             resolve({
                 title: title,
                 artist: artist,
-                duration: duration
+                duration: duration,
+                size: size
             });
         });
     });
