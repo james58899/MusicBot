@@ -15,6 +15,8 @@ class Telegram {
     constructor(core) {
         this.core = core;
 
+        if (!core.config.telegram.token) return;
+
         // Create bot
         this.bot = new TelegramBot(core.config.telegram.token, {polling: true});
 
@@ -42,8 +44,8 @@ class Telegram {
         this.bot.on('document', this._processFile.bind(this));
 
         // Link
-        this.bot.on('text', (msg) => {
-            if (msg.entities.some((entity) => entity.type.match(/url|text_link/ig))) {
+        this.bot.on('text', async (msg) => {
+            if (msg.entities && msg.entities.some((entity) => entity.type.match(/url|text_link/ig))) {
                 this._sendProcessing(msg);
                 for (const entity of msg.entities) {
                     if (entity.type === 'url') {
@@ -128,7 +130,7 @@ class Telegram {
     }
 
     async _sendDone(msg, sound) {
-        const message = `編號: ${sound._id}\n標題： ${sound.title}`;
+        const message = `編號： ${sound._id}\n標題： ${sound.title}`;
         if (msg.from.id === this.me.id) {
             return this.bot.editMessageText(message, {
                 chat_id: msg.chat.id,

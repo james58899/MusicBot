@@ -7,11 +7,11 @@ const crypto = require('crypto');
 class Core {
     constructor() {
         this.config = require(path.resolve('Utils', 'Config'));
-        this.urlParser = new (require(path.resolve('Utils', 'URLParser')))(this);
-        this.encoder = new (require(path.resolve('Audio', 'Encoder')))(this);
-        this.database = new (require(path.resolve('Database', 'MongoDB')))(this);
-        this.discord = new (require(path.resolve('Component', 'Discord')))(this);
-        this.telegram = new (require(path.resolve('Component', 'Telegram')))(this);
+        this.urlParser = new(require(path.resolve('Utils', 'URLParser')))(this);
+        this.encoder = new(require(path.resolve('Audio', 'Encoder')))(this);
+        this.database = new(require(path.resolve('Database', 'MongoDB')))(this);
+        this.discord = new(require(path.resolve('Component', 'Discord')))(this);
+        this.telegram = new(require(path.resolve('Component', 'Telegram')))(this);
 
         this.queue = new Queue(os.cpus().length);
 
@@ -34,13 +34,13 @@ class Core {
         if (sender == null) throw new Error('Missing sender');
         if (source == null) throw new Error('Missing source');
 
-        const exist = await this.getExist(source);
-        if (exist) return exist;
+        const id = (await this.database.addSound(metadata.title, metadata.artist, metadata.duration, sender, source, null)).ops[0]._id;
 
         try {
             const input = this.urlParser.getFile(source);
-            const mediaInfo = await this.queue.add(() => this.urlParser.getMetadata(source));
+            const mediaInfo = await this.queue.add(async () => this.urlParser.getMetadata(source));
 
+            // fetch metadata
             if (!metadata.title) metadata.title = mediaInfo.title;
             if (!metadata.artist) metadata.artist = mediaInfo.artist;
             if (!metadata.duration) metadata.duration = mediaInfo.duration;
@@ -48,14 +48,24 @@ class Core {
             if (!metadata.duration) throw new Error('Invalid file');
             if (!metadata.title) throw new Error('Missing title');
 
+            // check exist and write data
+            const hash = crypto.createHash('md5').update(metadata.title + metadata.artist + metadata.duration).digest('hex');
+            if (await this.checkExist(hash)) {
+                throw new Error('Sound exist');
+            }
+            await this.database.editSound(id, metadata.title, metadata.artist, metadata.duration, hash);
+
+            // encode
             try {
-                const file = await this.queue.add(async () => this.encoder.encode(await input, crypto.createHash('md5').update(source).digest('hex')));
-                return (await this.database.addSound(metadata.title, metadata.artist, metadata.duration, sender, source, file)).ops[0];
+                await this.queue.add(async () => this.encoder.encode(await input, hash));
             } catch (error) {
                 console.log(error.message);
                 throw new Error('Encode failed');
             }
+
+            return this.database.getSound(id);
         } catch (error) {
+            this.database.delSound(id);
             console.log(error.message);
             throw error;
         }
@@ -64,11 +74,13 @@ class Core {
     /**
      * Check sound exist
      *
-     * @param {String} source
+     * @param {String} hash
      * @return {Promise}
      */
-    async getExist(source) {
-        return (await (this.database.searchSound({source: source}))).next();
+    async checkExist(hash) {
+        return this.database.searchSound({
+            hash: hash
+        }).hasNext();
     }
 
     async createList(name, owner) {
@@ -85,21 +97,21 @@ class Core {
     }
 
     /**
-    * Add sound to playlist
-    *
-    * @param {String} uuid
-    * @param {String} list
-    */
+     * Add sound to playlist
+     *
+     * @param {String} uuid
+     * @param {String} list
+     */
     async addToList(uuid, list) {
         // TOOD
     }
 
     /**
-    * Remove sound from playlist
-    *
-    * @param {String} uuid
-    * @param {String} list
-    */
+     * Remove sound from playlist
+     *
+     * @param {String} uuid
+     * @param {String} list
+     */
     async removeFromList(uuid, list) {
         // TODO
     }
@@ -111,7 +123,10 @@ class Core {
     async cleanFiles() {
         fs.readdir(path.resolve(this.config.audio.save), async (err, files) => {
             for (const file of files) {
-                const cursor = await this.database.searchSound({file: file});
+                const hash = file.replace('.opus', '');
+                const cursor = await this.database.searchSound({
+                    hash: hash
+                });
                 if (await cursor.count() === 0) {
                     fs.unlink(path.resolve(this.config.audio.save, file), () => {
                         console.log('Deleted not exist file: ', file);
@@ -125,18 +140,6 @@ class Core {
         (await this.database.searchSound()).forEach((sound) => {
             if (!fs.existsSync(path.resolve(this.config.audio.save, sound.file))) {
                 // TODO
-            }
-        });
-    }
-
-    // TODO more safety
-    async deDuplicate() {
-        fs.readdir(path.resolve(this.config.audio.save), async (err, files) => {
-            for (const file of files) {
-                const cursor = await this.database.searchSound({file: file});
-                if (await cursor.count() > 1) {
-                    this.database.delSound((await cursor.next())._id);
-                }
             }
         });
     }

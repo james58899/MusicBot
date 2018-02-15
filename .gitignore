@@ -83,4 +83,3 @@ typings/
 
 # Ingore local sound data
 Data/*
-!Data/.gitkeep
