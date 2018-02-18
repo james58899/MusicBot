@@ -1,9 +1,6 @@
-const util = require('util');
 const MongoClient = require('mongodb').MongoClient;
-const assert = require('assert');
 
-
-class Mongodb {
+class MongoDB {
     constructor(core) {
         this.config = core.config.database;
 
@@ -79,4 +76,4 @@ class Mongodb {
     }
 }
 
-module.exports = Mongodb;
+module.exports = MongoDB;
