@@ -38,7 +38,7 @@ class Encoder {
             ffmpeg(input)
                 .withNoVideo()
                 .audioFilters(
-                    'loudnorm=' +
+                    'loudnorm=i=-16:lra=11:tp=-1.5:' +
                     `measured_I=${normalize.input_i}:` +
                     `measured_LRA=${normalize.input_lra}:` +
                     `measured_tp=${normalize.input_tp}:` +
@@ -61,7 +61,7 @@ class Encoder {
                 stdoutLines: 14
             })
                 .withNoVideo()
-                .audioFilters('loudnorm=print_format=json')
+                .audioFilters('loudnorm=i=-16:lra=11:tp=-1.5:print_format=json')
                 .duration(this.config.audio.length)
                 .format('null')
                 .save('-')
