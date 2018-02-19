@@ -10,7 +10,6 @@ class Core {
         this.urlParser = new(require(path.resolve('Utils', 'URLParser')))(this);
         this.encoder = new(require(path.resolve('Audio', 'Encoder')))(this);
         this.database = new(require(path.resolve('Database', 'MongoDB')))(this);
-        this.userManager = new(require(path.resolve('Database', 'UserManager')))(this);
         this.discord = new(require(path.resolve('Component', 'Discord')))(this);
         this.telegram = new(require(path.resolve('Component', 'Telegram')))(this);
 
@@ -19,7 +18,7 @@ class Core {
         if (!fs.existsSync(path.resolve(this.config.audio.save))) fs.mkdirSync(path.resolve(this.config.audio.save));
 
         // Wait DB connect
-        setTimeout(this.cleanFiles.bind(this), 1000);
+        this.database.on('connect', this.cleanFiles.bind(this));
     }
 
     /**
@@ -34,7 +33,9 @@ class Core {
         if (sender == null) throw new Error('Missing sender');
         if (source == null) throw new Error('Missing source');
 
-        const id = (await this.database.addSound(metadata.title, metadata.artist, metadata.duration, sender, source, null)).ops[0]._id;
+        const database = this.database.audio;
+
+        const id = (await database.add(metadata.title, metadata.artist, metadata.duration, sender, source, null)).ops[0]._id;
 
         try {
             const input = this.urlParser.getFile(source);
@@ -53,7 +54,7 @@ class Core {
             if (await this._checkExist(hash)) {
                 throw new Error('Sound exist');
             }
-            await this.database.editSound(id, metadata.title, metadata.artist, metadata.duration, hash);
+            await database.edit(id, metadata.title, metadata.artist, metadata.duration, hash);
 
             // encode
             try {
@@ -63,9 +64,9 @@ class Core {
                 throw new Error('Encode failed');
             }
 
-            return this.database.getSound(id);
+            return database.get(id);
         } catch (error) {
-            this.database.delSound(id);
+            database.delete(id);
             console.log(`[Core] Add sound fail, sender: ${sender} error: ${error.message}`);
             throw error;
         }
@@ -78,7 +79,7 @@ class Core {
      * @return {Promise}
      */
     async _checkExist(hash) {
-        return this.database.searchSound({
+        return this.database.audio.search({
             hash: hash
         }).hasNext();
     }
@@ -124,7 +125,7 @@ class Core {
         fs.readdir(path.resolve(this.config.audio.save), async (err, files) => {
             for (const file of files) {
                 const hash = file.replace('.opus', '');
-                const cursor = await this.database.searchSound({
+                const cursor = await this.database.audio.search({
                     hash: hash
                 });
                 if (await cursor.count() === 0) {
@@ -137,7 +138,7 @@ class Core {
     }
 
     async checkMissFile() {
-        (await this.database.searchSound()).forEach((sound) => {
+        (await this.database.audio.search()).forEach((sound) => {
             if (!fs.existsSync(path.resolve(this.config.audio.save, sound.file))) {
                 // TODO
             }

@@ -1,26 +1,31 @@
 class UserManager {
-    constructor(core) {
-        this.database = core.database;
+    constructor(database) {
+        this.user = database.db.collection('user');
     }
 
-    async getUser(type, id) {
-        return this.database.getUser(type, id);
+    async get(type, id) {
+        return this.user.findOne({
+            bind: {
+                type: type,
+                id: id
+            }
+        });
     }
 
-    async createUser(name, bind) {
-        if (await this.getUser(bind.type, bind.id)) throw new Error('User exist');
+    async create(name, bind) {
+        if (await this.get(bind.type, bind.id)) throw new Error('User exist');
 
-        return this.bindUser((await this.database.createUser(name)).ops[0]._id, bind);
+        return this.bind((await this.user.insertOne({name: name})).ops[0]._id, bind);
     }
 
-    async bindUser(id, bind) {
-        const result = await this.database.bindUser(id, bind);
+    async bind(id, bind) {
+        const result = await this.user.findOneAndUpdate({_id: id}, {$push: {bind: bind}}, {returnOriginal: false});
         if (!result) throw Error('User not found');
         return result.value;
     }
 
-    async delUser(id) {
-        return this.database.delUser(id);
+    async delete(id) {
+        return this.user.deleteOne({_id: id});
     }
 }
 

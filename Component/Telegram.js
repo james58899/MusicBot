@@ -14,9 +14,10 @@ class Telegram {
      */
     constructor(core) {
         this.core = core;
-        this.userManager = core.userManager;
 
         if (!core.config.telegram.token) return;
+
+        core.database.on('connect', (database) => this.user = database.user);
 
         // Create bot
         this.bot = new TelegramBot(core.config.telegram.token, {
@@ -74,7 +75,7 @@ class Telegram {
     async _createUser(msg) {
         let user;
         try {
-            user = await this.userManager.createUser(msg.from.username, {
+            user = await this.user.create(msg.from.username, {
                 type: 'telegram',
                 id: msg.from.id
             });
@@ -87,7 +88,7 @@ class Telegram {
     }
 
     async _getUserInfo(msg) {
-        const user = await this.userManager.getUser('telegram', msg.from.id);
+        const user = await this.user.get('telegram', msg.from.id);
         if (!user) {
             this.bot.sendMessage(msg.chat.id, 'User not found');
         } else {
