@@ -14,11 +14,14 @@ class Telegram {
      */
     constructor(core) {
         this.core = core;
+        this.userManager = core.userManager;
 
         if (!core.config.telegram.token) return;
 
         // Create bot
-        this.bot = new TelegramBot(core.config.telegram.token, {polling: true});
+        this.bot = new TelegramBot(core.config.telegram.token, {
+            polling: true
+        });
 
         // Register URLParser
         core.urlParser.registerURLHandler('^tg://', this.getFile.bind(this));
@@ -33,8 +36,16 @@ class Telegram {
 
     async _listener() {
         // Handle command
-        this.bot.onText(/^\/(\w+)@?(\w*)/i, (msg, match) => {
-            // TODO
+        this.bot.onText(/^\/(\w+)@?(\w*)/i, async (msg, match) => {
+            if (!match) return;
+            switch (match[1]) {
+            case 'register':
+                this._createUser(msg);
+                break;
+            case 'info':
+                this._getUserInfo(msg);
+                break;
+            }
         });
 
         // Audio
@@ -58,6 +69,30 @@ class Telegram {
                 }
             }
         });
+    }
+
+    async _createUser(msg) {
+        let user;
+        try {
+            user = await this.userManager.createUser(msg.from.username, {
+                type: 'telegram',
+                id: msg.from.id
+            });
+        } catch (error) {
+            this.bot.sendMessage(msg.chat.id, error.message);
+            return;
+        }
+
+        this.bot.sendMessage(msg.chat.id, `ID: ${user._id}\nName: ${user.name}`);
+    }
+
+    async _getUserInfo(msg) {
+        const user = await this.userManager.getUser('telegram', msg.from.id);
+        if (!user) {
+            this.bot.sendMessage(msg.chat.id, 'User not found');
+        } else {
+            this.bot.sendMessage(msg.chat.id, `ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map( (i) => i.type).join(', ')}`);
+        }
     }
 
     async _processAudio(msg) {
@@ -205,7 +240,9 @@ class Telegram {
                 if (title.text) {
                     resolve(title.text);
                 } else {
-                    this.bot.sendMessage(msg.chat.id, '這看起來不像是標題', {reply_to_message_id: title.message_id}).then(() => {
+                    this.bot.sendMessage(msg.chat.id, '這看起來不像是標題', {
+                        reply_to_message_id: title.message_id
+                    }).then(() => {
                         reject(new Error('Wrong title'));
                     });
                 }

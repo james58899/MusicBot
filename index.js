@@ -10,6 +10,7 @@ class Core {
         this.urlParser = new(require(path.resolve('Utils', 'URLParser')))(this);
         this.encoder = new(require(path.resolve('Audio', 'Encoder')))(this);
         this.database = new(require(path.resolve('Database', 'MongoDB')))(this);
+        this.userManager = new(require(path.resolve('Database', 'UserManager')))(this);
         this.discord = new(require(path.resolve('Component', 'Discord')))(this);
         this.telegram = new(require(path.resolve('Component', 'Telegram')))(this);
 

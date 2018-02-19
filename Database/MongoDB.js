@@ -31,7 +31,7 @@ class MongoDB {
             artist: artist,
             duration: duration,
             hash: hash
-        }});
+        }}, {returnOriginal: false});
     }
 
     async delSound(id) {
@@ -73,6 +73,29 @@ class MongoDB {
 
     async getPlayList(list) {
         // TODO
+    }
+
+    async getUser(type, id) {
+        return this.user.findOne({
+            bind: {
+                type: type,
+                id: id
+            }
+        });
+    }
+
+    async createUser(name) {
+        return this.user.insertOne({
+            name: name
+        });
+    }
+
+    async bindUser(id, bind) {
+        return this.user.findOneAndUpdate({_id: id}, {$push: {bind: bind}}, {returnOriginal: false});
+    }
+
+    async delUser(id) {
+        return this.user.deleteOne({_id: id});
     }
 }
 
