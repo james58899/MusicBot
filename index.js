@@ -58,6 +58,7 @@ class Core {
             try {
                 await this.queue.add(async () => this.encoder.encode(await input, hash));
             } catch (error) {
+                console.error(error);
                 throw new Error('Encode failed');
             }
 
