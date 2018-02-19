@@ -31,7 +31,7 @@ class Encoder {
      * @memberof encoder
      */
     async encode(input, filename) {
-        const normalize = await this.getNormalize(input);
+        const normalize = await this._getNormalize(input);
 
         filename = filename + '.opus';
         return new Promise((resolve, reject) => {
@@ -55,7 +55,7 @@ class Encoder {
         });
     }
 
-    async getNormalize(input) {
+    async _getNormalize(input) {
         return new Promise((resolve, reject) => {
             ffmpeg(input, {
                 stdoutLines: 14
