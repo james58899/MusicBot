@@ -6,7 +6,7 @@
   "author": "james58899 <james59988@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "bson-ext": "^1.0.5",
+    "bson-ext": "^2.0.0",
     "eris": "^0.8.4",
     "fluent-ffmpeg": "^2.1.2",
     "mongodb": "^3.0.2",
