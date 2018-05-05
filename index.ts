@@ -51,15 +51,15 @@ export class Core {
             if (!data.title) throw new Error('Missing title');
 
             // check exist and write data
-            const hash = createHash('md5').update(data.title + data.artist + data.duration + mediaInfo.size).digest('hex');
-            if (await this.checkExist(hash)) {
+            data.hash = createHash('md5').update(data.title + data.artist + data.duration + mediaInfo.size).digest('hex');
+            if (await this.checkExist(data.hash)) {
                 throw new Error('Sound exist');
             }
             await database.edit(id, data);
 
             // encode
             try {
-                await this.queue.add(async () => this.encoder.encode(await input, hash));
+                await this.queue.add(async () => this.encoder.encode(await input, data.hash!!));
             } catch (error) {
                 console.error(error);
                 throw new Error('Encode failed');
@@ -73,79 +73,47 @@ export class Core {
         }
     }
 
-    /**
-     * Check sound exist
-     *
-     * @param {String} hash
-     * @return {Promise}
-     */
-    private async checkExist(hash: string): Promise<any> {
-        return this.database.audio.search({
-            hash: hash
-        }).hasNext();
+    private async checkExist(hash: string) {
+        return this.database.audio.search({ hash: hash }).hasNext();
     }
 
     async createList(name: String, owner: Number) {
         // TODO
     }
 
-    /**
-     * delete sounde
-     *
-     * @param {String} file file ID
-     */
     async delSound(file: ObjectID) {
         this.database.audio.delete(file);
     }
 
-    /**
-     * Add sound to playlist
-     *
-     * @param {String} uuid
-     * @param {String} list
-     */
     async addToList(uuid: string, list: string) {
         // TOOD
     }
 
-    /**
-     * Remove sound from playlist
-     *
-     * @param {String} uuid
-     * @param {String} list
-     */
     async removeFromList(uuid: string, list: string) {
         // TODO
     }
 
-    /**
-     * Clean up not exist in database file
-     *
-     */
-    async cleanFiles() {
-        readdir(resolve(this.config.audio.save))
-            .then(async files => {
-                for (const file of files) {
-                    const hash = file.replace('.opus', '');
-                    const cursor = await this.database.audio.search({
-                        hash: hash
+    private async cleanFiles() {
+        readdir(resolve(this.config.audio.save)).then(async files => {
+            for (const file of files) {
+                const hash = file.replace('.opus', '');
+                const cursor = await this.database.audio.search({ hash: hash });
+                if (await cursor.count() === 0) {
+                    unlink(resolve(this.config.audio.save, file), () => {
+                        console.log('[Core] Deleted not exist file: ', file);
                     });
-                    if (await cursor.count() === 0) {
-                        unlink(resolve(this.config.audio.save, file), () => {
-                            console.log('[Core] Deleted not exist file: ', file);
-                        });
-                    }
                 }
-            });
+            }
+        });
     }
 
-    async checkMissFile() {
-        (await this.database.audio.search()).forEach((sound: any) => {
-            if (!existsSync(resolve(this.config.audio.save, sound.file))) {
-                // TODO
-            }
-        }, (e) => console.error(e));
-    }
+    // private async checkMissFile() {
+    //     (await this.database.audio.search()).forEach((sound: any) => {
+    //         if (!existsSync(resolve(this.config.audio.save, sound.file))) {
+    //             // TODO
+    //         }
+    //     }, (e) => console.error(e));
+    // }
 }
 
 new Core();
