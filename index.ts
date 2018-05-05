@@ -18,7 +18,7 @@ export class Core {
     urlParser = new UrlParser(this)
     database = new MongoDB(this);
     private encoder = new Encoder(this)
-    private queue = new Queue(cpus.length)
+    private queue = new Queue(cpus().length)
 
     constructor() {
         if (!existsSync(resolve(this.config.audio.save))) mkdirSync(resolve(this.config.audio.save));
