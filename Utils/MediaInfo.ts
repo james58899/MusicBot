@@ -1,5 +1,7 @@
-const execFile = require('child_process').execFile;
-let ffprobe;
+import { AudioData } from "../Database/AudioManager";
+import { execFile } from "child_process";
+
+let ffprobe: string;
 // Test system ffprobe
 try {
     execFile('ffprobe');
@@ -8,7 +10,7 @@ try {
     ffprobe = require('@ffprobe-installer/ffprobe').path;
 }
 
-async function mediaInfo(file) {
+export async function getMediaInfo(file: string) {
     const ffprobeOption = [
         '-v', 'error',
         '-of', 'default=nw=1',
@@ -21,7 +23,7 @@ async function mediaInfo(file) {
         windowsHide: true
     };
 
-    return new Promise((resolve) => {
+    return new Promise<AudioData>((resolve) => {
         execFile(ffprobe, ffprobeOption, execOption, (err, stdout, stderr) => {
             if (err) {
                 console.log(err);
@@ -35,20 +37,17 @@ async function mediaInfo(file) {
             const artistMatch = stdout.match(/TAG:artist=(.*)/i);
 
             // Test has match
-            const title = (titleMatch) ? titleMatch[1] : null;
-            const artist = (artistMatch) ? artistMatch[1] : null;
-            const duration = (durationMatch && durationMatch !== 'N/A') ? durationMatch[1] : null;
-            const size = (sizeMatch && sizeMatch !== 'N/A') ? sizeMatch[1] : null;
+            const title = (titleMatch) ? titleMatch[1] : undefined;
+            const artist = (artistMatch) ? artistMatch[1] : undefined;
+            const duration = (durationMatch && durationMatch[1] !== 'N/A') ? durationMatch[1] : undefined;
+            const size = (sizeMatch && sizeMatch[1] !== 'N/A') ? sizeMatch[1] : undefined;
 
             resolve({
                 title: title,
                 artist: artist,
                 duration: duration,
                 size: size
-            });
+            } as AudioData);
         });
     });
 }
-
-
-module.exports = mediaInfo;

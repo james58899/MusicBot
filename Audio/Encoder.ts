@@ -1,17 +1,17 @@
-const path = require('path');
-const ffmpeg = require('fluent-ffmpeg');
+import { Core } from "..";
+import path from 'path'
+
+const ffmpeg = require('fluent-ffmpeg')
+
 /**
  * Audio Encoder
  *
  * @class encoder
  */
-class Encoder {
-    /**
-     * Creates an instance of encoder.
-     * @param {Object} core
-     * @memberof encoder
-     */
-    constructor(core) {
+export class Encoder {
+    config: any
+
+    constructor(core: Core) {
         this.config = core.config;
 
         // Test system ffmpeg
@@ -30,11 +30,11 @@ class Encoder {
      * @return {Promise<String>} Transcoded file path
      * @memberof encoder
      */
-    async encode(input, filename) {
-        const normalize = await this._getNormalize(input);
+    async encode(input: string, filename: string): Promise<string> {
+        const normalize = await this.getNormalize(input);
 
         filename = filename + '.opus';
-        return new Promise((resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
             ffmpeg(input)
                 .withNoVideo()
                 .audioFilters(
@@ -55,20 +55,16 @@ class Encoder {
         });
     }
 
-    async _getNormalize(input) {
-        return new Promise((resolve, reject) => {
-            ffmpeg(input, {
-                stdoutLines: 14
-            })
+    private async getNormalize(input: string) {
+        return new Promise<any>((resolve, reject) => {
+            ffmpeg(input, { stdoutLines: 14 })
                 .withNoVideo()
                 .audioFilters('loudnorm=print_format=json')
                 .duration(this.config.audio.length)
                 .format('null')
                 .save('-')
                 .on('error', reject)
-                .on('end', (stdout, stderr) => resolve(JSON.parse(stderr)));
+                .on('end', (stdout: string, stderr: string) => resolve(JSON.parse(stderr)));
         });
     }
 }
-
-module.exports = Encoder;

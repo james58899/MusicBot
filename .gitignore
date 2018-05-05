@@ -82,4 +82,10 @@ typings/
 # End of https://www.gitignore.io/api/node,database,visualstudiocode
 
 # Ingore local sound data
-Data/*
+Data
+
+# Typescript Output
+dist
+
+# VisualStudioCode
+.vscode

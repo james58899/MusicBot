@@ -5,21 +5,29 @@
   "repository": "https://github.com/james58899/MusicBot.git",
   "author": "james58899 <james59988@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc --pretty"
+  },
   "dependencies": {
     "bson-ext": "^2.0.0",
-    "eris": "^0.8.4",
+    "eris": "^0.8.5",
     "fluent-ffmpeg": "^2.1.2",
-    "mongodb": "^3.0.2",
+    "mongodb": "^3.0.7",
     "node-telegram-bot-api": "^0.30.0",
     "promise-queue": "^2.2.5",
-    "ytdl-core": "^0.20.1"
+    "ytdl-core": "^0.20.2"
   },
   "devDependencies": {
-    "eslint": "^4.18.1",
-    "eslint-config-google": "^0.9.1"
+    "@types/bson": "^1.0.8",
+    "@types/mongodb": "^3.0.18",
+    "@types/node": "^10.0.4",
+    "@types/node-telegram-bot-api": "^0.28.3",
+    "@types/promise-queue": "^2.2.0",
+    "tslint": "^5.10.0",
+    "typescript": "^2.8.3"
   },
   "optionalDependencies": {
-    "@ffmpeg-installer/ffmpeg": "^1.0.13",
+    "@ffmpeg-installer/ffmpeg": "^1.0.14",
     "@ffprobe-installer/ffprobe": "^1.0.8"
   }
 }
