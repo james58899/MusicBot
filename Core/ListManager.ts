@@ -1,30 +1,34 @@
-import { Collection, ObjectID } from 'mongodb';
-import { MongoDB } from './MongoDB';
+import { Collection, ObjectID } from "mongodb";
+import { Core } from "..";
 
 export class ListManager {
-    list: Collection
+    private database?: Collection;
 
-    constructor(database: MongoDB) {
-        this.list = database.db.collection('list');
+    constructor(core: Core) {
+        if (core.database.client) {
+            this.database = core.database.client.collection("list");
+        } else {
+            core.database.on("connect", client => this.database = client.collection("list"));
+        }
     }
 
-    async createList(name: string, owner: ObjectID) {
+    public async createList(name: string, owner: ObjectID) {
         // TODO
     }
 
-    async delList(id: ObjectID) {
+    public async delList(id: ObjectID) {
         // TODO
     }
 
-    async addToList(list: ObjectID, sound: ObjectID) {
+    public async addToList(list: ObjectID, sound: ObjectID) {
         // TODO
     }
 
-    async delFromList(list: ObjectID, sound: ObjectID) {
+    public async delFromList(list: ObjectID, sound: ObjectID) {
         // TODO
     }
 
-    async getPlayList(list: ObjectID) {
+    public async getPlayList(list: ObjectID) {
         // TODO
     }
 }
