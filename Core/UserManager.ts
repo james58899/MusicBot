@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { Collection, FindAndModifyWriteOpResultObject, ObjectID } from "mongodb";
 import { Core } from "..";
 
@@ -14,6 +15,7 @@ export interface IBindData {
 
 export class UserManager {
     private database?: Collection;
+    private bindToken = new Map<string, IBindData>();
 
     constructor(core: Core) {
         if (core.database.client) {
@@ -23,10 +25,10 @@ export class UserManager {
         }
     }
 
-    public async get(type: string, id: string | number) {
+    public get(type: string, id: string | number) {
         if (!this.database) throw Error("Database is not initialized");
 
-        return this.database.findOne<IUserData>({ bind: { type, id } });
+        return this.database.findOne<IUserData>({ bind: {$elemMatch: { type, id } }});
     }
 
     public async create(name: string, bind: IBindData) {
@@ -51,9 +53,24 @@ export class UserManager {
         return result.value!!;
     }
 
-    public async delete(id: ObjectID) {
+    public delete(id: ObjectID) {
         if (!this.database) throw Error("Database is not initialized");
 
         return this.database.deleteOne({ _id: id });
+    }
+
+    public createBindToken(bind: IBindData) {
+        const token = randomBytes(20).toString("ascii");
+        this.bindToken.set(token, bind);
+
+        return token;
+    }
+
+    public useBindToken(id: ObjectID, token: string) {
+        const bind = this.bindToken.get(token);
+
+        if (!bind) throw Error("Token not found!");
+
+        return this.bind(id, bind);
     }
 }
