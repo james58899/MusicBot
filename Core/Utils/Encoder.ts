@@ -1,57 +1,44 @@
-import path from 'path'
-import { Core } from '../..';
+import { rename } from "fs/promises";
+import path from "path";
 
-const ffmpeg = require('fluent-ffmpeg')
+const ffmpeg = require("fluent-ffmpeg");
 
-/**
- * Audio Encoder
- *
- * @class encoder
- */
 export class Encoder {
-    config: any
+    private config: any;
 
-    constructor(core: Core) {
-        this.config = core.config;
+    constructor(config: any) {
+        this.config = config.audio;
 
         // Test system ffmpeg
         try {
-            require('child_process').spawn('ffmpeg');
+            require("child_process").spawn("ffmpeg");
         } catch (err) {
-            ffmpeg.ffmpegPath(require('@ffmpeg-installer/ffmpeg').path);
+            ffmpeg.ffmpegPath(require("@ffmpeg-installer/ffmpeg").path);
         }
     }
 
-    /**
-     * input file then transcodeing
-     *
-     * @param {String} input
-     * @param {String} filename
-     * @return {Promise<String>} Transcoded file path
-     * @memberof encoder
-     */
-    async encode(input: string, filename: string): Promise<string> {
+    public async encode(input: string, filename: string): Promise<string> {
         const normalize = await this.getNormalize(input);
 
-        filename = filename + '.opus';
+        const savePath = path.resolve(this.config.save, filename + ".opus");
         return new Promise<string>((resolve, reject) => {
             ffmpeg(input)
                 .withNoVideo()
                 .audioFilters(
-                    'loudnorm=' +
+                    "loudnorm=" +
                     `measured_I=${normalize.input_i}:` +
                     `measured_LRA=${normalize.input_lra}:` +
                     `measured_tp=${normalize.input_tp}:` +
                     `measured_thresh=${normalize.input_thresh}:` +
                     `offset=${normalize.target_offset}`
                 )
-                .audioBitrate(this.config.audio.bitrate)
-                .audioCodec('libopus')
-                .duration(this.config.audio.length)
-                .format('opus')
-                .save(path.resolve(this.config.audio.save, filename))
-                .on('error', reject)
-                .on('end', () => resolve(filename));
+                .audioBitrate(this.config.bitrate)
+                .audioCodec("libopus")
+                .duration(this.config.length)
+                .format("opus")
+                .save(savePath + ".tmp")
+                .on("error", reject)
+                .on("end", () => rename(savePath + ".tmp", savePath).then(() => resolve(savePath)));
         });
     }
 
@@ -59,12 +46,12 @@ export class Encoder {
         return new Promise<any>((resolve, reject) => {
             ffmpeg(input, { stdoutLines: 14 })
                 .withNoVideo()
-                .audioFilters('loudnorm=print_format=json')
-                .duration(this.config.audio.length)
-                .format('null')
-                .save('-')
-                .on('error', reject)
-                .on('end', (stdout: string, stderr: string) => resolve(JSON.parse(stderr)));
+                .audioFilters("loudnorm=print_format=json")
+                .duration(this.config.length)
+                .format("null")
+                .save("-")
+                .on("error", reject)
+                .on("end", (stdout: string, stderr: string) => resolve(JSON.parse(stderr)));
         });
     }
 }

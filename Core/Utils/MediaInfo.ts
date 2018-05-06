@@ -1,33 +1,33 @@
-import { AudioData } from "../AudioManager";
 import { execFile } from "child_process";
+import { IAudioMetadata } from "../URLParser";
 
 let ffprobe: string;
 // Test system ffprobe
 try {
-    execFile('ffprobe');
-    ffprobe = 'ffprobe';
+    execFile("ffprobe");
+    ffprobe = "ffprobe";
 } catch (err) {
-    ffprobe = require('@ffprobe-installer/ffprobe').path;
+    ffprobe = require("@ffprobe-installer/ffprobe").path;
 }
 
 export async function getMediaInfo(file: string) {
     const ffprobeOption = [
-        '-v', 'error',
-        '-of', 'default=nw=1',
-        '-show_entries', 'stream_tags=title,artist:format_tags=title,artist:format=duration,size',
-        file
+        "-v", "error",
+        "-of", "default=nw=1",
+        "-show_entries", "stream_tags=title,artist:format_tags=title,artist:format=duration,size",
+        file,
     ];
 
     const execOption = {
         timeout: 10000,
-        windowsHide: true
+        windowsHide: true,
     };
 
-    return new Promise<AudioData>((resolve) => {
+    return new Promise<IAudioMetadata>(resolve => {
         execFile(ffprobe, ffprobeOption, execOption, (err, stdout, stderr) => {
             if (err) {
                 console.log(err);
-                resolve({});
+                resolve({} as IAudioMetadata);
             }
 
             // Match output
@@ -39,15 +39,15 @@ export async function getMediaInfo(file: string) {
             // Test has match
             const title = (titleMatch) ? titleMatch[1] : undefined;
             const artist = (artistMatch) ? artistMatch[1] : undefined;
-            const duration = (durationMatch && durationMatch[1] !== 'N/A') ? durationMatch[1] : undefined;
-            const size = (sizeMatch && sizeMatch[1] !== 'N/A') ? sizeMatch[1] : undefined;
+            const duration = (durationMatch && durationMatch[1] !== "N/A") ? Number(durationMatch[1]) : undefined;
+            const size = (sizeMatch && sizeMatch[1] !== "N/A") ? sizeMatch[1] : undefined;
 
             resolve({
-                title: title,
-                artist: artist,
-                duration: duration,
-                size: size
-            } as AudioData);
+                artist,
+                duration,
+                size,
+                title
+            } as IAudioMetadata);
         });
     });
 }

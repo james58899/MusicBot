@@ -1,35 +1,36 @@
-import { Core } from "..";
-import { readdir } from "fs/promises";
-import { resolve } from "path";
 import { getMediaInfo } from "./Utils/MediaInfo";
-import { AudioData } from "./AudioManager";
+import { Youtube } from "./Utils/URLHandler/Youtube";
 
-type URLHandlerType = (url: string) => string | Promise<string>
-type metadataProviderType = (url: string) => AudioData | Promise<AudioData>
+export interface IAudioMetadata {
+    title: string;
+    artist?: string;
+    duration: number;
+    size?: number;
+}
+
+type URLHandlerType = (url: string) => string | Promise<string>;
+type metadataProviderType = (url: string) => IAudioMetadata | Promise<IAudioMetadata>;
 
 export class UrlParser {
-    urlHandler = new Map<RegExp | string, URLHandlerType>();
-    metadataProvider = new Map<RegExp | string, metadataProviderType>();
+    private urlHandler = new Map<RegExp | string, URLHandlerType>();
+    private metadataProvider = new Map<RegExp | string, metadataProviderType>();
 
-    constructor(core: Core) {
-        readdir(resolve(__dirname, 'URLHandler')).then(files => {
-            for (const file of files) {
-                new (require(resolve(__dirname, 'URLHandler', file)))(this);
-            }
-        });
+    constructor() {
+        // tslint:disable-next-line:no-unused-expression
+        new Youtube(this);
     }
 
-    registerURLHandler(match: RegExp | string, handler: URLHandlerType) {
+    public registerURLHandler(match: RegExp | string, handler: URLHandlerType) {
         this.urlHandler.set(match, handler);
     }
 
-    registerMetadataProvider(match: RegExp | string, provider: metadataProviderType) {
+    public registerMetadataProvider(match: RegExp | string, provider: metadataProviderType) {
         this.metadataProvider.set(match, provider);
     }
 
-    async getFile(url: string) {
+    public async getFile(url: string) {
         for (const [match, handler] of this.urlHandler) {
-            const regexp = (match instanceof RegExp) ? match : new RegExp(match, 'gi');
+            const regexp = (match instanceof RegExp) ? match : new RegExp(match, "gi");
             if (url.match(regexp)) {
                 return handler(url);
             }
@@ -38,9 +39,9 @@ export class UrlParser {
         return url;
     }
 
-    async getMetadata(url: string) {
+    public async getMetadata(url: string) {
         for (const [match, provider] of this.metadataProvider) {
-            const regexp = (match instanceof RegExp) ? match : new RegExp(match, 'gi');
+            const regexp = (match instanceof RegExp) ? match : new RegExp(match, "gi");
             if (url.match(regexp)) {
                 return provider(url);
             }
