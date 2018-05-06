@@ -18,14 +18,14 @@ export interface IAudioData {
 }
 
 export class AudioManager {
-    private urlParser = new UrlParser();
-    private encoder: Encoder["encode"];
+    public urlParser = new UrlParser();
+    private encoder: Encoder;
     private database?: Collection;
     private metadataQueue = new Queue(cpus().length);
     private encodeQueue = new Queue(cpus().length);
 
     constructor(core: Core) {
-        this.encoder = new Encoder(core.config).encode;
+        this.encoder = new Encoder(core.config);
 
         if (core.database.client) {
             this.database = core.database.client.collection("user");
@@ -59,7 +59,7 @@ export class AudioManager {
             title,
         })).ops[0];
 
-        await this.encodeQueue.add(async () => this.encoder(await this.urlParser.getFile(source), hash));
+        await this.encodeQueue.add(async () => this.encoder.encode(await this.urlParser.getFile(source), hash));
         return data;
     }
 
