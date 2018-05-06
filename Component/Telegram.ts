@@ -56,8 +56,8 @@ export class Telegram {
             if (msg.entities && msg.entities.some(entity => entity.type.match(/url|text_link/ig) != null)) {
                 this.sendProcessing(msg);
                 for (const entity of msg.entities) {
-                    if (entity.type === "url") {
-                        this.processLink(msg, msg.text!!.substr(entity.offset, entity.length));
+                    if (entity.type === "url" && msg.text) {
+                        this.processLink(msg, msg.text.substr(entity.offset, entity.length));
                     }
 
                     if (entity.type === "text_link" && entity.url) {
@@ -86,7 +86,9 @@ export class Telegram {
     }
 
     private async getUserInfo(msg: Message) {
-        const user = await this.user.get("telegram", msg.from!!.id);
+        if (!msg.from) return;
+
+        const user = await this.user.get("telegram", msg.from.id);
         if (!user) {
             this.bot.sendMessage(msg.chat.id, "User not found");
         } else {
@@ -98,7 +100,7 @@ export class Telegram {
     }
 
     private async processAudio(msg: Message) {
-        if (msg.from == null) return;
+        if (!msg.from || !msg.audio) return;
 
         const sender = await this.getUser(msg.from.id);
         if (!sender) {
@@ -106,7 +108,7 @@ export class Telegram {
             return;
         }
 
-        const file = "tg://" + msg.audio!!.file_id;
+        const file = "tg://" + msg.audio.file_id;
         const replyMessage = await this.sendProcessing(msg);
 
         if (replyMessage instanceof Error) { throw replyMessage; }
@@ -128,8 +130,8 @@ export class Telegram {
             if (!title) return;
 
             const sound = await this.audio.add(sender._id, file, {
-                artist: msg.audio!!.performer,
-                duration: msg.audio!!.duration,
+                artist: msg.audio.performer,
+                duration: msg.audio.duration,
                 title
             });
 
@@ -138,7 +140,7 @@ export class Telegram {
     }
 
     private async processFile(msg: Message, title: string) {
-        if (msg.from == null) return;
+        if (msg.from == null|| !msg.document) return;
 
         const sender = await this.getUser(msg.from.id);
 
@@ -147,7 +149,7 @@ export class Telegram {
             return;
         }
 
-        const source = "tg://" + msg.document!!.file_id;
+        const source = "tg://" + msg.document.file_id;
 
         const replyMessage = await this.sendProcessing(msg);
 
@@ -213,7 +215,9 @@ export class Telegram {
     }
 
     private async sendError(msg: Message, errorMessage: string) {
-        if (msg.from!!.id === this.me.id) {
+        if (!msg.from) return;
+
+        if (msg.from.id === this.me.id) {
             return this.bot.editMessageText(errorMessage, {
                 chat_id: msg.chat.id,
                 disable_web_page_preview: true,
@@ -255,7 +259,7 @@ export class Telegram {
         return new Promise<string>((resolve, reject) => {
             this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, title => {
                 // If not origin sender
-                if (title.from!!.id !== msg.from!!.id) { return; }
+                if (!title.from || !msg.from || title.from.id !== msg.from.id) return;
 
                 if (title.text) {
                     resolve(title.text);
