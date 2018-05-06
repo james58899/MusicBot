@@ -1,7 +1,9 @@
 import { createHash } from "crypto";
 import { Collection, ObjectID } from "mongodb";
+import { cpus } from "os";
+import Queue from "promise-queue";
 import { Core } from "..";
-import { AudioMetadata, UrlParser } from "./URLParser";
+import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
 
 export interface IAudioData {
@@ -19,6 +21,8 @@ export class AudioManager {
     private urlParser = new UrlParser();
     private encoder: Encoder["encode"];
     private database?: Collection;
+    private metadataQueue = new Queue(cpus().length);
+    private encodeQueue = new Queue(cpus().length);
 
     constructor(core: Core) {
         this.encoder = new Encoder(core.config).encode;
@@ -30,13 +34,13 @@ export class AudioManager {
         }
     }
 
-    public async add(sender: ObjectID, source: string, metadata?: AudioMetadata) {
+    public async add(sender: ObjectID, source: string, metadata?: IAudioMetadata) {
         if (!this.database) throw Error("Database is not initialized");
 
         const exist = await this.checkExist(source);
         if (exist) return exist;
 
-        const info = await this.urlParser.getMetadata(source);
+        const info = await this.metadataQueue.add(() => this.urlParser.getMetadata(source));
 
         const title = (metadata && metadata.title) ? metadata.title : info.title;
         const artist = (metadata && metadata.artist) ? metadata.artist : info.artist;
@@ -55,7 +59,7 @@ export class AudioManager {
             title,
         })).ops[0];
 
-        await this.encoder(await this.urlParser.getFile(source), hash);
+        await this.encodeQueue.add(async () => this.encoder(await this.urlParser.getFile(source), hash));
         return data;
     }
 
@@ -84,7 +88,7 @@ export class AudioManager {
         return this.database.findOne<IAudioData>({ _id: id });
     }
 
-    public search(metadata?: AudioMetadata) {
+    public search(metadata?: IAudioMetadata) {
         if (!this.database) throw Error("Database is not initialized");
 
         return this.database.find<IAudioData>(metadata);
