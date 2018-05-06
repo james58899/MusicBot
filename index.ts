@@ -4,13 +4,13 @@ import { mkdirSync, existsSync, unlink } from 'fs';
 import { createHash } from 'crypto';
 import { resolve } from 'path';
 import { readdir } from 'fs/promises';
-import { MongoDB } from './Database/MongoDB'
+import { MongoDB } from './Core/MongoDB'
 import { Telegram } from './Component/Telegram';
 import { Discord } from './Component/Discord';
-import { Encoder } from './Audio/Encoder';
-import { AudioData } from './Database/AudioManager';
+import { Encoder } from './Core/Utils/Encoder';
+import { AudioData } from './Core/AudioManager';
 import { ObjectID } from 'bson';
-import { UrlParser } from './Utils/URLParser';
+import { UrlParser } from './Core/URLParser';
 
 export class Core {
     readonly config = require(resolve('config.json'));

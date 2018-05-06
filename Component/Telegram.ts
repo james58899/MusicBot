@@ -1,7 +1,7 @@
 import { Core } from "..";
 import TelegramBot, { User, Message } from 'node-telegram-bot-api';
-import { UserManager, BindData } from "../Database/UserManager";
-import { AudioData } from "../Database/AudioManager";
+import { UserManager, BindData } from "../Core/UserManager";
+import { AudioData } from "../Core/AudioManager";
 
 export class Telegram {
     core: Core

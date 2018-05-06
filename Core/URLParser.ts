@@ -1,8 +1,8 @@
 import { Core } from "..";
 import { readdir } from "fs/promises";
 import { resolve } from "path";
-import { getMediaInfo } from "./MediaInfo";
-import { AudioData } from "../Database/AudioManager";
+import { getMediaInfo } from "./Utils/MediaInfo";
+import { AudioData } from "./AudioManager";
 
 type URLHandlerType = (url: string) => string | Promise<string>
 type metadataProviderType = (url: string) => AudioData | Promise<AudioData>

@@ -1,4 +1,4 @@
-import { AudioData } from "../Database/AudioManager";
+import { AudioData } from "../AudioManager";
 import { execFile } from "child_process";
 
 let ffprobe: string;

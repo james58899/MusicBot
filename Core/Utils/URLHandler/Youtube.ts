@@ -1,4 +1,4 @@
-import { UrlParser } from "../URLParser";
+import { UrlParser } from "../../URLParser";
 import { getInfo, videoFormat } from 'ytdl-core'
 
 class Youtube {

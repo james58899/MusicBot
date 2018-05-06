@@ -1,5 +1,5 @@
-import { Core } from "..";
 import path from 'path'
+import { Core } from '../..';
 
 const ffmpeg = require('fluent-ffmpeg')
 
