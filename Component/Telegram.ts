@@ -1,32 +1,31 @@
+import TelegramBot, { Message, User } from "node-telegram-bot-api";
 import { Core } from "..";
-import TelegramBot, { User, Message } from 'node-telegram-bot-api';
-import { UserManager, BindData } from "../Core/UserManager";
-import { AudioData } from "../Core/AudioManager";
+import { AudioManager, IAudioData } from "../Core/AudioManager";
+import { IBindData, UserManager } from "../Core/UserManager";
 
 export class Telegram {
-    core: Core
-    user!: UserManager
-    bot!: TelegramBot
-    me!: User
+    private audio: AudioManager;
+    private user: UserManager;
+    private bot: TelegramBot;
+    private me!: User;
 
     constructor(core: Core) {
-        this.core = core;
+        if (!core.config.telegram.token) throw Error("Telegram bot api token not found!");
 
-        if (!core.config.telegram.token) return;
-
-        this.user = core.database.user
+        this.user = core.userManager;
+        this.audio = core.audioManager;
 
         // Create bot
         this.bot = new TelegramBot(core.config.telegram.token, {
-            polling: true
+            polling: true,
         });
 
         // Register URLParser
-        core.urlParser.registerURLHandler('^tg://', this.getFile.bind(this));
-        core.urlParser.registerMetadataProvider('^tg://', this.getMetadata.bind(this));
+        this.audio.urlParser.registerURLHandler("^tg://", this.getFile.bind(this));
+        this.audio.urlParser.registerMetadataProvider("^tg://", this.getMetadata.bind(this));
 
         // Register listener
-        this.bot.getMe().then((me) => {
+        this.bot.getMe().then(me => {
             this.me = me as User;
             this.listener();
         });
@@ -35,33 +34,33 @@ export class Telegram {
     private async listener() {
         // Handle command
         this.bot.onText(/^\/(\w+)@?(\w*)/i, async (msg, match) => {
-            if (!match) return;
+            if (!match) { return; }
             switch (match[1]) {
-                case 'register':
+                case "register":
                     this.createUser(msg);
                     break;
-                case 'info':
+                case "info":
                     this.getUserInfo(msg);
                     break;
             }
         });
 
         // Audio
-        this.bot.on('audio', this.processAudio.bind(this));
+        this.bot.on("audio", this.processAudio.bind(this));
 
         // File
-        this.bot.on('document', this.processFile.bind(this));
+        this.bot.on("document", this.processFile.bind(this));
 
         // Link
-        this.bot.on('text', async (msg: Message) => {
-            if (msg.entities && msg.entities.some((entity) => entity.type.match(/url|text_link/ig) != null)) {
+        this.bot.on("text", async (msg: Message) => {
+            if (msg.entities && msg.entities.some(entity => entity.type.match(/url|text_link/ig) != null)) {
                 this.sendProcessing(msg);
                 for (const entity of msg.entities) {
-                    if (entity.type === 'url') {
+                    if (entity.type === "url") {
                         this.processLink(msg, msg.text!!.substr(entity.offset, entity.length));
                     }
 
-                    if (entity.type === 'text_link' && entity.url) {
+                    if (entity.type === "text_link" && entity.url) {
                         this.processLink(msg, entity.url);
                     }
                 }
@@ -70,11 +69,13 @@ export class Telegram {
     }
 
     private async createUser(msg: Message) {
+        if (!msg.from) return;
+
         let user;
         try {
-            user = await this.user.create(msg.from!!.username || msg.from!!.id.toString(), {
-                type: 'telegram',
-                id: msg.from!!.id
+            user = await this.user.create(msg.from.username || msg.from.id.toString(), {
+                id: msg.from.id,
+                type: "telegram"
             });
         } catch (error) {
             this.bot.sendMessage(msg.chat.id, error.message);
@@ -85,83 +86,106 @@ export class Telegram {
     }
 
     private async getUserInfo(msg: Message) {
-        const user = await this.user.get('telegram', msg.from!!.id);
+        const user = await this.user.get("telegram", msg.from!!.id);
         if (!user) {
-            this.bot.sendMessage(msg.chat.id, 'User not found');
+            this.bot.sendMessage(msg.chat.id, "User not found");
         } else {
-            this.bot.sendMessage(msg.chat.id, `ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map((i: BindData) => i.type).join(', ')}`);
+            this.bot.sendMessage(
+                msg.chat.id,
+                `ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map((i: IBindData) => i.type).join(", ")}`
+            );
         }
     }
 
     private async processAudio(msg: Message) {
-        if (msg.from == null) return
+        if (msg.from == null) return;
 
-        const sender = (msg.from.username) ? msg.from.username : String(msg.from.id);
-        const file = 'tg://' + msg.audio!!.file_id;
+        const sender = await this.getUser(msg.from.id);
+        if (!sender) {
+            this.sendError(msg, "Please register or bind account!");
+            return;
+        }
 
+        const file = "tg://" + msg.audio!!.file_id;
         const replyMessage = await this.sendProcessing(msg);
 
-        if (replyMessage instanceof Error) throw replyMessage
+        if (replyMessage instanceof Error) { throw replyMessage; }
 
         if (msg.audio && msg.audio.title) {
             try {
-                const sound = await this.core.addSound({
-                    sender: sender,
-                    source: file,
-                    title: msg.audio.title,
+                const sound = await this.audio.add(sender._id, file, {
                     artist: msg.audio.performer,
-                    duration: msg.audio.duration
+                    duration: msg.audio.duration,
+                    title: msg.audio.title
                 });
 
-                if (sound) this.sendDone(replyMessage, sound);
+                if (sound) { this.sendDone(replyMessage, sound); }
             } catch (e) {
-                this.sendError(replyMessage, '添加歌曲錯誤：' + e.message);
+                this.sendError(replyMessage, "添加歌曲錯誤：" + e.message);
             }
         } else {
-            const sound = await this.core.addSound({
-                sender: sender,
-                source: file,
-                title: await this.retrySendNeedTitle(msg),
+            const title = await this.retrySendNeedTitle(msg);
+            if (!title) return;
+
+            const sound = await this.audio.add(sender._id, file, {
                 artist: msg.audio!!.performer,
-                duration: msg.audio!!.duration
+                duration: msg.audio!!.duration,
+                title
             });
 
             if (sound) this.sendDone(replyMessage, sound);
         }
     }
 
-    private async processFile(msg: Message, data: AudioData = {}) {
-        data.sender = msg.from!!.username || msg.from!!.id.toString();
-        data.source = 'tg://' + msg.document!!.file_id;
+    private async processFile(msg: Message, title: string) {
+        if (msg.from == null) return;
+
+        const sender = await this.getUser(msg.from.id);
+
+        if (!sender) {
+            this.sendError(msg, "Please register or bind account!");
+            return;
+        }
+
+        const source = "tg://" + msg.document!!.file_id;
 
         const replyMessage = await this.sendProcessing(msg);
 
-        if (replyMessage instanceof Error) throw replyMessage
+        if (replyMessage instanceof Error) { throw replyMessage; }
 
         try {
-            const sound = await this.core.addSound(data);
-            if (sound) this.sendDone(replyMessage, sound); else this.sendError(replyMessage, 'failed');
+            const sound = await this.audio.add(sender._id, source);
+
+            if (sound) this.sendDone(replyMessage, sound); else this.sendError(replyMessage, "failed");
         } catch (e) {
-            if (e.message === 'Missing title') {
+            if (e.message === "Missing title") {
                 const title = await this.retrySendNeedTitle(msg);
-                this.processFile(msg, { title: title });
+                if (!title) return;
+
+                this.processFile(msg, title);
             } else {
-                this.sendError(replyMessage, '檔案處理失敗：' + e.message);
+                this.sendError(replyMessage, "檔案處理失敗：" + e.message);
             }
         }
     }
 
-    private async processLink(msg: Message, link: string, data: AudioData = {}) {
-        data.sender = msg.from!!.username || msg.from!!.id.toString();
-        data.source = link
+    private async processLink(msg: Message, link: string, title?: string) {
+        if (msg.from == null) return;
+
+        const sender = await this.getUser(msg.from.id);
+
+        if (!sender) {
+            this.sendError(msg, "Please register or bind account!");
+            return;
+        }
 
         try {
-            const sound = await this.core.addSound(data);
+            const sound = await this.audio.add(sender._id, link);
             if (sound) this.sendDone(msg, sound);
         } catch (e) {
-            if (e.message === 'Missing title') {
+            if (e.message === "Missing title") {
                 const title = await this.retrySendNeedTitle(msg);
-                this.processLink(msg, link, { title: title });
+                this.processLink(msg, link, title);
             } else {
                 this.sendError(msg, `連結 ${link} 處理失敗：${e.message}`);
             }
@@ -169,12 +193,12 @@ export class Telegram {
     }
 
     private async sendProcessing(msg: Message) {
-        return this.bot.sendMessage(msg.chat.id, '處理中...', {
+        return this.bot.sendMessage(msg.chat.id, "處理中...", {
             reply_to_message_id: msg.message_id
         });
     }
 
-    private async sendDone(msg: Message, sound: AudioData) {
+    private async sendDone(msg: Message, sound: IAudioData) {
         const message = `編號： ${sound._id}\n標題： ${sound.title}`;
         if (msg.from && msg.from.id === this.me.id) {
             return this.bot.editMessageText(message, {
@@ -191,8 +215,8 @@ export class Telegram {
     private async sendError(msg: Message, errorMessage: string) {
         if (msg.from!!.id === this.me.id) {
             return this.bot.editMessageText(errorMessage, {
-                disable_web_page_preview: true,
                 chat_id: msg.chat.id,
+                disable_web_page_preview: true,
                 message_id: msg.message_id
             });
         } else {
@@ -210,36 +234,36 @@ export class Telegram {
             } catch (e) {
                 // Send error if try 5 time
                 if (i === time) {
-                    this.sendError(msg, '設定標題錯誤：' + e.message);
+                    this.sendError(msg, "設定標題錯誤：" + e.message);
                     throw e;
                 }
             }
         }
 
-        return undefined
+        return undefined;
     }
 
     private async sendNeedTitle(msg: Message): Promise<string> {
-        const needTitle = await this.bot.sendMessage(msg.chat.id, '這個音樂沒有標題\n請幫它添加一個！', {
-            reply_to_message_id: msg.message_id,
+        const needTitle = await this.bot.sendMessage(msg.chat.id, "這個音樂沒有標題\n請幫它添加一個！", {
             reply_markup: {
                 force_reply: true,
-                selective: true
-            }
+                selective: true,
+            },
+            reply_to_message_id: msg.message_id
         }) as Message;
 
         return new Promise<string>((resolve, reject) => {
-            this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, (title) => {
+            this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, title => {
                 // If not origin sender
-                if (title.from!!.id !== msg.from!!.id) return;
+                if (title.from!!.id !== msg.from!!.id) { return; }
 
                 if (title.text) {
                     resolve(title.text);
                 } else {
-                    this.bot.sendMessage(msg.chat.id, '這看起來不像是標題', {
-                        reply_to_message_id: title.message_id
+                    this.bot.sendMessage(msg.chat.id, "這看起來不像是標題", {
+                        reply_to_message_id: title.message_id,
                     }).then(() => {
-                        reject(new Error('Wrong title'));
+                        reject(new Error("Wrong title"));
                     });
                 }
 
@@ -248,15 +272,19 @@ export class Telegram {
         });
     }
 
-    async getFile(fileId: string) {
-        fileId = fileId.replace('tg://', '');
+    private getUser(id: number) {
+        return this.user.get("telegram", id);
+    }
+
+    private getFile(fileId: string) {
+        fileId = fileId.replace("tg://", "");
         return this.bot.getFileLink(fileId);
     }
 
-    async getMetadata(fileId: string) {
-        const file = await this.getFile(fileId)
-        if (file instanceof Error) throw file
+    private async getMetadata(fileId: string) {
+        const file = await this.getFile(fileId);
+        if (file instanceof Error) throw file;
 
-        return this.core.urlParser.getMetadata(file);
+        return this.audio.urlParser.getMetadata(file);
     }
 }
