@@ -1,4 +1,4 @@
-import { Collection, ObjectID, FindAndModifyWriteOpResultObject } from "mongodb";
+import { Collection, FindAndModifyWriteOpResultObject, ObjectID } from "mongodb";
 import { Core } from "..";
 
 export interface IUserData {
@@ -32,7 +32,7 @@ export class UserManager {
     public async create(name: string, bind: IBindData) {
         if (!this.database) throw Error("Database is not initialized");
 
-        if (await this.get(bind.type, bind.id)) throw new Error("User exist")
+        if (await this.get(bind.type, bind.id)) throw new Error("User exist");
 
         return this.bind((await this.database.insertOne({ name })).ops[0]._id, bind);
     }
