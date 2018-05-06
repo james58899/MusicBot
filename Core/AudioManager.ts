@@ -22,14 +22,19 @@ export class AudioManager {
 
     constructor(core: Core) {
         this.encoder = new Encoder(core.config).encode;
-        core.database.on("connect", (database) => this.database = database.collection("sound"));
+
+        if (core.database.client) {
+            this.database = core.database.client.collection("user");
+        } else {
+            core.database.on("connect", database => this.database = database.collection("sound"));
+        }
     }
 
     public async add(sender: ObjectID, source: string, metadata?: AudioMetadata) {
-        if (!this.database) { throw Error("Database is not initialized"); }
+        if (!this.database) throw Error("Database is not initialized");
 
         const exist = await this.checkExist(source);
-        if (exist) { return exist; }
+        if (exist) return exist;
 
         const info = await this.urlParser.getMetadata(source);
 
@@ -55,7 +60,7 @@ export class AudioManager {
     }
 
     public async edit(id: ObjectID, data: IAudioData) {
-        if (!this.database) { throw Error("Database is not initialized"); }
+        if (!this.database) throw Error("Database is not initialized");
 
         return this.database.findOneAndUpdate({ _id: id }, {
             $set: {
@@ -68,25 +73,25 @@ export class AudioManager {
     }
 
     public async delete(id: ObjectID) {
-        if (!this.database) { throw Error("Database is not initialized"); }
+        if (!this.database) throw Error("Database is not initialized");
 
         return this.database.deleteOne({ _id: id });
     }
 
     public async get(id: ObjectID) {
-        if (!this.database) { throw Error("Database is not initialized"); }
+        if (!this.database) throw Error("Database is not initialized");
 
         return this.database.findOne<IAudioData>({ _id: id });
     }
 
     public search(metadata?: AudioMetadata) {
-        if (!this.database) { throw Error("Database is not initialized"); }
+        if (!this.database) throw Error("Database is not initialized");
 
         return this.database.find<IAudioData>(metadata);
     }
 
     private async checkExist(source?: string, hash?: string) {
-        if (!this.database) { throw Error("Database is not initialized"); }
+        if (!this.database) throw Error("Database is not initialized");
 
         return this.database.findOne<IAudioData>({ $or: [{ source }, { hash }] });
     }

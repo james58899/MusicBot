@@ -1,33 +1,25 @@
-import { Core } from "../index"
 import { EventEmitter } from "events";
-import { MongoClient, Db } from "mongodb";
-import { AudioManager } from "./AudioManager";
-import { UserManager } from "./UserManager";
-import { ListManager } from "./ListManager";
+import { Db, MongoClient } from "mongodb";
+
+// tslint:disable-next-line:interface-name
+export declare interface MongoDB {
+    on(event: "connect", listen: (database: Db) => void): this;
+}
 
 export class MongoDB extends EventEmitter {
-    config: any
-    db!: Db;
-    audio!: AudioManager
-    user!: UserManager
-    list!: ListManager
+    public client?: Db;
 
-    constructor(core: Core) {
-        super()
+    constructor(config: any) {
+        super();
 
-        this.config = core.config.database;
+        config = config.database;
 
-        MongoClient.connect(this.config.host)
-            .then(client => {
-                console.log('[MongoDB] Connected successfully to server');
+        MongoClient.connect(config.host).then(client => {
+            console.log("[MongoDB] Connected successfully to server");
 
-                this.db = client.db(this.config.name)
+            this.client = client.db(config.name);
 
-                this.audio = new AudioManager(this);
-                this.user = new UserManager(this);
-                this.list = new ListManager(this);
-
-                this.emit('connect', this);
-            })
+            this.emit("connect", this.client);
+        });
     }
 }

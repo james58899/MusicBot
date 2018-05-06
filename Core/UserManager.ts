@@ -1,40 +1,59 @@
-import { MongoDB } from "./MongoDB";
-import { Collection, ObjectID } from "mongodb";
+import { Collection, ObjectID, FindAndModifyWriteOpResultObject } from "mongodb";
+import { Core } from "..";
 
-export interface BindData {
-    type: string,
-    id: string | number
+export interface IUserData {
+    _id: ObjectID;
+    name: string;
+    bind: IBindData[];
+}
+
+export interface IBindData {
+    type: string;
+    id: string | number;
 }
 
 export class UserManager {
-    user: Collection
+    private database?: Collection;
 
-    constructor(database: MongoDB) {
-        this.user = database.db.collection('user');
+    constructor(core: Core) {
+        if (core.database.client) {
+            this.database = core.database.client.collection("user");
+        } else {
+            core.database.on("connect", database => this.database = database.collection<IUserData>("user"));
+        }
     }
 
-    async get(type: string, id: string | number) {
-        return this.user.findOne({
-            bind: {
-                type: type,
-                id: id
-            }
-        });
+    public async get(type: string, id: string | number) {
+        if (!this.database) throw Error("Database is not initialized");
+
+        return this.database.findOne<IUserData>({ bind: { type, id } });
     }
 
-    async create(name: string, bind: BindData) {
-        if (await this.get(bind.type, bind.id)) throw new Error('User exist');
+    public async create(name: string, bind: IBindData) {
+        if (!this.database) throw Error("Database is not initialized");
 
-        return this.bind((await this.user.insertOne({ name: name })).ops[0]._id, bind);
+        if (await this.get(bind.type, bind.id)) throw new Error("User exist")
+
+        return this.bind((await this.database.insertOne({ name })).ops[0]._id, bind);
     }
 
-    async bind(id: ObjectID, bind: BindData) {
-        const result = await this.user.findOneAndUpdate({ _id: id }, { $push: { bind: bind } }, { returnOriginal: false });
-        if (!result) throw Error('User not found');
-        return result.value;
+    public async bind(id: ObjectID, bind: IBindData) {
+        if (!this.database) throw Error("Database is not initialized");
+
+        const result: FindAndModifyWriteOpResultObject<IUserData> = await this.database.findOneAndUpdate(
+            { _id: id },
+            { $push: { bind } },
+            { returnOriginal: false }
+        );
+
+        if (!result) throw Error("User not found");
+
+        return result.value!!;
     }
 
-    async delete(id: ObjectID) {
-        return this.user.deleteOne({ _id: id });
+    public async delete(id: ObjectID) {
+        if (!this.database) throw Error("Database is not initialized");
+
+        return this.database.deleteOne({ _id: id });
     }
 }
