@@ -1,55 +1,93 @@
-import { Collection, ObjectID, FilterQuery } from 'mongodb';
-import { MongoDB } from './MongoDB';
+import { createHash } from "crypto";
+import { Collection, ObjectID } from "mongodb";
+import { Core } from "..";
+import { AudioMetadata, UrlParser } from "./URLParser";
+import { Encoder } from "./Utils/Encoder";
 
-export interface AudioData {
-    _id?: ObjectID,
-    title?: string,
-    artist?: string,
-    duration?: number,
-    sender?: string,
-    source?: string,
-    size?:number,
-    hash?: string
+export interface IAudioData {
+    _id?: ObjectID;
+    title: string;
+    artist?: string;
+    duration: number;
+    sender: ObjectID;
+    source: string;
+    size: number;
+    hash: string;
 }
 
 export class AudioManager {
-    sound: Collection
+    private urlParser = new UrlParser();
+    private encoder: Encoder["encode"];
+    private database?: Collection;
 
-    constructor(database: MongoDB) {
-        this.sound = database.db.collection('sound');
+    constructor(core: Core) {
+        this.encoder = new Encoder(core.config).encode;
+        core.database.on("connect", (database) => this.database = database.collection("sound"));
     }
 
-    async add(audio: AudioData) {
-        return this.sound.insertOne({
-            title: audio.title,
-            artist: audio.artist,
-            duration: audio.duration,
-            sender: audio.sender,
-            source: audio.source,
-            hash: audio.hash
-        });
+    public async add(sender: ObjectID, source: string, metadata?: AudioMetadata) {
+        if (!this.database) { throw Error("Database is not initialized"); }
+
+        const exist = await this.checkExist(source);
+        if (exist) { return exist; }
+
+        const info = await this.urlParser.getMetadata(source);
+
+        const title = (metadata && metadata.title) ? metadata.title : info.title;
+        const artist = (metadata && metadata.artist) ? metadata.artist : info.artist;
+        const duration = (metadata && metadata.duration) ? metadata.duration : info.duration;
+        const size = (metadata && metadata.size) ? metadata.size : info.size;
+
+        const hash = createHash("md5").update(title + artist + duration + size).digest("hex");
+
+        const data: IAudioData = await this.checkExist(source, hash) || (await this.database.insertOne({
+            artist,
+            duration,
+            hash,
+            sender,
+            size,
+            source,
+            title,
+        })).ops[0];
+
+        await this.encoder(await this.urlParser.getFile(source), hash);
+        return data;
     }
 
-    async edit(id: Object, data: AudioData) {
-        return this.sound.findOneAndUpdate({ _id: id }, {
+    public async edit(id: ObjectID, data: IAudioData) {
+        if (!this.database) { throw Error("Database is not initialized"); }
+
+        return this.database.findOneAndUpdate({ _id: id }, {
             $set: {
-                title: data.title,
                 artist: data.artist,
                 duration: data.duration,
-                hash: data.hash
-            }
+                hash: data.hash,
+                title: data.title,
+            },
         }, { returnOriginal: false });
     }
 
-    async delete(id: ObjectID) {
-        return this.sound.deleteOne({ _id: id });
+    public async delete(id: ObjectID) {
+        if (!this.database) { throw Error("Database is not initialized"); }
+
+        return this.database.deleteOne({ _id: id });
     }
 
-    async get(id: ObjectID) {
-        return this.sound.findOne<AudioData>({ _id: id });
+    public async get(id: ObjectID) {
+        if (!this.database) { throw Error("Database is not initialized"); }
+
+        return this.database.findOne<IAudioData>({ _id: id });
     }
 
-    search(keyword?: FilterQuery<AudioData>) {
-        return this.sound.find<AudioData>(keyword);
+    public search(metadata?: AudioMetadata) {
+        if (!this.database) { throw Error("Database is not initialized"); }
+
+        return this.database.find<IAudioData>(metadata);
+    }
+
+    private async checkExist(source?: string, hash?: string) {
+        if (!this.database) { throw Error("Database is not initialized"); }
+
+        return this.database.findOne<IAudioData>({ $or: [{ source }, { hash }] });
     }
 }
