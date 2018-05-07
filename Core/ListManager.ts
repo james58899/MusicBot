@@ -1,8 +1,15 @@
 import { Collection, ObjectID } from "mongodb";
 import { Core } from "..";
+import { ERR_DB_NOT_INIT } from "./MongoDB";
+
+export interface IAudioList {
+    name: string;
+    owner: ObjectID;
+    audio: ObjectID[];
+}
 
 export class ListManager {
-    private database?: Collection;
+    private database?: Collection<IAudioList>;
 
     constructor(core: Core) {
         if (core.database.client) {
@@ -12,23 +19,45 @@ export class ListManager {
         }
     }
 
-    public async createList(name: string, owner: ObjectID) {
-        // TODO
+    public async create(name: string, owner: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.insertOne({
+            audio: Array<ObjectID>(),
+            name,
+            owner,
+        } as IAudioList)).ops[0];
     }
 
-    public async delList(id: ObjectID) {
-        // TODO
+    public get(id: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return this.database.findOne({ _id: id });
     }
 
-    public async addToList(list: ObjectID, sound: ObjectID) {
-        // TODO
+    public async delete(id: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        this.database.deleteOne({ _id: id });
     }
 
-    public async delFromList(list: ObjectID, sound: ObjectID) {
-        // TODO
+    public async addAudio(id: ObjectID, audio: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $addToSet: audio },
+            { returnOriginal: false }
+        )).value;
     }
 
-    public async getPlayList(list: ObjectID) {
-        // TODO
+    public async delAudio(id: ObjectID, audio: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $pull: audio },
+            { returnOriginal: false }
+        )).value;
     }
 }
