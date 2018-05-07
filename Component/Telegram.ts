@@ -5,8 +5,8 @@ import { IBindData, UserManager } from "../Core/UserManager";
 
 const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
-const ERR_CREATE_ACCOUNT_FAIL = Error("Create account failed");
 const ERR_NOT_REGISTER = "Please register or bind account!";
+const ERR_ALREADY_BOUND = "This telegram user already bound!";
 
 export class Telegram {
     private audio: AudioManager;
@@ -83,14 +83,12 @@ export class Telegram {
         try {
             user = await this.user.create(
                 msg.from.username || msg.from.id.toString(),
-                { id: msg.from.id, type: BIND_TYPE }
+                { type: BIND_TYPE, id: msg.from.id }
             );
         } catch (error) {
             this.bot.sendMessage(msg.chat.id, error.message);
             return;
         }
-
-        if (!user) throw ERR_CREATE_ACCOUNT_FAIL;
 
         this.bot.sendMessage(msg.chat.id, `ID: ${user._id}\nName: ${user.name}`);
     }
@@ -101,15 +99,23 @@ export class Telegram {
         const args = msg.text.split(" ");
 
         if (args.length > 1) {
-            const user = await this.getUser(msg.from.id);
+            let user = await this.getUser(msg.from.id);
 
             if (!user) {
                 this.sendError(msg, ERR_NOT_REGISTER);
                 return;
             }
 
-            this.user.useBindToken(user._id, args[1]);
+            user = await this.user.useBindToken(user._id, args[1]);
+
+            this.bot.sendMessage(msg.chat.id, `Bind sucessfull!`);
+            this.getUserInfo(msg);
         } else {
+            if (await this.getUser(msg.from.id)) {
+                 this.sendError(msg, ERR_ALREADY_BOUND);
+                 return;
+            }
+
             const token = this.user.createBindToken({ type: BIND_TYPE, id: msg.from.id });
             this.bot.sendMessage(msg.chat.id, `Bind token: ${token}`);
         }
@@ -124,7 +130,7 @@ export class Telegram {
         } else {
             this.bot.sendMessage(
                 msg.chat.id,
-                `ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map((i: IBindData) => i.type).join(", ")}`
+                `ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`
             );
         }
     }
