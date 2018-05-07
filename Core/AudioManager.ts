@@ -3,6 +3,7 @@ import { Collection, ObjectID } from "mongodb";
 import { cpus } from "os";
 import Queue from "promise-queue";
 import { Core } from "..";
+import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
 
@@ -35,7 +36,7 @@ export class AudioManager {
     }
 
     public async add(sender: ObjectID, source: string, metadata?: IAudioMetadata) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
         const exist = await this.checkExist(source);
         if (exist) return exist;
@@ -64,7 +65,7 @@ export class AudioManager {
     }
 
     public async edit(id: ObjectID, data: IAudioData) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOneAndUpdate({ _id: id }, {
             $set: {
@@ -77,25 +78,25 @@ export class AudioManager {
     }
 
     public async delete(id: ObjectID) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.deleteOne({ _id: id });
     }
 
     public async get(id: ObjectID) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({ _id: id });
     }
 
     public search(metadata?: IAudioMetadata) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.find(metadata);
     }
 
     private async checkExist(source?: string, hash?: string) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({ $or: [{ source }, { hash }] });
     }
