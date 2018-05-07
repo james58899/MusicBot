@@ -1,12 +1,11 @@
 import TelegramBot, { Message, User } from "node-telegram-bot-api";
 import { Core } from "..";
 import { AudioManager, IAudioData } from "../Core/AudioManager";
-import { IBindData, UserManager } from "../Core/UserManager";
+import { ERR_BIND_TOKEN_NOT_FOUND, ERR_USER_EXIST, IBindData, UserManager } from "../Core/UserManager";
 
 const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
 const ERR_NOT_REGISTER = "Please register or bind account!";
-const ERR_ALREADY_BOUND = "This telegram user already bound!";
 
 export class Telegram {
     private audio: AudioManager;
@@ -77,48 +76,41 @@ export class Telegram {
     }
 
     private async createUser(msg: Message) {
-        if (!msg.from) return;
-
-        let user;
-        try {
-            user = await this.user.create(
-                msg.from.username || msg.from.id.toString(),
-                { type: BIND_TYPE, id: msg.from.id }
-            );
-        } catch (error) {
-            this.bot.sendMessage(msg.chat.id, error.message);
-            return;
-        }
-
-        this.bot.sendMessage(msg.chat.id, `ID: ${user._id}\nName: ${user.name}`);
-    }
-
-    private async bind(msg: Message) {
         if (!msg.text || !msg.from) return;
 
         const args = msg.text.split(" ");
 
-        if (args.length > 1) {
-            let user = await this.getUser(msg.from.id);
-
-            if (!user) {
-                this.sendError(msg, ERR_NOT_REGISTER);
-                return;
+        try {
+            if (args.length > 1) {
+                await this.user.createFromToken(args[1], { type: BIND_TYPE, id: msg.from.id });
+            } else {
+                await this.user.create(
+                    msg.from.username || msg.from.id.toString(),
+                    { type: BIND_TYPE, id: msg.from.id }
+                );
             }
-
-            user = await this.user.useBindToken(user._id, args[1]);
-
-            this.bot.sendMessage(msg.chat.id, `Bind sucessfull!`);
-            this.getUserInfo(msg);
-        } else {
-            if (await this.getUser(msg.from.id)) {
-                 this.sendError(msg, ERR_ALREADY_BOUND);
-                 return;
-            }
-
-            const token = this.user.createBindToken({ type: BIND_TYPE, id: msg.from.id });
-            this.bot.sendMessage(msg.chat.id, `Bind token: ${token}`);
+        } catch (error) {
+            this.sendError(msg, error.message);
+            return;
         }
+
+        this.getUserInfo(msg);
+    }
+
+    private async bind(msg: Message) {
+        if (!msg.from) return;
+
+        const user = await this.getUser(msg.from.id);
+
+        if (!user) {
+            this.sendError(msg, ERR_NOT_REGISTER);
+            return;
+        }
+
+        this.bot.sendMessage(
+            msg.chat.id,
+            `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`
+        );
     }
 
     private async getUserInfo(msg: Message) {

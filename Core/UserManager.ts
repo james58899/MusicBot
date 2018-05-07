@@ -19,7 +19,7 @@ export interface IBindData {
 
 export class UserManager {
     private database?: Collection<IUserData>;
-    private bindToken = new Map<string, IBindData>();
+    private bindToken = new Map<string, ObjectID>();
 
     constructor(core: Core) {
         if (core.database.client) {
@@ -43,29 +43,29 @@ export class UserManager {
         return this.bind((await this.database.insertOne({ name })).ops[0]._id, bind);
     }
 
+    public async createFromToken(token: string, bind: IBindData) {
+        const id = this.bindToken.get(token);
+
+        if (!id) throw ERR_BIND_TOKEN_NOT_FOUND;
+        if (await this.get(bind.type, bind.id)) throw ERR_USER_EXIST;
+
+        return this.bind(id, bind);
+    }
+
     public delete(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.deleteOne({ _id: id });
     }
 
-    public createBindToken(bind: IBindData) {
+    public createBindToken(id: ObjectID) {
         const token = randomBytes(20).toString("hex");
-        this.bindToken.set(token, bind);
+        this.bindToken.set(token, id);
 
         // delete token after 1 hour
         setInterval(() => this.bindToken.delete(token), 60 * 60 * 1000);
 
         return token;
-    }
-
-    public useBindToken(id: ObjectID, token: string) {
-        const bind = this.bindToken.get(token);
-        this.bindToken.delete(token);
-
-        if (!bind) throw ERR_BIND_TOKEN_NOT_FOUND;
-
-        return this.bind(id, bind);
     }
 
     private async bind(id: ObjectID, bind: IBindData) {
