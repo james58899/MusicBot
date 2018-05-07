@@ -2,9 +2,9 @@ import { getMediaInfo } from "./Utils/MediaInfo";
 import { Youtube } from "./Utils/URLHandler/Youtube";
 
 export interface IAudioMetadata {
-    title: string;
+    title?: string;
     artist?: string;
-    duration: number;
+    duration?: number;
     size?: number;
 }
 
