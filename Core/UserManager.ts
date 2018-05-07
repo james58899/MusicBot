@@ -43,16 +43,6 @@ export class UserManager {
         return this.bind((await this.database.insertOne({ name })).ops[0]._id, bind);
     }
 
-    public async bind(id: ObjectID, bind: IBindData) {
-        if (!this.database) throw ERR_DB_NOT_INIT;
-
-        return (await this.database.findOneAndUpdate(
-            { _id: id },
-            { $addToSet: { bind } },
-            { returnOriginal: false }
-        )).value;
-    }
-
     public delete(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
@@ -60,7 +50,7 @@ export class UserManager {
     }
 
     public createBindToken(bind: IBindData) {
-        const token = randomBytes(20).toString("ascii");
+        const token = randomBytes(20).toString("hex");
         this.bindToken.set(token, bind);
 
         // delete token after 1 hour
@@ -76,5 +66,15 @@ export class UserManager {
         if (!bind) throw ERR_BIND_TOKEN_NOT_FOUND;
 
         return this.bind(id, bind);
+    }
+
+    private async bind(id: ObjectID, bind: IBindData) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $addToSet: { bind } },
+            { returnOriginal: false }
+        )).value!;
     }
 }
