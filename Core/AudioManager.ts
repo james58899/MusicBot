@@ -20,7 +20,7 @@ export interface IAudioData {
 export class AudioManager {
     public urlParser = new UrlParser();
     private encoder: Encoder;
-    private database?: Collection;
+    private database?: Collection<IAudioData>;
     private metadataQueue = new Queue(cpus().length);
     private encodeQueue = new Queue(cpus().length);
 
@@ -85,18 +85,18 @@ export class AudioManager {
     public async get(id: ObjectID) {
         if (!this.database) throw Error("Database is not initialized");
 
-        return this.database.findOne<IAudioData>({ _id: id });
+        return this.database.findOne({ _id: id });
     }
 
     public search(metadata?: IAudioMetadata) {
         if (!this.database) throw Error("Database is not initialized");
 
-        return this.database.find<IAudioData>(metadata);
+        return this.database.find(metadata);
     }
 
     private async checkExist(source?: string, hash?: string) {
         if (!this.database) throw Error("Database is not initialized");
 
-        return this.database.findOne<IAudioData>({ $or: [{ source }, { hash }] });
+        return this.database.findOne({ $or: [{ source }, { hash }] });
     }
 }

@@ -1,8 +1,7 @@
 import { randomBytes } from "crypto";
 import { Collection, FindAndModifyWriteOpResultObject, ObjectID } from "mongodb";
 import { Core } from "..";
-
-const ERR_DB_NOT_INIT = Error("Database is not initialized");
+import { ERR_DB_NOT_INIT } from "./MongoDB";
 
 export interface IUserData {
     _id: ObjectID;
@@ -16,21 +15,21 @@ export interface IBindData {
 }
 
 export class UserManager {
-    private database?: Collection;
+    private database?: Collection<IUserData>;
     private bindToken = new Map<string, IBindData>();
 
     constructor(core: Core) {
         if (core.database.client) {
             this.database = core.database.client.collection("user");
         } else {
-            core.database.on("connect", database => this.database = database.collection<IUserData>("user"));
+            core.database.on("connect", database => this.database = database.collection("user"));
         }
     }
 
     public get(type: string, id: string | number) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.findOne<IUserData>({ bind: { $elemMatch: { type, id } } });
+        return this.database.findOne({ bind: { $elemMatch: { type, id } } });
     }
 
     public async create(name: string, bind: IBindData) {
@@ -45,10 +44,10 @@ export class UserManager {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         // Check bind exist
-        if (await this.database.findOne<IUserData>({ _id: id, bind: { $elemMatch: bind } })) throw Error("Bind exist");
+        if (await this.database.findOne({bind: { $elemMatch: bind } })) throw Error("Bind exist");
 
         // add bind to account
-        const result: FindAndModifyWriteOpResultObject<IUserData> = await this.database.findOneAndUpdate(
+        const result = await this.database.findOneAndUpdate(
             { _id: id },
             { $push: { bind } },
             { returnOriginal: false }
