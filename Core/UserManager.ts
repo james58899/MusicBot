@@ -3,6 +3,9 @@ import { Collection, FindAndModifyWriteOpResultObject, ObjectID } from "mongodb"
 import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 
+export const ERR_USER_EXIST = Error("User exist");
+export const ERR_BIND_TOKEN_NOT_FOUND = Error("Bind token not found");
+
 export interface IUserData {
     _id: ObjectID;
     name: string;
@@ -35,7 +38,7 @@ export class UserManager {
     public async create(name: string, bind: IBindData) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        if (await this.get(bind.type, bind.id)) throw new Error("User exist");
+        if (await this.get(bind.type, bind.id)) throw ERR_USER_EXIST;
 
         return this.bind((await this.database.insertOne({ name })).ops[0]._id, bind);
     }
@@ -43,19 +46,11 @@ export class UserManager {
     public async bind(id: ObjectID, bind: IBindData) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        // Check bind exist
-        if (await this.database.findOne({bind: { $elemMatch: bind } })) throw Error("Bind exist");
-
-        // add bind to account
-        const result = await this.database.findOneAndUpdate(
+        return (await this.database.findOneAndUpdate(
             { _id: id },
-            { $push: { bind } },
+            { $addToSet: { bind } },
             { returnOriginal: false }
-        );
-
-        if (!result) throw Error("User not found");
-
-        return result.value!!;
+        )).value;
     }
 
     public delete(id: ObjectID) {
@@ -68,6 +63,9 @@ export class UserManager {
         const token = randomBytes(20).toString("ascii");
         this.bindToken.set(token, bind);
 
+        // delete token after 1 hour
+        setInterval(() => this.bindToken.delete(token), 60 * 60 * 1000);
+
         return token;
     }
 
@@ -75,7 +73,7 @@ export class UserManager {
         const bind = this.bindToken.get(token);
         this.bindToken.delete(token);
 
-        if (!bind) throw Error("Token not found!");
+        if (!bind) throw ERR_BIND_TOKEN_NOT_FOUND;
 
         return this.bind(id, bind);
     }
