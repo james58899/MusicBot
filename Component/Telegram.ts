@@ -4,7 +4,8 @@ import { AudioManager, IAudioData } from "../Core/AudioManager";
 import { IBindData, UserManager } from "../Core/UserManager";
 
 const BIND_TYPE = "telegram";
-const ERR_MISSING_TOKEN = "Telegram bot api token not found!";
+const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
+const ERR_CREATE_ACCOUNT_FAIL = Error("Create account failed");
 const ERR_NOT_REGISTER = "Please register or bind account!";
 
 export class Telegram {
@@ -14,7 +15,7 @@ export class Telegram {
     private me!: User;
 
     constructor(core: Core) {
-        if (!core.config.telegram.token) throw Error(ERR_MISSING_TOKEN);
+        if (!core.config.telegram.token) throw ERR_MISSING_TOKEN;
 
         this.user = core.userManager;
         this.audio = core.audioManager;
@@ -89,6 +90,8 @@ export class Telegram {
             return;
         }
 
+        if (!user) throw ERR_CREATE_ACCOUNT_FAIL;
+
         this.bot.sendMessage(msg.chat.id, `ID: ${user._id}\nName: ${user.name}`);
     }
 
@@ -107,7 +110,7 @@ export class Telegram {
 
             this.user.useBindToken(user._id, args[1]);
         } else {
-            const token = this.user.createBindToken({type: BIND_TYPE, id: msg.from.id});
+            const token = this.user.createBindToken({ type: BIND_TYPE, id: msg.from.id });
             this.bot.sendMessage(msg.chat.id, `Bind token: ${token}`);
         }
     }
