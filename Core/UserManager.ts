@@ -2,6 +2,8 @@ import { randomBytes } from "crypto";
 import { Collection, FindAndModifyWriteOpResultObject, ObjectID } from "mongodb";
 import { Core } from "..";
 
+const ERR_DB_NOT_INIT = Error("Database is not initialized");
+
 export interface IUserData {
     _id: ObjectID;
     name: string;
@@ -26,13 +28,13 @@ export class UserManager {
     }
 
     public get(type: string, id: string | number) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.findOne<IUserData>({ bind: {$elemMatch: { type, id } }});
+        return this.database.findOne<IUserData>({ bind: { $elemMatch: { type, id } } });
     }
 
     public async create(name: string, bind: IBindData) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
         if (await this.get(bind.type, bind.id)) throw new Error("User exist");
 
@@ -40,8 +42,12 @@ export class UserManager {
     }
 
     public async bind(id: ObjectID, bind: IBindData) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
+        // Check bind exist
+        if (await this.database.findOne<IUserData>({ _id: id, bind: { $elemMatch: bind } })) throw Error("Bind exist");
+
+        // add bind to account
         const result: FindAndModifyWriteOpResultObject<IUserData> = await this.database.findOneAndUpdate(
             { _id: id },
             { $push: { bind } },
@@ -54,7 +60,7 @@ export class UserManager {
     }
 
     public delete(id: ObjectID) {
-        if (!this.database) throw Error("Database is not initialized");
+        if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.deleteOne({ _id: id });
     }
@@ -68,6 +74,7 @@ export class UserManager {
 
     public useBindToken(id: ObjectID, token: string) {
         const bind = this.bindToken.get(token);
+        this.bindToken.delete(token);
 
         if (!bind) throw Error("Token not found!");
 

@@ -3,6 +3,10 @@ import { Core } from "..";
 import { AudioManager, IAudioData } from "../Core/AudioManager";
 import { IBindData, UserManager } from "../Core/UserManager";
 
+const BIND_TYPE = "telegram";
+const ERR_MISSING_TOKEN = "Telegram bot api token not found!";
+const ERR_NOT_REGISTER = "Please register or bind account!";
+
 export class Telegram {
     private audio: AudioManager;
     private user: UserManager;
@@ -10,7 +14,7 @@ export class Telegram {
     private me!: User;
 
     constructor(core: Core) {
-        if (!core.config.telegram.token) throw Error("Telegram bot api token not found!");
+        if (!core.config.telegram.token) throw Error(ERR_MISSING_TOKEN);
 
         this.user = core.userManager;
         this.audio = core.audioManager;
@@ -34,10 +38,13 @@ export class Telegram {
     private async listener() {
         // Handle command
         this.bot.onText(/^\/(\w+)@?(\w*)/i, async (msg, match) => {
-            if (!match) { return; }
+            if (!match || msg.chat.type !== "private" && match[2] !== this.me.username) return;
             switch (match[1]) {
                 case "register":
                     this.createUser(msg);
+                    break;
+                case "bind":
+                    this.bind(msg);
                     break;
                 case "info":
                     this.getUserInfo(msg);
@@ -73,10 +80,10 @@ export class Telegram {
 
         let user;
         try {
-            user = await this.user.create(msg.from.username || msg.from.id.toString(), {
-                id: msg.from.id,
-                type: "telegram"
-            });
+            user = await this.user.create(
+                msg.from.username || msg.from.id.toString(),
+                { id: msg.from.id, type: BIND_TYPE }
+            );
         } catch (error) {
             this.bot.sendMessage(msg.chat.id, error.message);
             return;
@@ -85,10 +92,30 @@ export class Telegram {
         this.bot.sendMessage(msg.chat.id, `ID: ${user._id}\nName: ${user.name}`);
     }
 
+    private async bind(msg: Message) {
+        if (!msg.text || !msg.from) return;
+
+        const args = msg.text.split(" ");
+
+        if (args.length > 1) {
+            const user = await this.getUser(msg.from.id);
+
+            if (!user) {
+                this.sendError(msg, ERR_NOT_REGISTER);
+                return;
+            }
+
+            this.user.useBindToken(user._id, args[1]);
+        } else {
+            const token = this.user.createBindToken({type: BIND_TYPE, id: msg.from.id});
+            this.bot.sendMessage(msg.chat.id, `Bind token: ${token}`);
+        }
+    }
+
     private async getUserInfo(msg: Message) {
         if (!msg.from) return;
 
-        const user = await this.user.get("telegram", msg.from.id);
+        const user = await this.user.get(BIND_TYPE, msg.from.id);
         if (!user) {
             this.bot.sendMessage(msg.chat.id, "User not found");
         } else {
@@ -104,7 +131,7 @@ export class Telegram {
 
         const sender = await this.getUser(msg.from.id);
         if (!sender) {
-            this.sendError(msg, "Please register or bind account!");
+            this.sendError(msg, ERR_NOT_REGISTER);
             return;
         }
 
@@ -140,12 +167,12 @@ export class Telegram {
     }
 
     private async processFile(msg: Message, title: string) {
-        if (msg.from == null|| !msg.document) return;
+        if (msg.from == null || !msg.document) return;
 
         const sender = await this.getUser(msg.from.id);
 
         if (!sender) {
-            this.sendError(msg, "Please register or bind account!");
+            this.sendError(msg, ERR_NOT_REGISTER);
             return;
         }
 
@@ -177,7 +204,7 @@ export class Telegram {
         const sender = await this.getUser(msg.from.id);
 
         if (!sender) {
-            this.sendError(msg, "Please register or bind account!");
+            this.sendError(msg, ERR_NOT_REGISTER);
             return;
         }
 
@@ -277,7 +304,7 @@ export class Telegram {
     }
 
     private getUser(id: number) {
-        return this.user.get("telegram", id);
+        return this.user.get(BIND_TYPE, id);
     }
 
     private getFile(fileId: string) {
