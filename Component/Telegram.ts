@@ -1,6 +1,7 @@
 import TelegramBot, { Message, User } from "node-telegram-bot-api";
 import { Core } from "..";
-import { AudioManager, IAudioData } from "../Core/AudioManager";
+import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
+import { ListManager } from "../Core/ListManager";
 import { ERR_BIND_TOKEN_NOT_FOUND, ERR_USER_EXIST, IBindData, UserManager } from "../Core/UserManager";
 
 const BIND_TYPE = "telegram";
@@ -10,6 +11,7 @@ const ERR_NOT_REGISTER = "Please register or bind account!";
 export class Telegram {
     private audio: AudioManager;
     private user: UserManager;
+    private list: ListManager;
     private bot: TelegramBot;
     private me!: User;
 
@@ -18,6 +20,7 @@ export class Telegram {
 
         this.user = core.userManager;
         this.audio = core.audioManager;
+        this.list = core.listManager;
 
         // Create bot
         this.bot = new TelegramBot(core.config.telegram.token, {
@@ -184,17 +187,17 @@ export class Telegram {
         if (replyMessage instanceof Error) { throw replyMessage; }
 
         try {
-            const sound = await this.audio.add(sender._id, source);
+            const sound = await this.audio.add(sender._id, source, { title });
 
             if (sound) this.sendDone(replyMessage, sound); else this.sendError(replyMessage, "failed");
-        } catch (e) {
-            if (e.message === "Missing title") {
+        } catch (error) {
+            if (error === ERR_MISSING_TITLE) {
                 const title = await this.retrySendNeedTitle(msg);
                 if (!title) return;
 
                 this.processFile(msg, title);
             } else {
-                this.sendError(replyMessage, "檔案處理失敗：" + e.message);
+                this.sendError(replyMessage, "檔案處理失敗：" + error.message);
             }
         }
     }
