@@ -20,7 +20,7 @@ export class Encoder {
     public async encode(input: string, filename: string): Promise<string> {
         const normalize = await this.getNormalize(input);
 
-        const savePath = path.resolve(this.config.save, filename + ".opus");
+        const savePath = path.resolve(this.config.save, filename + ".ogg");
         return new Promise<string>((resolve, reject) => {
             ffmpeg(input)
                 .withNoVideo()
@@ -35,7 +35,7 @@ export class Encoder {
                 .audioBitrate(this.config.bitrate)
                 .audioCodec("libopus")
                 .duration(this.config.length)
-                .format("opus")
+                .format("ogg")
                 .save(savePath + ".tmp")
                 .on("error", reject)
                 .on("end", () => rename(savePath + ".tmp", savePath).then(() => resolve(savePath)));
