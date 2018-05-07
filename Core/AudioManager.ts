@@ -1,11 +1,16 @@
 import { createHash } from "crypto";
+import { exists } from "fs";
 import { Collection, ObjectID } from "mongodb";
 import { cpus } from "os";
+import { resolve } from "path";
 import Queue from "promise-queue";
+import { promisify } from "util";
 import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
+
+export const ERR_MISSING_TITLE = Error("Missing title");
 
 export interface IAudioData {
     _id?: ObjectID;
@@ -20,12 +25,14 @@ export interface IAudioData {
 
 export class AudioManager {
     public urlParser = new UrlParser();
+    private config: any;
     private encoder: Encoder;
     private database?: Collection<IAudioData>;
     private metadataQueue = new Queue(cpus().length);
     private encodeQueue = new Queue(cpus().length);
 
     constructor(core: Core) {
+        this.config = core.config.audio;
         this.encoder = new Encoder(core.config);
 
         if (core.database.client) {
@@ -48,6 +55,8 @@ export class AudioManager {
         const duration = (metadata && metadata.duration) ? metadata.duration : info.duration;
         const size = (metadata && metadata.size) ? metadata.size : info.size;
 
+        if (!title) throw ERR_MISSING_TITLE;
+
         const hash = createHash("md5").update(title + artist + duration + size).digest("hex");
 
         const data: IAudioData = await this.checkExist(source, hash) || (await this.database.insertOne({
@@ -64,7 +73,7 @@ export class AudioManager {
         return data;
     }
 
-    public async edit(id: ObjectID, data: IAudioData) {
+    public edit(id: ObjectID, data: IAudioData) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOneAndUpdate({ _id: id }, {
@@ -77,13 +86,14 @@ export class AudioManager {
         }, { returnOriginal: false });
     }
 
-    public async delete(id: ObjectID) {
+    public delete(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
+        // TODO delete audio in play list
 
         return this.database.deleteOne({ _id: id });
     }
 
-    public async get(id: ObjectID) {
+    public get(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({ _id: id });
@@ -95,7 +105,12 @@ export class AudioManager {
         return this.database.find(metadata);
     }
 
-    private async checkExist(source?: string, hash?: string) {
+    public async getFile(audio: IAudioData) {
+        const path = resolve(this.config.save, audio.hash + ".ogg");
+        return await promisify(exists)(path) ? path : false;
+    }
+
+    private checkExist(source?: string, hash?: string) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({ $or: [{ source }, { hash }] });
