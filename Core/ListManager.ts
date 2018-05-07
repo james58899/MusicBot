@@ -3,6 +3,7 @@ import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 
 export interface IAudioList {
+    _id: ObjectID;
     name: string;
     owner: ObjectID;
     audio: ObjectID[];
@@ -26,7 +27,7 @@ export class ListManager {
             audio: Array<ObjectID>(),
             name,
             owner,
-        } as IAudioList)).ops[0];
+        } as IAudioList)).ops[0] as IAudioList;
     }
 
     public get(id: ObjectID) {
@@ -46,7 +47,7 @@ export class ListManager {
 
         return (await this.database.findOneAndUpdate(
             { _id: id },
-            { $addToSet: audio },
+            { $addToSet: { audio } },
             { returnOriginal: false }
         )).value;
     }
