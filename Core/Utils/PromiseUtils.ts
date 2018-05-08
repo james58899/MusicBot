@@ -14,3 +14,7 @@ export async function retry<T>(fun: () => Promise<T>, time: number = 5, interval
 
     return run!;
 }
+
+export function sleep(time: number) {
+    return new Promise(resolve => setTimeout(resolve, time));
+}

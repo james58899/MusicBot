@@ -1,6 +1,7 @@
 import { rename } from "fs/promises";
 import path from "path";
 import { getMediaInfo } from "./MediaInfo";
+import { sleep } from "./PromiseUtils";
 
 const ffmpeg = require("fluent-ffmpeg");
 
@@ -41,6 +42,7 @@ export class Encoder {
                 .save(savePath + ".tmp")
                 .on("error", reject)
                 .on("end", async () => {
+                    await sleep(1000);
                     await rename(savePath + ".tmp", savePath);
                     if ((await getMediaInfo(savePath)).duration !== duration) {
                         reject(Error("Duration mismatch"));

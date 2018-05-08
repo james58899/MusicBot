@@ -10,7 +10,7 @@ import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
-import { retry } from "./Utils/Retry";
+import { retry } from "./Utils/PromiseUtils";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
 
