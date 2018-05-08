@@ -6,7 +6,8 @@ import { IAudioList, ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
 
 const ERR_MISSING_TOKEN = Error("Discord token missing");
-const MESSAGE_HI = "Hi! you dose not in voice channel so ";
+const MESSAGE_HI = "Hi!\nYou are not in voice channel, so only can say hi using text.";
+const MESSAGE_LIST_NOT_FOUND = "Play list not found!";
 
 export class Discord {
     private config: any;
@@ -56,7 +57,7 @@ export class Discord {
         if (msg.member.voiceState.channelID) {
             this.bot.joinVoiceChannel(msg.member.voiceState.channelID);
         } else {
-            this.bot.createMessage(msg.channel.id, "Hi!\nYou are not in voice channel, so only can say hi using text.");
+            this.bot.createMessage(msg.channel.id, MESSAGE_HI);
         }
     }
 
@@ -65,7 +66,7 @@ export class Discord {
         const voice = this.bot.voiceConnections.find(conn => conn.id === (msg.channel as TextChannel).guild.id);
 
         if (!list) {
-            this.bot.createMessage(msg.channel.id, "Play list not found!");
+            this.bot.createMessage(msg.channel.id, MESSAGE_LIST_NOT_FOUND);
             return;
         }
 
@@ -85,12 +86,12 @@ export class Discord {
         voice.on("end", async () => {
             index++;
             file = await this.audio.getFile((await this.audio.get(list.audio[index]))!); // TODO null check
-            if (file) voice.play(file, {format: "ogg"});
+            if (file) voice.play(file, { format: "ogg" });
         });
 
         voice.on("disconnect", () => voice.removeAllListeners());
 
-        if (file) voice.play(file, {format: "ogg"});
+        if (file) voice.play(file, { format: "ogg" });
     }
 
     private async procseeFile(msg: Message) {
