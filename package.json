@@ -1,7 +1,7 @@
 {
   "name": "music-bot",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "repository": "https://github.com/james58899/MusicBot.git",
   "author": "james58899 <james59988@gmail.com>",
   "license": "MIT",
@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/bson": "^1.0.8",
     "@types/mongodb": "^3.0.18",
-    "@types/node": "^10.0.4",
+    "@types/node": "^10.0.5",
     "@types/node-telegram-bot-api": "^0.28.3",
     "@types/promise-queue": "^2.2.0",
     "tslint": "^5.10.0",
