@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { exists } from "fs";
+import { unlink } from "fs/promises";
 import { Collection, ObjectID } from "mongodb";
 import { cpus } from "os";
 import { resolve } from "path";
@@ -11,7 +12,6 @@ import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
 import { getMediaInfo } from "./Utils/MediaInfo";
 import { retry } from "./Utils/Retry";
-import { unlink } from "fs/promises";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
 
@@ -96,7 +96,7 @@ export class AudioManager {
         const audio = await this.get(id);
         if (!audio) return;
 
-        unlink(resolve(this.config.save, audio.hash + ".ogg"));
+        unlink(this.getCachePath(audio));
         return this.database.deleteOne({ _id: id });
     }
 
@@ -113,7 +113,7 @@ export class AudioManager {
     }
 
     public async getFile(audio: IAudioData) {
-        const path = resolve(this.config.save, audio.hash + ".ogg");
+        const path = this.getCachePath(audio);
         return await promisify(exists)(path) ? path : false;
     }
 
@@ -124,7 +124,7 @@ export class AudioManager {
             this.search().forEach(async audio => {
                 if (!audio.source) return;
 
-                const file = resolve(this.config.save, audio.hash + ".ogg");
+                const file = this.getCachePath(audio);
 
                 if (!await promisify(exists)(file)) {
                     console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
@@ -149,5 +149,9 @@ export class AudioManager {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({ $or: [{ source }, { hash }] });
+    }
+
+    private getCachePath(audio: IAudioData) {
+        return resolve(this.config.save, audio.hash + ".ogg");
     }
 }
