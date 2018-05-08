@@ -86,7 +86,7 @@ export class Discord {
 
         voice.on("end", async () => {
             index++;
-            if (index > list.audio.length) index = 0;
+            if (index >= list.audio.length) index = 0;
 
             file = await this.audio.getFile((await this.audio.get(list.audio[index]))!); // TODO null check
             if (file) voice.play(file, { format: "ogg" });
