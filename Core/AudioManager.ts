@@ -11,6 +11,7 @@ import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
 import { getMediaInfo } from "./Utils/MediaInfo";
 import { retry } from "./Utils/Retry";
+import { unlink } from "fs/promises";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
 
@@ -89,10 +90,13 @@ export class AudioManager {
         }, { returnOriginal: false });
     }
 
-    public delete(id: ObjectID) {
+    public async delete(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
-        // TODO delete audio in play list
 
+        const audio = await this.get(id);
+        if (!audio) return;
+
+        unlink(resolve(this.config.save, audio.hash + ".ogg"));
         return this.database.deleteOne({ _id: id });
     }
 
