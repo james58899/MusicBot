@@ -1,5 +1,6 @@
 import { rename } from "fs/promises";
 import path from "path";
+import { getMediaInfo } from "./MediaInfo";
 
 const ffmpeg = require("fluent-ffmpeg");
 
@@ -17,7 +18,7 @@ export class Encoder {
         }
     }
 
-    public async encode(input: string, filename: string): Promise<string> {
+    public async encode(input: string, filename: string, duration: number): Promise<string> {
         const normalize = await this.getNormalize(input);
 
         const savePath = path.resolve(this.config.save, filename + ".ogg");
@@ -26,6 +27,7 @@ export class Encoder {
                 .withNoVideo()
                 .audioFilters(
                     "loudnorm=" +
+                    "I=-23:LRA=10:TP=-1:" +
                     `measured_I=${normalize.input_i}:` +
                     `measured_LRA=${normalize.input_lra}:` +
                     `measured_tp=${normalize.input_tp}:` +
@@ -38,7 +40,14 @@ export class Encoder {
                 .format("ogg")
                 .save(savePath + ".tmp")
                 .on("error", reject)
-                .on("end", () => rename(savePath + ".tmp", savePath).then(() => resolve(savePath)));
+                .on("end", async () => {
+                    await rename(savePath + ".tmp", savePath);
+                    if ((await getMediaInfo(savePath)).duration !== duration) {
+                        reject(Error("Duration mismatch"));
+                    } else {
+                        resolve(savePath);
+                    }
+                });
         });
     }
 
@@ -46,7 +55,7 @@ export class Encoder {
         return new Promise<any>((resolve, reject) => {
             ffmpeg(input, { stdoutLines: 14, timeout: 300 })
                 .withNoVideo()
-                .audioFilters("loudnorm=print_format=json")
+                .audioFilters("loudnorm=print_format=json:I=-23:LRA=10:TP=-1")
                 .duration(this.config.length)
                 .format("null")
                 .save("-")

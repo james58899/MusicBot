@@ -10,7 +10,6 @@ import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
-import { getMediaInfo } from "./Utils/MediaInfo";
 import { retry } from "./Utils/Retry";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
@@ -49,7 +48,7 @@ export class AudioManager {
     public async add(sender: ObjectID, source: string, metadata?: IAudioMetadata) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        const exist = await this.checkExist(source);
+        let exist = await this.checkExist(source);
         if (exist) return exist;
 
         const info = await retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
@@ -63,7 +62,10 @@ export class AudioManager {
 
         const hash = createHash("md5").update(title + artist + duration + size).digest("hex");
 
-        const data: IAudioData = await this.checkExist(source, hash) || (await this.database.insertOne({
+        exist = await this.checkExist(hash);
+        if (exist) return exist;
+
+        const audio: IAudioData = (await this.database.insertOne({
             artist,
             duration,
             hash,
@@ -73,8 +75,8 @@ export class AudioManager {
             title,
         })).ops[0];
 
-        await retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), hash)));
-        return data;
+        await retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), audio.hash, audio.duration)));
+        return audio;
     }
 
     public edit(id: ObjectID, data: IAudioData) {
@@ -122,21 +124,37 @@ export class AudioManager {
 
         return new Promise((done, reject) => {
             this.search().forEach(async audio => {
-                if (!audio.source) return;
-
                 const file = this.getCachePath(audio);
 
                 if (!await promisify(exists)(file)) {
+                    if (!audio.source) {
+                        this.delete(audio._id!);
+                        return;
+                    }
+
                     console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
-                    await this.delete(audio._id!);
-                    this.add(audio.sender, audio.source!, audio);
+                    try {
+                        await retry(() => this.encodeQueue.add(() => this.encode(audio.source!, audio.hash, audio.duration)));
+                    } catch {
+                        console.error(`Failed to download ${audio.title}`);
+                        this.delete(audio._id!);
+                    }
                 } else if (deep) {
-                    const metadata = this.metadataQueue.add(() => getMediaInfo(file));
+                    const metadata = this.metadataQueue.add(() => this.urlParser.getMetadata(file));
 
                     if ((await metadata).duration !== audio.duration) {
-                        console.log(`[Audio] File ${file} damaged, redownload...`);
-                        await this.delete(audio._id!);
-                        this.add(audio.sender, audio.source!, audio);
+                        if (!audio.source) {
+                            this.delete(audio._id!);
+                            return;
+                        }
+
+                        console.log(`[Audio] ${audio.title} cache damaged, redownload...`);
+                        try {
+                            await retry(() => this.encodeQueue.add(() => this.encode(audio.source!, audio.hash, audio.duration)));
+                        } catch {
+                            console.error(`Failed to download ${audio.title}`);
+                            this.delete(audio._id!);
+                        }
                     }
                 }
             }, reject);
