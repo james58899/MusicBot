@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { Collection, FindAndModifyWriteOpResultObject, ObjectID } from "mongodb";
+import { Collection, ObjectID } from "mongodb";
 import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 

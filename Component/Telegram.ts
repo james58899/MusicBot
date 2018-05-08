@@ -2,7 +2,7 @@ import TelegramBot, { Message, User } from "node-telegram-bot-api";
 import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
 import { ListManager } from "../Core/ListManager";
-import { ERR_BIND_TOKEN_NOT_FOUND, ERR_USER_EXIST, IBindData, UserManager } from "../Core/UserManager";
+import { UserManager } from "../Core/UserManager";
 
 const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");

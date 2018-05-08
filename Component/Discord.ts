@@ -1,7 +1,7 @@
 import { ObjectID } from "bson";
 import { CommandClient, Message, TextChannel, VoiceConnection } from "eris";
 import { Core } from "..";
-import { AudioManager, IAudioData } from "../Core/AudioManager";
+import { AudioManager } from "../Core/AudioManager";
 import { IAudioList, ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
 
