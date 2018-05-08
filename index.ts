@@ -24,6 +24,12 @@ export class Core {
             new Telegram(this);
             // tslint:disable-next-line:no-unused-expression
             new Discord(this);
+
+            if (process.argv.indexOf("--deep-check") !== -1) {
+                this.audioManager.checkCache(true);
+            } else {
+                this.audioManager.checkCache();
+            }
         });
     }
 

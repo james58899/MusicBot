@@ -9,6 +9,7 @@ import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
+import { getMediaInfo } from "./Utils/MediaInfo";
 import { retry } from "./Utils/Retry";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
@@ -19,7 +20,7 @@ export interface IAudioData {
     artist?: string;
     duration: number;
     sender: ObjectID;
-    source: string;
+    source?: string;
     size: number;
     hash: string;
 }
@@ -110,6 +111,34 @@ export class AudioManager {
     public async getFile(audio: IAudioData) {
         const path = resolve(this.config.save, audio.hash + ".ogg");
         return await promisify(exists)(path) ? path : false;
+    }
+
+    public checkCache(deep: boolean = false) {
+        if (deep) console.log("[Audio] Starting deep cache check...");
+
+        return new Promise((done, reject) => {
+            this.search().forEach(async audio => {
+                if (!audio.source) return;
+
+                const file = resolve(this.config.save, audio.hash + ".ogg");
+
+                if (!await promisify(exists)(file)) {
+                    console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
+                    await this.delete(audio._id!);
+                    this.add(audio.sender, audio.source!, audio);
+                } else if (deep) {
+                    const metadata = this.metadataQueue.add(() => getMediaInfo(file));
+
+                    if ((await metadata).duration !== audio.duration) {
+                        console.log(`[Audio] File ${file} damaged, redownload...`);
+                        await this.delete(audio._id!);
+                        this.add(audio.sender, audio.source!, audio);
+                    }
+                }
+            }, reject);
+
+            done();
+        });
     }
 
     private checkExist(source?: string, hash?: string) {
