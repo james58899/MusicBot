@@ -13,6 +13,8 @@ import { Encoder } from "./Utils/Encoder";
 import { retry } from "./Utils/PromiseUtils";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
+export const ERR_MISSING_DURATION = Error("Missing duration");
+export const ERR_MAX_LENGTH = Error("Audio length exceeds limit");
 
 export interface IAudioData {
     _id?: ObjectID;
@@ -21,7 +23,6 @@ export interface IAudioData {
     duration: number;
     sender: ObjectID;
     source?: string;
-    size: number;
     hash: string;
 }
 
@@ -59,6 +60,9 @@ export class AudioManager {
         const size = (metadata && metadata.size) ? metadata.size : info.size;
 
         if (!title) throw ERR_MISSING_TITLE;
+        if (!duration) throw ERR_MISSING_DURATION;
+
+        if (duration > this.config.length) throw ERR_MAX_LENGTH;
 
         const hash = createHash("md5").update(title + artist + duration + size).digest("hex");
 
@@ -70,10 +74,9 @@ export class AudioManager {
             duration,
             hash,
             sender,
-            size,
             source,
             title,
-        })).ops[0];
+        } as IAudioData)).ops[0];
 
         try {
             await retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), audio.hash, audio.duration)));
@@ -103,7 +106,7 @@ export class AudioManager {
         const audio = await this.get(id);
         if (!audio) return;
 
-        unlink(this.getCachePath(audio));
+        unlink(this.getCachePath(audio)).catch();
         return this.database.deleteOne({ _id: id });
     }
 
