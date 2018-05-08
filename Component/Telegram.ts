@@ -56,10 +56,10 @@ export class Telegram {
         });
 
         // Audio
-        this.bot.on("audio", this.processAudio.bind(this));
+        this.bot.on("audio", msg => this.processAudio(msg));
 
         // File
-        this.bot.on("document", this.processFile.bind(this));
+        this.bot.on("document", msg => this.processFile(msg));
 
         // Link
         this.bot.on("text", async (msg: Message) => {
@@ -170,7 +170,7 @@ export class Telegram {
         }
     }
 
-    private async processFile(msg: Message, title: string) {
+    private async processFile(msg: Message, title?: string) {
         if (msg.from == null || !msg.document) return;
 
         const sender = await this.getUser(msg.from.id);
