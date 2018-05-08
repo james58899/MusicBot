@@ -75,8 +75,13 @@ export class AudioManager {
             title,
         })).ops[0];
 
-        await retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), audio.hash, audio.duration)));
-        return audio;
+        try {
+            await retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), audio.hash, audio.duration)));
+            return audio;
+        } catch (error) {
+            this.delete(audio._id!);
+            throw error;
+        }
     }
 
     public edit(id: ObjectID, data: IAudioData) {
