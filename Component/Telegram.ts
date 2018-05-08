@@ -142,7 +142,7 @@ export class Telegram {
         const file = "tg://" + msg.audio.file_id;
         const replyMessage = await this.sendProcessing(msg);
 
-        if (replyMessage instanceof Error) { throw replyMessage; }
+        if (replyMessage instanceof Error) throw replyMessage;
 
         if (msg.audio && msg.audio.title) {
             try {
@@ -152,7 +152,7 @@ export class Telegram {
                     title: msg.audio.title
                 });
 
-                if (sound) { this.sendDone(replyMessage, sound); }
+                if (sound) this.sendDone(replyMessage, sound);
             } catch (e) {
                 this.sendError(replyMessage, "添加歌曲錯誤：" + e.message);
             }
@@ -184,7 +184,7 @@ export class Telegram {
 
         const replyMessage = await this.sendProcessing(msg);
 
-        if (replyMessage instanceof Error) { throw replyMessage; }
+        if (replyMessage instanceof Error) throw replyMessage;
 
         try {
             const sound = await this.audio.add(sender._id, source, { title });
