@@ -22,7 +22,7 @@ export class Encoder {
 
         const savePath = path.resolve(this.config.save, filename + ".ogg");
         return new Promise<string>((resolve, reject) => {
-            ffmpeg(input)
+            ffmpeg(input, { timeout: 300 })
                 .withNoVideo()
                 .audioFilters(
                     "loudnorm=" +
@@ -44,7 +44,7 @@ export class Encoder {
 
     private async getNormalize(input: string) {
         return new Promise<any>((resolve, reject) => {
-            ffmpeg(input, { stdoutLines: 14 })
+            ffmpeg(input, { stdoutLines: 14, timeout: 300 })
                 .withNoVideo()
                 .audioFilters("loudnorm=print_format=json")
                 .duration(this.config.length)

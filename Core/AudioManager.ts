@@ -9,6 +9,7 @@ import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { IAudioMetadata, UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
+import { retry } from "./Utils/Retry";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
 
@@ -26,14 +27,15 @@ export interface IAudioData {
 export class AudioManager {
     public urlParser = new UrlParser();
     private config: any;
-    private encoder: Encoder;
+    private encode: Encoder["encode"];
     private database?: Collection<IAudioData>;
     private metadataQueue = new Queue(cpus().length);
     private encodeQueue = new Queue(cpus().length);
 
     constructor(core: Core) {
         this.config = core.config.audio;
-        this.encoder = new Encoder(core.config);
+        const encoder = new Encoder(core.config);
+        this.encode = encoder.encode.bind(encoder);
 
         if (core.database.client) {
             this.database = core.database.client.collection("user");
@@ -48,7 +50,7 @@ export class AudioManager {
         const exist = await this.checkExist(source);
         if (exist) return exist;
 
-        const info = await this.metadataQueue.add(() => this.urlParser.getMetadata(source));
+        const info = await retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
 
         const title = (metadata && metadata.title) ? metadata.title : info.title;
         const artist = (metadata && metadata.artist) ? metadata.artist : info.artist;
@@ -69,7 +71,7 @@ export class AudioManager {
             title,
         })).ops[0];
 
-        await this.encodeQueue.add(async () => this.encoder.encode(await this.urlParser.getFile(source), hash));
+        await retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), hash)));
         return data;
     }
 

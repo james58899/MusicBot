@@ -19,15 +19,15 @@ export async function getMediaInfo(file: string) {
     ];
 
     const execOption = {
-        timeout: 10000,
-        windowsHide: true,
+        timeout: 30000,
+        windowsHide: true
     };
 
-    return new Promise<IAudioMetadata>(resolve => {
+    return new Promise<IAudioMetadata>((resolve, reject) => {
         execFile(ffprobe, ffprobeOption, execOption, (err, stdout, stderr) => {
             if (err) {
-                console.log(err);
-                resolve({} as IAudioMetadata);
+                reject(err);
+                return;
             }
 
             // Match output
