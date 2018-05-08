@@ -28,6 +28,11 @@
   },
   "optionalDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.14",
-    "@ffprobe-installer/ffprobe": "^1.0.8"
+    "@ffprobe-installer/ffprobe": "^1.0.8",
+    "bufferutil": "^3.0.5",
+    "erlpack": "discordapp/erlpack",
+    "eventemitter3": "^3.1.0",
+    "sodium-native": "^2.1.6",
+    "uws": "^9.148.0"
   }
 }
