@@ -71,6 +71,7 @@ export class Discord {
         }
 
         if (voice) {
+            voice.removeAllListeners();
             this.playList(voice, list);
         } else {
             if (msg.member && msg.member.voiceState.channelID) {
@@ -85,6 +86,8 @@ export class Discord {
 
         voice.on("end", async () => {
             index++;
+            if (index > list.audio.length) index = 0;
+
             file = await this.audio.getFile((await this.audio.get(list.audio[index]))!); // TODO null check
             if (file) voice.play(file, { format: "ogg" });
         });
