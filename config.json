@@ -12,6 +12,7 @@
         "token": ""
     },
     "discord": {
-        "token": ""
+        "token": "",
+        "owner": "self"
     }
 }

@@ -21,13 +21,11 @@ export class Discord {
 
         if (!this.config.token) throw ERR_MISSING_TOKEN;
 
-        this.bot = new CommandClient(this.config.token, undefined, {
-            defaultCommandOptions: {
-                caseInsensitive: true
-            },
-            owner: "wow" // TODO owner name
-        });
-        this.user = core.userManager;
+        this.bot = new CommandClient(
+            this.config.token,
+            { maxShards: "auto" },
+            { defaultCommandOptions: { caseInsensitive: true }, owner: this.config.owner }
+        );
         this.audio = core.audioManager;
         this.list = core.listManager;
 
