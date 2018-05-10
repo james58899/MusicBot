@@ -22,7 +22,7 @@ export interface IAudioData {
     artist?: string;
     duration: number;
     sender: ObjectID;
-    source?: string;
+    source: string;
     hash: string;
 }
 
@@ -142,7 +142,7 @@ export class AudioManager {
 
                     console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
                     try {
-                        await retry(() => this.encodeQueue.add(() => this.encode(audio.source!, audio.hash, audio.duration)));
+                        await retry(() => this.encodeQueue.add(() => this.encode(audio.source, audio.hash, audio.duration)));
                     } catch {
                         console.error(`Failed to download ${audio.title}`);
                         this.delete(audio._id!);
@@ -158,7 +158,7 @@ export class AudioManager {
 
                         console.log(`[Audio] ${audio.title} cache damaged, redownload...`);
                         try {
-                            await retry(() => this.encodeQueue.add(() => this.encode(audio.source!, audio.hash, audio.duration)));
+                            await retry(() => this.encodeQueue.add(() => this.encode(audio.source, audio.hash, audio.duration)));
                         } catch {
                             console.error(`Failed to download ${audio.title}`);
                             this.delete(audio._id!);
