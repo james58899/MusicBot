@@ -13,6 +13,7 @@ const MESSAGE_HI = "Hi!\nWant some music?";
 const MESSAGE_HI_NOT_IN_VOICE = "Hi!\nYou are not in voice channel, so only can say hi using text.";
 const MESSAGE_LIST_NOT_FOUND = "Play list not found!";
 const MESSAGE_NOT_IN_VOICE = "You should say hi to me first!";
+const MESSAGE_NOTHING_PLAYING = "Nothing playing";
 
 enum PlayMode {
     normal,
@@ -78,6 +79,10 @@ export class Discord {
             description: "Next sound!",
             guildOnly: true,
         });
+        this.bot.registerCommand("stop", this.commandStop.bind(this), {
+            description: "Stop play and leave voice channel",
+            guildOnly: true
+        });
     }
 
     private async commandHi(msg: Message) {
@@ -142,13 +147,23 @@ export class Discord {
         }
     }
 
-    private async commandNext(msg: Message) {
+    private commandNext(msg: Message) {
         const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
 
         if (voice) {
             voice.stopPlaying();
         } else {
-            this.bot.createMessage(msg.channel.id, "Nothing playing");
+            this.bot.createMessage(msg.channel.id, MESSAGE_NOTHING_PLAYING);
+        }
+    }
+
+    private commandStop(msg: Message) {
+        const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
+
+        if (voice) {
+            this.bot.leaveVoiceChannel(voice.channelID);
+        } else {
+            this.bot.createMessage(msg.channel.id, MESSAGE_NOTHING_PLAYING);
         }
     }
 
