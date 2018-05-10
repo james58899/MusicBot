@@ -2,13 +2,16 @@ import { ObjectID } from "bson";
 import { CommandClient, Message, MessageContent, TextChannel, VoiceConnection } from "eris";
 import shuffle from "shuffle-array";
 import { Core } from "..";
-import { AudioManager } from "../Core/AudioManager";
+import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
 import { IAudioList, ListManager } from "../Core/ListManager";
+import { IUserData, UserManager } from "../Core/UserManager";
 
+export const BIND_TYPE = "discord";
 const ERR_MISSING_TOKEN = Error("Discord token missing");
 const ERR_CAN_NOT_GET_LIST = Error("Can not get playlist from database");
 const ERR_CAN_NOT_GET_AUDIO = Error("Can not get audio from database");
 const ERR_MISSING_AUDIO_FILE = Error("Audio missing in cache");
+const ERR_NOT_REGISTER = "Please register or bind account!";
 const MESSAGE_HI = "Hi!\nWant some music?";
 const MESSAGE_HI_NOT_IN_VOICE = "Hi!\nYou are not in voice channel, so only can say hi using text.";
 const MESSAGE_LIST_NOT_FOUND = "Play list not found!";
@@ -32,6 +35,7 @@ export class Discord {
     private bot: CommandClient;
     private audio: AudioManager;
     private list: ListManager;
+    private user: UserManager;
     private playing = new Map<string, IPlayingStatus>();
 
     constructor(core: Core) {
@@ -46,6 +50,7 @@ export class Discord {
         );
         this.audio = core.audioManager;
         this.list = core.listManager;
+        this.user = core.userManager;
 
         this.bot.on("ready", () => {
             console.log("[Discord] Ready!");
@@ -79,9 +84,13 @@ export class Discord {
             description: "Next sound!",
             guildOnly: true,
         });
-        this.bot.registerCommand("stop", this.commandStop.bind(this), {
+        this.bot.registerCommand("bye", this.commandBye.bind(this), {
             description: "Stop play and leave voice channel",
             guildOnly: true
+        });
+        this.bot.registerCommand("register", this.commandRegister.bind(this), {
+            description: "Register or bind account",
+            usage: "[token]"
         });
     }
 
@@ -90,9 +99,9 @@ export class Discord {
 
         if (msg.member.voiceState.channelID) {
             this.bot.joinVoiceChannel(msg.member.voiceState.channelID);
-            this.bot.createMessage(msg.channel.id, MESSAGE_HI);
+            msg.channel.createMessage(MESSAGE_HI);
         } else {
-            this.bot.createMessage(msg.channel.id, MESSAGE_HI_NOT_IN_VOICE);
+            msg.channel.createMessage(MESSAGE_HI_NOT_IN_VOICE);
         }
     }
 
@@ -103,12 +112,12 @@ export class Discord {
         const mode = (args[1]) ? ((args[1].toLocaleLowerCase() === "random") ? PlayMode.random : PlayMode.normal) : PlayMode.normal;
 
         if (!list) {
-            this.bot.createMessage(msg.channel.id, MESSAGE_LIST_NOT_FOUND);
+            msg.channel.createMessage(MESSAGE_LIST_NOT_FOUND);
             return;
         }
 
         if (!voice) {
-            this.bot.createMessage(msg.channel.id, MESSAGE_NOT_IN_VOICE);
+            msg.channel.createMessage(MESSAGE_NOT_IN_VOICE);
             return;
         }
 
@@ -153,18 +162,54 @@ export class Discord {
         if (voice) {
             voice.stopPlaying();
         } else {
-            this.bot.createMessage(msg.channel.id, MESSAGE_NOTHING_PLAYING);
+            msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
         }
     }
 
-    private commandStop(msg: Message) {
+    private commandBye(msg: Message) {
         const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
 
         if (voice) {
             this.bot.leaveVoiceChannel(voice.channelID);
         } else {
-            this.bot.createMessage(msg.channel.id, MESSAGE_NOTHING_PLAYING);
+            msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
         }
+    }
+
+    private async commandRegister(msg: Message, args: string[]) {
+        let user: IUserData;
+        if (args[0]) {
+            try {
+                user = await this.user.createFromToken(args[0], { type: BIND_TYPE, id: msg.author.id });
+            } catch (error) {
+                msg.channel.createMessage(error.message);
+                return;
+            }
+        } else {
+            user = await this.user.create(msg.author.username, { type: BIND_TYPE, id: msg.author.id });
+        }
+
+        msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
+    }
+
+    private async procseeFile(msg: Message) {
+        const user = await this.user.get(BIND_TYPE, msg.author.id);
+
+        if (!user) {
+            msg.channel.createMessage(ERR_NOT_REGISTER);
+            return;
+        }
+
+        msg.attachments.forEach(async file => {
+            let audio: IAudioData;
+            try {
+                audio = await this.audio.add(user._id, file.url);
+            } catch (error) {
+                if (error === ERR_MISSING_TITLE) audio = await this.audio.add(user._id, file.url, { title: file.filename }); else throw error;
+            }
+
+            msg.channel.createMessage(`編號： ${audio._id}\n標題： ${audio.title}`);
+        });
     }
 
     private async play(voice: VoiceConnection, status: IPlayingStatus) {
@@ -207,9 +252,5 @@ export class Discord {
                 title: "Playing",
             }
         } as MessageContent;
-    }
-
-    private async procseeFile(msg: Message) {
-        // TODO
     }
 }
