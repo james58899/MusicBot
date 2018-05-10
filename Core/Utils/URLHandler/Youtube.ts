@@ -1,5 +1,5 @@
 import { getInfo, videoFormat } from "ytdl-core";
-import { UrlParser } from "../../URLParser";
+import { IAudioMetadata, UrlParser } from "../../URLParser";
 
 export class Youtube {
     constructor(parser: UrlParser) {
@@ -32,8 +32,8 @@ export class Youtube {
 
         return {
             artist: info.author.name,
-            duration: info.length_seconds,
+            duration: parseInt(info.length_seconds, 10),
             title: info.title
-        };
+        } as IAudioMetadata;
     }
 }
