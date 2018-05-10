@@ -52,6 +52,9 @@ export class Telegram {
                 case "info":
                     this.getUserInfo(msg);
                     break;
+                case "test":
+                    this.test(msg);
+                    break;
             }
         });
 
@@ -76,6 +79,11 @@ export class Telegram {
                 }
             }
         });
+    }
+
+    private async test(msg: Message) {
+        const list = await this.list.create("test", (await this.getUser(msg.from!.id))!._id);
+        this.audio.search().forEach(audio => this.list.addAudio(list._id, audio._id!), () => {/* empty */ });
     }
 
     private async createUser(msg: Message) {
