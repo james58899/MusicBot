@@ -74,6 +74,10 @@ export class Discord {
             guildOnly: true,
             usage: "<playlist> [random]"
         });
+        this.bot.registerCommand("next", this.commandNext.bind(this), {
+            description: "Next sound!",
+            guildOnly: true,
+        });
     }
 
     private async commandHi(msg: Message) {
@@ -135,6 +139,16 @@ export class Discord {
 
                 this.play(voice, status);
             });
+        }
+    }
+
+    private async commandNext(msg: Message) {
+        const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
+
+        if (voice) {
+            voice.stopPlaying();
+        } else {
+            this.bot.createMessage(msg.channel.id, "Nothing playing");
         }
     }
 
