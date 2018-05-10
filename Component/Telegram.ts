@@ -4,9 +4,9 @@ import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManage
 import { ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
 
-const BIND_TYPE = "telegram";
+export const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
-const ERR_NOT_REGISTER = "Please register or bind account!";
+const ERR_NOT_REGISTER = "Please use /register to register or bind account!";
 
 export class Telegram {
     private audio: AudioManager;
@@ -52,9 +52,6 @@ export class Telegram {
                 case "info":
                     this.getUserInfo(msg);
                     break;
-                case "test":
-                    this.test(msg);
-                    break;
             }
         });
 
@@ -79,11 +76,6 @@ export class Telegram {
                 }
             }
         });
-    }
-
-    private async test(msg: Message) {
-        const list = await this.list.create("test", (await this.getUser(msg.from!.id))!._id);
-        this.audio.search().forEach(audio => this.list.addAudio(list._id, audio._id!), () => {/* empty */ });
     }
 
     private async createUser(msg: Message) {
@@ -129,7 +121,7 @@ export class Telegram {
 
         const user = await this.user.get(BIND_TYPE, msg.from.id);
         if (!user) {
-            this.bot.sendMessage(msg.chat.id, "User not found");
+            this.bot.sendMessage(msg.chat.id, ERR_NOT_REGISTER);
         } else {
             this.bot.sendMessage(
                 msg.chat.id,
