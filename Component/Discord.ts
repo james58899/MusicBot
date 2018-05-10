@@ -1,20 +1,37 @@
 import { ObjectID } from "bson";
-import { CommandClient, Message, TextChannel, VoiceConnection } from "eris";
+import { CommandClient, Message, MessageContent, TextChannel, VoiceConnection } from "eris";
+import shuffle from "shuffle-array";
 import { Core } from "..";
 import { AudioManager } from "../Core/AudioManager";
 import { IAudioList, ListManager } from "../Core/ListManager";
-import { UserManager } from "../Core/UserManager";
 
 const ERR_MISSING_TOKEN = Error("Discord token missing");
-const MESSAGE_HI = "Hi!\nYou are not in voice channel, so only can say hi using text.";
+const ERR_CAN_NOT_GET_LIST = Error("Can not get playlist from database");
+const ERR_CAN_NOT_GET_AUDIO = Error("Can not get audio from database");
+const ERR_MISSING_AUDIO_FILE = Error("Audio missing in cache");
+const MESSAGE_HI = "Hi!\nWant some music?";
+const MESSAGE_HI_NOT_IN_VOICE = "Hi!\nYou are not in voice channel, so only can say hi using text.";
 const MESSAGE_LIST_NOT_FOUND = "Play list not found!";
+const MESSAGE_NOT_IN_VOICE = "You should say hi to me first!";
+
+enum PlayMode {
+    normal,
+    random
+}
+
+interface IPlayingStatus {
+    index: number;
+    list: IAudioList;
+    mode: PlayMode;
+    statusMessage: Message;
+}
 
 export class Discord {
     private config: any;
     private bot: CommandClient;
-    private user: UserManager;
     private audio: AudioManager;
     private list: ListManager;
+    private playing = new Map<string, IPlayingStatus>();
 
     constructor(core: Core) {
         this.config = core.config.discord;
@@ -23,7 +40,7 @@ export class Discord {
 
         this.bot = new CommandClient(
             this.config.token,
-            { maxShards: "auto" },
+            { opusOnly: true },
             { defaultCommandOptions: { caseInsensitive: true }, owner: this.config.owner }
         );
         this.audio = core.audioManager;
@@ -31,6 +48,10 @@ export class Discord {
 
         this.bot.on("ready", () => {
             console.log("[Discord] Ready!");
+            this.bot.editStatus(undefined, {
+                name: "Self",
+                type: 2
+            });
         });
 
         this.bot.on("messageCreate", msg => {
@@ -43,56 +64,120 @@ export class Discord {
     }
 
     private async registerCommand() {
-        this.bot.registerCommand("hi", this.joinVoiceChannel.bind(this), { guildOnly: true });
-        this.bot.registerCommand("play", this.commandPlay.bind(this), { guildOnly: true });
+        this.bot.registerCommand("hi", this.commandHi.bind(this), {
+            description: "Say Hi! make bot join voice channel",
+            guildOnly: true,
+        });
+        this.bot.registerCommand("play", this.commandPlay.bind(this), {
+            argsRequired: true,
+            description: "Start play music playlist",
+            guildOnly: true,
+            usage: "<playlist> [random]"
+        });
     }
 
-    private async joinVoiceChannel(msg: Message) {
+    private async commandHi(msg: Message) {
         if (!msg.member) return;
-
-        if (this.bot.voiceConnections.find(conn => conn.id === (msg.channel as TextChannel).guild.id)) return;
 
         if (msg.member.voiceState.channelID) {
             this.bot.joinVoiceChannel(msg.member.voiceState.channelID);
-        } else {
             this.bot.createMessage(msg.channel.id, MESSAGE_HI);
+        } else {
+            this.bot.createMessage(msg.channel.id, MESSAGE_HI_NOT_IN_VOICE);
         }
     }
 
     private async commandPlay(msg: Message, args: string[]) {
+        const channel = msg.channel as TextChannel;
         const list = await this.list.get(new ObjectID(args[0]));
-        const voice = this.bot.voiceConnections.find(conn => conn.id === (msg.channel as TextChannel).guild.id);
+        const voice = this.bot.voiceConnections.get(channel.guild.id);
+        const mode = (args[1]) ? ((args[1].toLocaleLowerCase() === "random") ? PlayMode.random : PlayMode.normal) : PlayMode.normal;
 
         if (!list) {
             this.bot.createMessage(msg.channel.id, MESSAGE_LIST_NOT_FOUND);
             return;
         }
 
-        if (voice) {
-            voice.removeAllListeners();
-            this.playList(voice, list);
-        } else {
-            if (msg.member && msg.member.voiceState.channelID) {
-                this.playList(await this.bot.joinVoiceChannel(msg.member!.voiceState.channelID!), list);
-            }
+        if (!voice) {
+            this.bot.createMessage(msg.channel.id, MESSAGE_NOT_IN_VOICE);
+            return;
+        }
+
+        // Init playing status
+        if (mode === PlayMode.random) shuffle(list.audio);
+        this.playing.set(voice.id, {
+            index: 0,
+            list,
+            mode,
+            statusMessage: await this.bot.createMessage(msg.channel.id, await this.genPlayingMessage(list, 0))
+        });
+
+        // Start play
+        if (!voice.playing) {
+            this.play(voice, this.playing.get(voice.id)!);
+            voice.on("end", async () => {
+                // check status
+                const status = this.playing.get(voice.id);
+                if (!status) {
+                    this.bot.leaveVoiceChannel(voice.channelID);
+                    return;
+                }
+
+                // next
+                status.index++;
+                if (status.index >= status.list.audio.length) {
+                    // refresh list
+                    const newList = await this.list.get(status.list._id);
+                    if (newList) status.list = newList; else throw ERR_CAN_NOT_GET_LIST;
+                    if (status.mode === PlayMode.random) shuffle(newList.audio);
+                    status.index = 0;
+                }
+
+                this.play(voice, status);
+            });
         }
     }
 
-    private async playList(voice: VoiceConnection, list: IAudioList) { // TODO random play
-        let index = 0;
-        let file = await this.audio.getFile((await this.audio.get(list.audio[index]))!); // TODO null check
+    private async play(voice: VoiceConnection, status: IPlayingStatus) {
+        if (!voice.ready) return;
 
-        voice.on("end", async () => {
-            index++;
-            if (index >= list.audio.length) index = 0;
+        const audio = await this.audio.get(status.list.audio[status.index]);
+        if (!audio) throw ERR_CAN_NOT_GET_AUDIO;
+        const file = await this.audio.getFile(audio!);
+        if (!file) throw ERR_MISSING_AUDIO_FILE;
 
-            file = await this.audio.getFile((await this.audio.get(list.audio[index]))!); // TODO null check
-            if (file) voice.play(file, { format: "ogg" });
-        });
+        voice.play(file, { format: "ogg" });
+        status.statusMessage.edit(await this.genPlayingMessage(status.list, status.index));
+    }
 
-        voice.on("disconnect", () => voice.removeAllListeners());
+    private async genPlayingMessage(list: IAudioList, index: number) {
+        const now = await this.audio.get(list.audio[index]);
+        const previous = await this.audio.get((index === 0) ? list.audio[list.audio.length - 1] : list.audio[index - 1]);
+        const next = await this.audio.get((index === list.audio.length) ? list.audio[0] : list.audio[index + 1]);
 
-        if (file) voice.play(file, { format: "ogg" });
+        return {
+            embed: {
+                color: 4886754,
+                description: list.name,
+                fields: [
+                    {
+                        name: "__Now__",
+                        value: now!.title
+                    },
+                    {
+                        inline: true,
+                        name: "Previous",
+                        value: previous!.title
+                    },
+                    {
+                        inline: true,
+                        name: "Next",
+                        value: next!.title
+                    }
+                ],
+                title: "Playing",
+            }
+        } as MessageContent;
     }
 
     private async procseeFile(msg: Message) {
