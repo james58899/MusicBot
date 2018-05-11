@@ -36,6 +36,18 @@ export class ListManager {
         return this.database.findOne({ _id: id });
     }
 
+    public getAll() {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return this.database.find();
+    }
+
+    public getFromOwner(owner: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return this.database.find({ owner });
+    }
+
     public async delete(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
