@@ -1,5 +1,5 @@
 import { execFileSync } from "child_process";
-import { FfmpegCommand } from "fluent-ffmpeg";
+import FFmpeg from "fluent-ffmpeg";
 import { rename } from "fs/promises";
 import path from "path";
 import { getMediaInfo } from "./MediaInfo";
@@ -25,7 +25,7 @@ export class Encoder {
         const savePath = path.resolve(this.config.save, filename + ".ogg");
 
         return new Promise<string>((resolve, reject) => {
-            const ffmpeg = new FfmpegCommand({ timeout: 300 });
+            const ffmpeg = FFmpeg({ timeout: 300 });
             if (this.ffmpegPath) ffmpeg.setFfmpegPath(this.ffmpegPath);
 
             ffmpeg.input(input)
@@ -59,7 +59,7 @@ export class Encoder {
 
     private async getNormalize(input: string) {
         return new Promise<any>((resolve, reject) => {
-            const ffmpeg = new FfmpegCommand({ stdoutLines: 14, timeout: 300 });
+            const ffmpeg = FFmpeg({ stdoutLines: 14, timeout: 300 });
             if (this.ffmpegPath) ffmpeg.setFfmpegPath(this.ffmpegPath);
 
             ffmpeg.input(input)
