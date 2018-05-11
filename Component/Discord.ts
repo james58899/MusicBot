@@ -2,7 +2,7 @@ import { ObjectID } from "bson";
 import { CommandClient, Message, MessageContent, TextChannel, VoiceConnection } from "eris";
 import shuffle from "shuffle-array";
 import { Core } from "..";
-import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
+import { AudioManager, ERR_MISSING_TITLE, IAudioData, ERR_MISSING_DURATION } from "../Core/AudioManager";
 import { IAudioList, ListManager } from "../Core/ListManager";
 import { IUserData, UserManager } from "../Core/UserManager";
 
@@ -205,6 +205,7 @@ export class Discord {
             try {
                 audio = await this.audio.add(user._id, file.url);
             } catch (error) {
+                if (error === ERR_MISSING_DURATION) return;
                 if (error === ERR_MISSING_TITLE) audio = await this.audio.add(user._id, file.url, { title: file.filename }); else throw error;
             }
 

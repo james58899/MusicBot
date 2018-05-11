@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { exists } from "fs";
+import { exists, existsSync } from "fs";
 import { unlink } from "fs/promises";
 import { Collection, ObjectID } from "mongodb";
 import { cpus } from "os";
@@ -59,8 +59,8 @@ export class AudioManager {
         const duration = (metadata && metadata.duration) ? metadata.duration : info.duration;
         const size = (metadata && metadata.size) ? metadata.size : info.size;
 
-        if (!title) throw ERR_MISSING_TITLE;
         if (!duration) throw ERR_MISSING_DURATION;
+        if (!title) throw ERR_MISSING_TITLE;
 
         if (duration > this.config.length) throw ERR_MAX_LENGTH;
 
@@ -106,7 +106,8 @@ export class AudioManager {
         const audio = await this.get(id);
         if (!audio) return;
 
-        unlink(this.getCachePath(audio)).catch();
+        const file = this.getCachePath(audio);
+        if (existsSync(file)) unlink(file);
         return this.database.deleteOne({ _id: id });
     }
 
