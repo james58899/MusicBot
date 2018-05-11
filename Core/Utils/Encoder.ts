@@ -1,34 +1,38 @@
+import { execFileSync } from "child_process";
+import { FfmpegCommand } from "fluent-ffmpeg";
 import { rename } from "fs/promises";
 import path from "path";
 import { getMediaInfo } from "./MediaInfo";
 import { sleep } from "./PromiseUtils";
 
-const ffmpeg = require("fluent-ffmpeg");
-
 export class Encoder {
     private config: any;
+    private ffmpegPath?: string;
 
     constructor(config: any) {
         this.config = config.audio;
 
         // Test system ffmpeg
         try {
-            require("child_process").spawn("ffmpeg");
+            execFileSync("ffmpeg");
         } catch (err) {
-            ffmpeg.ffmpegPath(require("@ffmpeg-installer/ffmpeg").path);
+            this.ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
         }
     }
 
     public async encode(input: string, filename: string, duration: number): Promise<string> {
         const normalize = await this.getNormalize(input);
-
         const savePath = path.resolve(this.config.save, filename + ".ogg");
+
         return new Promise<string>((resolve, reject) => {
-            ffmpeg(input, { timeout: 300 })
+            const ffmpeg = new FfmpegCommand({ timeout: 300 });
+            if (this.ffmpegPath) ffmpeg.setFfmpegPath(this.ffmpegPath);
+
+            ffmpeg.input(input)
                 .withNoVideo()
                 .audioFilters(
                     "loudnorm=" +
-                    "I=-23:LRA=10:TP=-1:" +
+                    "I=-23:LRA=20:TP=-1:" +
                     `measured_I=${normalize.input_i}:` +
                     `measured_LRA=${normalize.input_lra}:` +
                     `measured_tp=${normalize.input_tp}:` +
@@ -55,9 +59,12 @@ export class Encoder {
 
     private async getNormalize(input: string) {
         return new Promise<any>((resolve, reject) => {
-            ffmpeg(input, { stdoutLines: 14, timeout: 300 })
+            const ffmpeg = new FfmpegCommand({ stdoutLines: 14, timeout: 300 });
+            if (this.ffmpegPath) ffmpeg.setFfmpegPath(this.ffmpegPath);
+
+            ffmpeg.input(input)
                 .withNoVideo()
-                .audioFilters("loudnorm=print_format=json:I=-23:LRA=10:TP=-1")
+                .audioFilters("loudnorm=print_format=json:I=-23:LRA=20:TP=-1")
                 .duration(this.config.length)
                 .format("null")
                 .save("-")

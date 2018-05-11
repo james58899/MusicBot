@@ -1,10 +1,10 @@
-import { execFile } from "child_process";
+import { execFile, execFileSync } from "child_process";
 import { IAudioMetadata } from "../URLParser";
 
 let ffprobe: string;
 // Test system ffprobe
 try {
-    execFile("ffprobe");
+    execFileSync("ffprobe");
     ffprobe = "ffprobe";
 } catch (err) {
     ffprobe = require("@ffprobe-installer/ffprobe").path;
