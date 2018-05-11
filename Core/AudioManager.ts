@@ -143,8 +143,8 @@ export class AudioManager {
 
                     console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
                     try {
-                        const file = await this.urlParser.getFile(audio.source);
-                        await retry(() => this.encodeQueue.add(async () => this.encode(file, audio.hash, audio.duration)));
+                        const source = await this.urlParser.getFile(audio.source);
+                        await retry(() => this.encodeQueue.add(async () => this.encode(source, audio.hash, audio.duration)));
                     } catch {
                         console.error(`Failed to download ${audio.title}`);
                         this.delete(audio._id!);
@@ -160,8 +160,8 @@ export class AudioManager {
 
                         console.log(`[Audio] ${audio.title} cache damaged, redownload...`);
                         try {
-                            const file = await this.urlParser.getFile(audio.source);
-                            await retry(() => this.encodeQueue.add(() => this.encode(file, audio.hash, audio.duration)));
+                            const source = await this.urlParser.getFile(audio.source);
+                            await retry(() => this.encodeQueue.add(() => this.encode(source, audio.hash, audio.duration)));
                         } catch {
                             console.error(`Failed to download ${audio.title}`);
                             this.delete(audio._id!);
