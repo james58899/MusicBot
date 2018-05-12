@@ -46,13 +46,13 @@ export class Telegram {
             if (!match || msg.chat.type !== "private" && match[2] !== this.me.username) return;
             switch (match[1]) {
                 case "register":
-                    this.createUser(msg);
+                    this.commandRegister(msg);
                     break;
                 case "bind":
-                    this.bind(msg);
+                    this.commandBind(msg);
                     break;
                 case "info":
-                    this.getUserInfo(msg);
+                    this.commandInfo(msg);
                     break;
             }
         });
@@ -82,8 +82,8 @@ export class Telegram {
         this.bot.on("error", err => console.error(err));
     }
 
-    private async createUser(msg: Message) {
-        if (!msg.text || !msg.from) return;
+    private async commandRegister(msg: Message) {
+        if (!msg.from || !msg.text) return;
 
         const args = msg.text.split(" ");
 
@@ -101,10 +101,10 @@ export class Telegram {
             return;
         }
 
-        this.getUserInfo(msg);
+        this.commandInfo(msg);
     }
 
-    private async bind(msg: Message) {
+    private async commandBind(msg: Message) {
         if (!msg.from) return;
 
         const user = await this.getUser(msg.from.id);
@@ -120,7 +120,7 @@ export class Telegram {
         );
     }
 
-    private async getUserInfo(msg: Message) {
+    private async commandInfo(msg: Message) {
         if (!msg.from) return;
 
         const user = await this.user.get(BIND_TYPE, msg.from.id);
