@@ -4,6 +4,7 @@ import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
 import { ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
+import { sleep } from "../Core/Utils/PromiseUtils";
 
 export const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
@@ -196,7 +197,7 @@ export class Telegram {
             if (sound) this.sendDone(replyMessage, sound); else this.sendError(replyMessage, "failed");
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
-                const title = await this.retrySendNeedTitle(msg);
+                title = await this.retrySendNeedTitle(msg);
                 if (!title) return;
 
                 this.processFile(msg, title);
@@ -221,7 +222,7 @@ export class Telegram {
             if (sound) this.sendDone(msg, sound);
         } catch (e) {
             if (e.message === "Missing title") {
-                const title = await this.retrySendNeedTitle(msg);
+                title = await this.retrySendNeedTitle(msg);
                 this.processLink(msg, link, title);
             } else {
                 this.sendError(msg, `連結 ${link} 處理失敗：${e.message}`);
@@ -274,7 +275,6 @@ export class Telegram {
                 // Send error if try 5 time
                 if (i === time) {
                     this.sendError(msg, "設定標題錯誤：" + e.message);
-                    throw e;
                 }
             }
         }
