@@ -2,7 +2,7 @@ import { ObjectID } from "bson";
 import { CommandClient, Message, MessageContent, TextChannel, VoiceConnection } from "eris";
 import shuffle from "shuffle-array";
 import { Core } from "..";
-import { AudioManager, ERR_MISSING_TITLE, IAudioData, ERR_MISSING_DURATION } from "../Core/AudioManager";
+import { AudioManager, ERR_MISSING_DURATION, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
 import { IAudioList, ListManager } from "../Core/ListManager";
 import { IUserData, UserManager } from "../Core/UserManager";
 
