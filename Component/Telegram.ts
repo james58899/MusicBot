@@ -1,4 +1,5 @@
 import TelegramBot, { Message, User } from "node-telegram-bot-api";
+import Queue from "promise-queue";
 import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
 import { ListManager } from "../Core/ListManager";
@@ -14,6 +15,7 @@ export class Telegram {
     private list: ListManager;
     private bot: TelegramBot;
     private me!: User;
+    private queue = new Queue(1);
 
     constructor(core: Core) {
         if (!core.config.telegram.token) throw ERR_MISSING_TOKEN;
@@ -76,6 +78,8 @@ export class Telegram {
                 }
             }
         });
+
+        this.bot.on("error", err => console.error(err));
     }
 
     private async createUser(msg: Message) {
@@ -110,7 +114,7 @@ export class Telegram {
             return;
         }
 
-        this.bot.sendMessage(
+        this.queueSendMessage(
             msg.chat.id,
             `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`
         );
@@ -121,9 +125,9 @@ export class Telegram {
 
         const user = await this.user.get(BIND_TYPE, msg.from.id);
         if (!user) {
-            this.bot.sendMessage(msg.chat.id, ERR_NOT_REGISTER);
+            this.queueSendMessage(msg.chat.id, ERR_NOT_REGISTER);
         } else {
-            this.bot.sendMessage(
+            this.queueSendMessage(
                 msg.chat.id,
                 `ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`
             );
@@ -226,7 +230,7 @@ export class Telegram {
     }
 
     private async sendProcessing(msg: Message) {
-        return this.bot.sendMessage(msg.chat.id, "處理中...", {
+        return this.queueSendMessage(msg.chat.id, "處理中...", {
             reply_to_message_id: msg.message_id
         });
     }
@@ -239,7 +243,7 @@ export class Telegram {
                 message_id: msg.message_id
             });
         } else {
-            return this.bot.sendMessage(msg.chat.id, message, {
+            return this.queueSendMessage(msg.chat.id, message, {
                 reply_to_message_id: msg.message_id
             });
         }
@@ -255,7 +259,7 @@ export class Telegram {
                 message_id: msg.message_id
             });
         } else {
-            return this.bot.sendMessage(msg.chat.id, errorMessage, {
+            return this.queueSendMessage(msg.chat.id, errorMessage, {
                 disable_web_page_preview: true,
                 reply_to_message_id: msg.message_id
             });
@@ -279,7 +283,7 @@ export class Telegram {
     }
 
     private async sendNeedTitle(msg: Message): Promise<string> {
-        const needTitle = await this.bot.sendMessage(msg.chat.id, "這個音樂沒有標題\n請幫它添加一個！", {
+        const needTitle = await this.queueSendMessage(msg.chat.id, "這個音樂沒有標題\n請幫它添加一個！", {
             reply_markup: {
                 force_reply: true,
                 selective: true,
@@ -295,7 +299,7 @@ export class Telegram {
                 if (title.text) {
                     resolve(title.text);
                 } else {
-                    this.bot.sendMessage(msg.chat.id, "這看起來不像是標題", {
+                    this.queueSendMessage(msg.chat.id, "這看起來不像是標題", {
                         reply_to_message_id: title.message_id,
                     }).then(() => {
                         reject(new Error("Wrong title"));
@@ -321,5 +325,13 @@ export class Telegram {
         if (file instanceof Error) throw file;
 
         return this.audio.urlParser.getMetadata(file);
+    }
+
+    private queueSendMessage(chatId: number | string, text: string, options?: TelegramBot.SendMessageOptions) {
+        return this.queue.add(async () => {
+            const callback = this.bot.sendMessage(chatId, text, options);
+            await sleep(1000);
+            return callback;
+        });
     }
 }
