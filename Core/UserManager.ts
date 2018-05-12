@@ -24,8 +24,12 @@ export class UserManager {
     constructor(core: Core) {
         if (core.database.client) {
             this.database = core.database.client.collection("user");
+            this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
         } else {
-            core.database.on("connect", database => this.database = database.collection("user"));
+            core.database.on("connect", database => {
+                this.database = database.collection("user");
+                this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
+            });
         }
     }
 

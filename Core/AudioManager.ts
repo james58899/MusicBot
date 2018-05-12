@@ -41,8 +41,12 @@ export class AudioManager {
 
         if (core.database.client) {
             this.database = core.database.client.collection("user");
+            this.database.createIndex({ hash: 1 }, { unique: true });
         } else {
-            core.database.on("connect", database => this.database = database.collection("sound"));
+            core.database.on("connect", database => {
+                this.database = database.collection("sound");
+                this.database.createIndex({ hash: 1 }, { unique: true });
+            });
         }
     }
 

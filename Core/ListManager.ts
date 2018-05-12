@@ -15,8 +15,12 @@ export class ListManager {
     constructor(core: Core) {
         if (core.database.client) {
             this.database = core.database.client.collection("list");
+            this.database.createIndex({ owner: 1 });
         } else {
-            core.database.on("connect", client => this.database = client.collection("list"));
+            core.database.on("connect", client => {
+                this.database = client.collection("list");
+                this.database.createIndex({ owner: 1 });
+            });
         }
     }
 
