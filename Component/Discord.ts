@@ -11,7 +11,6 @@ const ERR_MISSING_TOKEN = Error("Discord token missing");
 const ERR_CAN_NOT_GET_LIST = Error("Can not get playlist from database");
 const ERR_CAN_NOT_GET_AUDIO = Error("Can not get audio from database");
 const ERR_MISSING_AUDIO_FILE = Error("Audio missing in cache");
-const ERR_NOT_REGISTER = "Please register or bind account!";
 const MESSAGE_HI = "Hi!\nWant some music?";
 const MESSAGE_HI_NOT_IN_VOICE = "Hi!\nYou are not in voice channel, so only can say hi using text.";
 const MESSAGE_LIST_NOT_FOUND = "Play list not found!";
@@ -195,10 +194,7 @@ export class Discord {
     private async procseeFile(msg: Message) {
         const user = await this.user.get(BIND_TYPE, msg.author.id);
 
-        if (!user) {
-            msg.channel.createMessage(ERR_NOT_REGISTER);
-            return;
-        }
+        if (!user) return;
 
         msg.attachments.forEach(async file => {
             let audio: IAudioData;
@@ -231,9 +227,9 @@ export class Discord {
         const next = (index < list.audio.length) ? await this.audio.get(list.audio[index + 1]) : null;
         const fields = [];
 
-        if (now) fields.push({name: "__Now__", value: now.title});
-        if (previous) fields.push({name: "Previous", value: previous.title, inline: true});
-        if (next) fields.push({name: "Next", value: next.title, inline: true});
+        if (now) fields.push({ name: "__Now__", value: now.title });
+        if (previous) fields.push({ name: "Previous", value: previous.title, inline: true });
+        if (next) fields.push({ name: "Next", value: next.title, inline: true });
 
         return {
             embed: {
