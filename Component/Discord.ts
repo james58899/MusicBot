@@ -227,30 +227,20 @@ export class Discord {
 
     private async genPlayingMessage(list: IAudioList, index: number) {
         const now = await this.audio.get(list.audio[index]);
-        const previous = await this.audio.get((index === 0) ? list.audio[list.audio.length - 1] : list.audio[index - 1]);
-        const next = await this.audio.get((index === list.audio.length) ? list.audio[0] : list.audio[index + 1]);
+        const previous = (index > 0) ? await this.audio.get(list.audio[index - 1]) : null;
+        const next = (index < list.audio.length) ? await this.audio.get(list.audio[index + 1]) : null;
+        const fields = [];
+
+        if (now) fields.push({name: "__Now__", value: now.title});
+        if (previous) fields.push({name: "Previous", value: previous.title, inline: true});
+        if (next) fields.push({name: "Next", value: next.title, inline: true});
 
         return {
             embed: {
                 color: 4886754,
                 description: list.name,
-                fields: [
-                    {
-                        name: "__Now__",
-                        value: now!.title
-                    },
-                    {
-                        inline: true,
-                        name: "Previous",
-                        value: previous!.title
-                    },
-                    {
-                        inline: true,
-                        name: "Next",
-                        value: next!.title
-                    }
-                ],
-                title: "Playing",
+                fields,
+                title: "Playing"
             }
         } as MessageContent;
     }
