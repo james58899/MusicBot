@@ -205,7 +205,7 @@ export class Discord {
                 if (error === ERR_MISSING_TITLE) audio = await this.audio.add(user._id, file.url, { title: file.filename }); else throw error;
             }
 
-            msg.channel.createMessage(`編號： ${audio._id}\n標題： ${audio.title}`);
+            msg.channel.createMessage(`ID: ${audio._id}\nTitle: ${audio.title}`);
         });
     }
 

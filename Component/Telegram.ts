@@ -159,7 +159,7 @@ export class Telegram {
 
                 if (sound) this.sendDone(replyMessage, sound);
             } catch (e) {
-                this.sendError(replyMessage, "添加歌曲錯誤：" + e.message);
+                this.sendError(replyMessage, "An error occured when adding song：" + e.message);
             }
         } else {
             const title = await retry(() => this.sendNeedTitle(msg), 3);
@@ -202,7 +202,7 @@ export class Telegram {
 
                 this.processFile(msg, title);
             } else {
-                this.sendError(replyMessage, "檔案處理失敗：" + error.message);
+                this.sendError(replyMessage, "Failed to process the file:" + error.message);
             }
         }
     }
@@ -225,19 +225,19 @@ export class Telegram {
                 title = await retry(() => this.sendNeedTitle(msg), 3);
                 this.processLink(msg, link, title);
             } else {
-                this.sendError(msg, `連結 ${link} 處理失敗：${e.message}`);
+                this.sendError(msg, `Failed to process the link ${link}: ${e.message}`);
             }
         }
     }
 
     private async sendProcessing(msg: Message) {
-        return this.queueSendMessage(msg.chat.id, "處理中...", {
+        return this.queueSendMessage(msg.chat.id, "Processing...", {
             reply_to_message_id: msg.message_id
         });
     }
 
     private async sendDone(msg: Message, sound: IAudioData) {
-        const message = `編號： ${sound._id}\n標題： ${sound.title}`;
+        const message = `ID: ${sound._id}\nTitle: ${sound.title}`;
         if (msg.from && msg.from.id === this.me.id) {
             return this.bot.editMessageText(message, {
                 chat_id: msg.chat.id,
@@ -268,7 +268,7 @@ export class Telegram {
     }
 
     private async sendNeedTitle(msg: Message): Promise<string> {
-        const needTitle = await this.queueSendMessage(msg.chat.id, "這個音樂沒有標題\n請幫它添加一個！", {
+        const needTitle = await this.queueSendMessage(msg.chat.id, "The music doesn't have a title.\nPlease add one for it!", {
             reply_markup: {
                 force_reply: true,
                 selective: true,
@@ -284,7 +284,7 @@ export class Telegram {
                 if (title.text) {
                     resolve(title.text);
                 } else {
-                    this.queueSendMessage(msg.chat.id, "這看起來不像是標題", {
+                    this.queueSendMessage(msg.chat.id, "It doesn't look like a title.", {
                         reply_to_message_id: title.message_id,
                     }).then(() => {
                         reject(new Error("Wrong title"));
