@@ -1,4 +1,5 @@
-import TelegramBot, { Message, User } from "node-telegram-bot-api";
+import { ObjectID } from "mongodb";
+import TelegramBot, { CallbackQuery, EditMessageTextOptions, InlineKeyboardButton, Message, User } from "node-telegram-bot-api";
 import Queue from "promise-queue";
 import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
@@ -8,6 +9,8 @@ import { retry, sleep } from "../Core/Utils/PromiseUtils";
 
 export const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
+const ERR_NOT_VALID_TITLE = Error("Not valid title");
+const ERR_LIST_NOT_FOUND = Error("Playlist not found");
 const ERR_NOT_REGISTER = "Please use /register to register or bind account!";
 
 export class Telegram {
@@ -55,6 +58,9 @@ export class Telegram {
                 case "info":
                     this.commandInfo(msg);
                     break;
+                case "list":
+                    this.commandShowList(msg);
+                    break;
             }
         });
 
@@ -77,6 +83,21 @@ export class Telegram {
                         this.processLink(msg, entity.url);
                     }
                 }
+            }
+        });
+
+        // Inline button
+        this.bot.on("callback_query", (query: CallbackQuery) => {
+            if (!query.data) return;
+            const data = query.data.split(" ");
+
+            switch (data[0]) {
+                case "list":
+                    this.playlistCallback(query, data);
+                    break;
+                case "list_info":
+                    this.listInfoCallback(query, data);
+                    break;
             }
         });
 
@@ -105,6 +126,7 @@ export class Telegram {
         this.commandInfo(msg);
     }
 
+    // Commands
     private async commandBind(msg: Message) {
         if (!msg.from) return;
 
@@ -135,6 +157,113 @@ export class Telegram {
         }
     }
 
+    private async commandShowList(msg: Message) {
+        if (!msg.from || !msg.text) return;
+
+        const args = msg.text.split(" ");
+        const user = await this.getUser(msg.from.id);
+
+        if (!user) {
+            this.sendError(msg, ERR_NOT_REGISTER);
+            return;
+        }
+
+        let view;
+
+        if (args[1] && args[1].toLocaleLowerCase() === "all") {
+            view = await this.genPlaylistView();
+        } else {
+            view = await this.genPlaylistView(0, user._id);
+        }
+
+        this.queueSendMessage(msg.chat.id, view.text, { reply_markup: { inline_keyboard: view.button } });
+    }
+
+    // Callbacks
+    private async playlistCallback(msg: CallbackQuery, data: string[]) {
+        if (!msg.message) return;
+
+        const start = parseInt(data[2], 10);
+        const view = await ((data[1]) ? this.genPlaylistView(start, new ObjectID(data[1])) : this.genPlaylistView(start));
+        const options: EditMessageTextOptions = {
+            chat_id: msg.message.chat.id,
+            message_id: msg.message.message_id,
+            reply_markup: { inline_keyboard: view.button }
+        };
+
+        this.bot.editMessageText(view.text, options);
+        this.bot.answerCallbackQuery({callback_query_id: msg.id});
+    }
+
+    private async listInfoCallback(msg: CallbackQuery, data: string[]) {
+        if (!msg.message) return;
+
+        const view = await this.genListInfoView(new ObjectID(data[1]));
+        const options: EditMessageTextOptions = {
+            chat_id: msg.message.chat.id,
+            message_id: msg.message.message_id,
+            reply_markup: { inline_keyboard: view.button }
+        };
+
+        this.bot.editMessageText(view.text, options);
+        this.bot.answerCallbackQuery({callback_query_id: msg.id});
+    }
+
+    // View generators
+    private async genPlaylistView(start = 0, user?: ObjectID) {
+        if (start < 0) start = 0;
+
+        const array = await ((user) ? this.list.getFromOwner(user) : this.list.getAll()).skip(start).limit(10).toArray();
+        const button: InlineKeyboardButton[][] = new Array();
+
+        array.map((item, index) => {
+            if (index < array.length / 2) {
+                if (!button[0]) button[0] = new Array();
+                button[0].push({
+                    callback_data: `list_info ${item._id.toHexString()}`,
+                    text: start + index + "1"
+                });
+            } else {
+                if (!button[1]) button[1] = new Array();
+                button[1].push({
+                    callback_data: `list_info ${item._id.toHexString()}`,
+                    text: start + index + "1"
+                });
+            }
+        });
+
+        button.push(new Array());
+        button[button.length - 1].push(
+            {
+                callback_data: `list ${(user) ? user.toHexString() : undefined} ${start - 10}`,
+                text: "<"
+            },
+            {
+                callback_data: `list ${(user) ? user.toHexString() : undefined} ${start + 10}`,
+                text: ">"
+            }
+        );
+
+        return {
+            button,
+            text: "Playlist:\n" + array.map((item, index) => `${start + index + 1} ${item.name} (${item.audio.length} sounds)`).join("\n")
+        };
+    }
+
+    private async genListInfoView(id: ObjectID) {
+        const list = await this.list.get(id);
+        const button = new Array(new Array<InlineKeyboardButton>());
+
+        if (!list) throw ERR_LIST_NOT_FOUND;
+        button[0].push({ text: "TOOOOOOOODOOOOO", callback_data: "TODO" });
+
+        return {
+            button,
+            text: `ID: ${list._id.toHexString()}\nName: ${list.name}\nOwner: ${list.owner}\nSounds: ${list.audio.length}`
+        };
+    }
+
+    // Audio process
     private async processAudio(msg: Message) {
         if (!msg.from || !msg.audio) return;
 
@@ -162,8 +291,12 @@ export class Telegram {
                 this.sendError(replyMessage, "添加歌曲錯誤：" + e.message);
             }
         } else {
-            const title = await retry(() => this.sendNeedTitle(msg), 3);
-            if (!title) return;
+            let title;
+            try {
+                title = await retry(() => this.sendNeedTitle(msg), 3);
+            } catch (error) {
+                return;
+            }
 
             const sound = await this.audio.add(sender._id, file, {
                 artist: msg.audio.performer,
@@ -197,8 +330,11 @@ export class Telegram {
             if (sound) this.sendDone(replyMessage, sound); else this.sendError(replyMessage, "failed");
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
-                title = await retry(() => this.sendNeedTitle(msg), 3);
-                if (!title) return;
+                try {
+                    title = await retry(() => this.sendNeedTitle(msg), 3);
+                } catch (error) {
+                    return;
+                }
 
                 this.processFile(msg, title);
             } else {
@@ -220,12 +356,17 @@ export class Telegram {
         try {
             const sound = await this.audio.add(sender._id, link);
             if (sound) this.sendDone(msg, sound);
-        } catch (e) {
-            if (e.message === "Missing title") {
-                title = await retry(() => this.sendNeedTitle(msg), 3);
+        } catch (error) {
+            if (error === ERR_MISSING_TITLE) {
+                try {
+                    title = await retry(() => this.sendNeedTitle(msg), 3);
+                } catch (error) {
+                    return;
+                }
+
                 this.processLink(msg, link, title);
             } else {
-                this.sendError(msg, `連結 ${link} 處理失敗：${e.message}`);
+                this.sendError(msg, `連結 ${link} 處理失敗：${error.message}`);
             }
         }
     }
@@ -287,7 +428,7 @@ export class Telegram {
                     this.queueSendMessage(msg.chat.id, "這看起來不像是標題", {
                         reply_to_message_id: title.message_id,
                     }).then(() => {
-                        reject(new Error("Wrong title"));
+                        reject(ERR_NOT_VALID_TITLE);
                     });
                 }
 
@@ -296,6 +437,7 @@ export class Telegram {
         });
     }
 
+    // Misc
     private getUser(id: number) {
         return this.user.get(BIND_TYPE, id);
     }
