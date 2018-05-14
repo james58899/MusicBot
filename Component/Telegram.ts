@@ -4,7 +4,7 @@ import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
 import { ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
-import { sleep } from "../Core/Utils/PromiseUtils";
+import { retry, sleep } from "../Core/Utils/PromiseUtils";
 
 export const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
@@ -162,7 +162,7 @@ export class Telegram {
                 this.sendError(replyMessage, "添加歌曲錯誤：" + e.message);
             }
         } else {
-            const title = await this.retrySendNeedTitle(msg);
+            const title = await retry(() => this.sendNeedTitle(msg), 3);
             if (!title) return;
 
             const sound = await this.audio.add(sender._id, file, {
@@ -197,7 +197,7 @@ export class Telegram {
             if (sound) this.sendDone(replyMessage, sound); else this.sendError(replyMessage, "failed");
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
-                title = await this.retrySendNeedTitle(msg);
+                title = await retry(() => this.sendNeedTitle(msg), 3);
                 if (!title) return;
 
                 this.processFile(msg, title);
@@ -222,7 +222,7 @@ export class Telegram {
             if (sound) this.sendDone(msg, sound);
         } catch (e) {
             if (e.message === "Missing title") {
-                title = await this.retrySendNeedTitle(msg);
+                title = await retry(() => this.sendNeedTitle(msg), 3);
                 this.processLink(msg, link, title);
             } else {
                 this.sendError(msg, `連結 ${link} 處理失敗：${e.message}`);
@@ -265,21 +265,6 @@ export class Telegram {
                 reply_to_message_id: msg.message_id
             });
         }
-    }
-
-    private async retrySendNeedTitle(msg: Message, time: number = 5) {
-        for (let i = 1; i <= time; i++) {
-            try {
-                return await this.sendNeedTitle(msg);
-            } catch (e) {
-                // Send error if try 5 time
-                if (i === time) {
-                    this.sendError(msg, "設定標題錯誤：" + e.message);
-                }
-            }
-        }
-
-        return undefined;
     }
 
     private async sendNeedTitle(msg: Message): Promise<string> {

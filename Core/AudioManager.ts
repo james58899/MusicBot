@@ -13,7 +13,7 @@ import { Encoder } from "./Utils/Encoder";
 import { retry } from "./Utils/PromiseUtils";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
-export const ERR_MISSING_DURATION = Error("Missing duration");
+export const ERR_NOT_AUDIO = Error("This doesn't look like audio");
 export const ERR_MAX_LENGTH = Error("Audio length exceeds limit");
 
 export interface IAudioData {
@@ -50,7 +50,7 @@ export class AudioManager {
         }
     }
 
-    public async add(sender: ObjectID, source: string, metadata?: IAudioMetadata) {
+    public async add(sender: ObjectID, source: string, metadata: { title?: string, artist?: string, duration?: number, size?: number } = {}) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         let exist = await this.checkExist(source);
@@ -58,12 +58,12 @@ export class AudioManager {
 
         const info = await retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
 
-        const title = (metadata && metadata.title) ? metadata.title : info.title;
-        const artist = (metadata && metadata.artist) ? metadata.artist : info.artist;
-        const duration = (metadata && metadata.duration) ? metadata.duration : info.duration;
-        const size = (metadata && metadata.size) ? metadata.size : info.size;
+        const title = metadata.title || info.title;
+        const artist = metadata.artist || info.artist;
+        const duration = metadata.duration || info.duration;
+        const size = metadata.size || info.size;
 
-        if (!duration) throw ERR_MISSING_DURATION;
+        if (!duration) throw ERR_NOT_AUDIO;
         if (!title) throw ERR_MISSING_TITLE;
 
         if (duration > this.config.length) throw ERR_MAX_LENGTH;

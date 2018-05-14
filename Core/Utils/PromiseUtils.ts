@@ -9,7 +9,7 @@ export async function retry<T>(fun: () => Promise<T>, time: number = 5, interval
         } catch (error) {
             tryTime++;
         }
-        await new Promise(resolve => setTimeout(resolve, interval));
+        await sleep(interval);
     } while (tryTime < time);
 
     return run!;
