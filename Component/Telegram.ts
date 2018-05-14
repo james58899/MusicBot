@@ -16,7 +16,7 @@ export class Telegram {
     private list: ListManager;
     private bot: TelegramBot;
     private me!: User;
-    private queue = new Queue(1);
+    private messageQueue = new Queue(1);
 
     constructor(core: Core) {
         if (!core.config.telegram.token) throw ERR_MISSING_TOKEN;
@@ -313,7 +313,7 @@ export class Telegram {
     }
 
     private queueSendMessage(chatId: number | string, text: string, options?: TelegramBot.SendMessageOptions) {
-        return this.queue.add(async () => {
+        return this.messageQueue.add(async () => {
             const callback = this.bot.sendMessage(chatId, text, options);
             await sleep(1000);
             return callback;
