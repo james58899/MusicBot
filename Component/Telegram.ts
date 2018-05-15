@@ -176,7 +176,11 @@ export class Telegram {
             view = await this.genPlaylistView(0, user._id);
         }
 
-        this.queueSendMessage(msg.chat.id, view.text, { reply_markup: { inline_keyboard: view.button } });
+        if (view.button) {
+            this.queueSendMessage(msg.chat.id, view.text, { reply_markup: { inline_keyboard: view.button } });
+        } else {
+            this.queueSendMessage(msg.chat.id, view.text);
+        }
     }
 
     // Callbacks
@@ -185,14 +189,15 @@ export class Telegram {
 
         const start = parseInt(data[2], 10);
         const view = await ((data[1]) ? this.genPlaylistView(start, new ObjectID(data[1])) : this.genPlaylistView(start));
-        const options: EditMessageTextOptions = {
-            chat_id: msg.message.chat.id,
-            message_id: msg.message.message_id,
-            reply_markup: { inline_keyboard: view.button }
-        };
 
-        this.bot.editMessageText(view.text, options);
-        this.bot.answerCallbackQuery({callback_query_id: msg.id});
+        if (view.button) {
+            this.bot.editMessageText(view.text, {
+                chat_id: msg.message.chat.id,
+                message_id: msg.message.message_id,
+                reply_markup: { inline_keyboard: view.button }
+            });
+        }
+        this.bot.answerCallbackQuery({ callback_query_id: msg.id });
     }
 
     private async listInfoCallback(msg: CallbackQuery, data: string[]) {
@@ -206,14 +211,13 @@ export class Telegram {
         };
 
         this.bot.editMessageText(view.text, options);
-        this.bot.answerCallbackQuery({callback_query_id: msg.id});
+        this.bot.answerCallbackQuery({ callback_query_id: msg.id });
     }
 
     // View generators
     private async genPlaylistView(start = 0, user?: ObjectID) {
-        if (start < 0) start = 0;
-
-        const array = await ((user) ? this.list.getFromOwner(user) : this.list.getAll()).skip(start).limit(10).toArray();
+        const list = (user) ? this.list.getFromOwner(user) : this.list.getAll();
+        const array = await list.skip(start).limit(10).toArray();
         const button: InlineKeyboardButton[][] = new Array();
 
         array.map((item, index) => {
@@ -232,20 +236,25 @@ export class Telegram {
             }
         });
 
-        button.push(new Array());
-        button[button.length - 1].push(
-            {
-                callback_data: `list ${(user) ? user.toHexString() : undefined} ${start - 10}`,
-                text: "<"
-            },
-            {
-                callback_data: `list ${(user) ? user.toHexString() : undefined} ${start + 10}`,
-                text: ">"
+        if (0 < await list.count()) {
+            button.push(new Array());
+
+            if (start - 10 >= 0) {
+                button[button.length - 1].push({
+                    callback_data: `list ${(user) ? user.toHexString() : undefined} ${start - 10}`,
+                    text: "<"
+                });
             }
-        );
+            if (start + 10 < await list.count()) {
+                button[button.length - 1].push({
+                    callback_data: `list ${(user) ? user.toHexString() : undefined} ${start + 10}`,
+                    text: ">"
+                });
+            }
+        }
 
         return {
-            button,
+            button: (button.length > 0) ? button : null,
             text: "Playlist:\n" + array.map((item, index) => `${start + index + 1} ${item.name} (${item.audio.length} sounds)`).join("\n")
         };
     }
