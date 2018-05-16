@@ -52,6 +52,16 @@ export class ListManager {
         return this.database.find({ owner });
     }
 
+    public async rename(id: ObjectID, name: string) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $set: { name } },
+            { returnOriginal: false }
+        )).value;
+    }
+
     public async delete(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 

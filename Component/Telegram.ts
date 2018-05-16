@@ -1,4 +1,4 @@
-import { ObjectID } from "mongodb";
+import { ObjectID } from "bson";
 import TelegramBot, { CallbackQuery, EditMessageTextOptions, InlineKeyboardButton, Message, User } from "node-telegram-bot-api";
 import Queue from "promise-queue";
 import { Core } from "..";
@@ -20,6 +20,7 @@ export class Telegram {
     private bot: TelegramBot;
     private me!: User;
     private messageQueue = new Queue(1);
+    // private audioAddSession = new Array<ObjectID>();
 
     constructor(core: Core) {
         if (!core.config.telegram.token) throw ERR_MISSING_TOKEN;
@@ -92,11 +93,20 @@ export class Telegram {
             const data = query.data.split(" ");
 
             switch (data[0]) {
+                case "dummy":
+                    this.dummyCallback(query);
+                    break;
                 case "list":
                     this.playlistCallback(query, data);
                     break;
                 case "list_info":
                     this.listInfoCallback(query, data);
+                    break;
+                case "list_rename":
+                    this.listRenameCallback(query, data);
+                    break;
+                case "list_delete":
+                    this.listDeleteCallback(query, data);
                     break;
             }
         });
@@ -184,6 +194,10 @@ export class Telegram {
     }
 
     // Callbacks
+    private async dummyCallback(msg: CallbackQuery) {
+        this.bot.answerCallbackQuery({callback_query_id: msg.id});
+    }
+
     private async playlistCallback(msg: CallbackQuery, data: string[]) {
         if (!msg.message) return;
 
@@ -212,6 +226,48 @@ export class Telegram {
 
         this.bot.editMessageText(view.text, options);
         this.bot.answerCallbackQuery({ callback_query_id: msg.id });
+    }
+
+    private async listRenameCallback(msg: CallbackQuery, data: string[]) {
+        if (!msg.message || !data[1]) return;
+
+        const message = await this.queueSendMessage(msg.message.chat.id, "What new name you want?", {
+            reply_markup: {
+                force_reply: true,
+                selective: true,
+            }
+        });
+
+        if (message instanceof Error) throw message;
+
+        this.bot.onReplyToMessage(message.chat.id, message.message_id, reply => {
+            if (reply.text) {
+                this.list.rename(new ObjectID(data[1]), reply.text);
+                this.queueSendMessage(reply.chat.id, "Success!", {
+                    reply_to_message_id: reply.message_id
+                });
+            } else {
+                this.queueSendMessage(reply.chat.id, "Invalid name!");
+            }
+
+            this.bot.removeReplyListener(message.message_id);
+        });
+    }
+
+    private async listDeleteCallback(msg: CallbackQuery, data: string[]) {
+        if (!msg.message || !data[1]) return;
+
+        if (data[2]) {
+            this.list.delete(new ObjectID(data[1]));
+            this.bot.editMessageReplyMarkup({inline_keyboard: [[{text: "Deleted", callback_data: "dummy"}]]});
+        } else {
+            const list = await this.list.get(new ObjectID(data[1]));
+            if (!list) return;
+
+            this.bot.sendMessage(msg.message.chat.id, `Are you sure delete list ${list.name}?`, {
+                reply_markup: { inline_keyboard: [[{text: "Yes", callback_data: `list_delete ${data[1]} true`}]] }
+            });
+        }
     }
 
     // View generators
@@ -261,10 +317,13 @@ export class Telegram {
 
     private async genListInfoView(id: ObjectID) {
         const list = await this.list.get(id);
-        const button = new Array(new Array<InlineKeyboardButton>());
+        const button: InlineKeyboardButton[][] = new Array(new Array(), new Array());
 
         if (!list) throw ERR_LIST_NOT_FOUND;
-        button[0].push({ text: "TOOOOOOOODOOOOO", callback_data: "TODO" });
+        button[0].push({ text: "Add sounds", callback_data: `list_audio_add ${id.toHexString()}` });
+        button[0].push({ text: "Show sounds", callback_data: `list_audio_show ${id.toHexString()}` });
+        button[1].push({ text: "Rename", callback_data: `list_rename ${id.toHexString()}` });
+        button[1].push({ text: "Delete", callback_data: `list_delete ${id.toHexString()}` });
 
         return {
             button,
