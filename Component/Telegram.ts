@@ -221,13 +221,38 @@ export class Telegram {
         this.bot.editMessageText(view.text, options);
     }
 
+    private async listAddCallback(msg: CallbackQuery, data: string[]) {
+        if (!msg.message || !data[1]) return;
+        const user = await this.getUser(msg.from.id);
+        if (!user || !user._id.equals(new ObjectID(data[1]))) return;
+
+        const message = await this.queueSendMessage(msg.message.chat.id, "Enter name for new playlist");
+
+        if (message instanceof Error) throw message;
+
+        this.bot.onReplyToMessage(message.chat.id, message.message_id, reply => {
+            if (!reply.from || reply.from.id !== msg.from.id) return;
+
+            if (reply.text) {
+                this.list.create(reply.text, user._id);
+                this.queueSendMessage(reply.chat.id, "Success!", {
+                    reply_to_message_id: reply.message_id
+                });
+            } else {
+                this.queueSendMessage(reply.chat.id, "Invalid name!");
+            }
+
+            this.bot.removeReplyListener(message.message_id);
+        });
+    }
+
     private async listRenameCallback(msg: CallbackQuery, data: string[]) {
         if (!msg.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(msg.from.id);
         if (!user || !list || !list.owner.equals(user._id)) return;
 
-        const message = await this.queueSendMessage(msg.message.chat.id, "What new name you want?", {
+        const message = await this.queueSendMessage(msg.message.chat.id, "Enter new name", {
             reply_markup: {
                 force_reply: true,
                 selective: true,
