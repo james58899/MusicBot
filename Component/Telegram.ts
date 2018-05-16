@@ -101,6 +101,9 @@ export class Telegram {
                 case "list_info":
                     this.listInfoCallback(query, data);
                     break;
+                case "list_create":
+                    this.listCreateCallback(query, data);
+                    break;
                 case "list_rename":
                     this.listRenameCallback(query, data);
                     break;
@@ -221,7 +224,7 @@ export class Telegram {
         this.bot.editMessageText(view.text, options);
     }
 
-    private async listAddCallback(msg: CallbackQuery, data: string[]) {
+    private async listCreateCallback(msg: CallbackQuery, data: string[]) {
         if (!msg.message || !data[1]) return;
         const user = await this.getUser(msg.from.id);
         if (!user || !user._id.equals(new ObjectID(data[1]))) return;
@@ -335,8 +338,8 @@ export class Telegram {
         if (user) {
             button.push(new Array());
             button[button.length - 1].push({
-                callback_data: `list_add`,
-                text: "Add list"
+                callback_data: `list_create`,
+                text: "Create new playlist"
             });
         }
 
