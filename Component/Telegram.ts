@@ -460,7 +460,7 @@ export class Telegram {
 
         return {
             button: (button.length > 0) ? button : null,
-            text: (deleteMode) ? "Choose sound to delete\n" : "Sound list:\n" +
+            text: ((deleteMode) ? "Choose sound to delete\n" : "Sound list:\n") +
                 audio.map((item, index) => (item) ? `${start + index + 1}. ${item.title} ${(item.artist) ? `(${item.artist})` : ""}` : item).join("\n")
         };
     }
