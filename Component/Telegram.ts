@@ -110,14 +110,14 @@ export class Telegram {
                 case "list_audio":
                     this.listAudioCallback(query, data);
                     break;
-                case "list_audio_delete":
-                    this.listAudioDeleteCallback(query, data);
-                    break;
                 case "list_rename":
                     this.listRenameCallback(query, data);
                     break;
                 case "list_delete":
                     this.listDeleteCallback(query, data);
+                    break;
+                case "audio_del":
+                    this.audioDeleteCallback(query, data);
                     break;
             }
         });
@@ -285,8 +285,12 @@ export class Telegram {
         }
     }
 
-    private async listAudioDeleteCallback(msg: CallbackQuery, data: string[]) {
-        // TODO
+    private async audioDeleteCallback(msg: CallbackQuery, data: string[]) {
+        if (data.length === 2) {
+            // TODO delete Audio
+        } else {
+            // TODO remove Audio from list
+        }
     }
 
     private async listRenameCallback(msg: CallbackQuery, data: string[]) {
@@ -424,14 +428,14 @@ export class Telegram {
                 if (!button[0]) button[0] = new Array();
 
                 button[0].push({
-                    callback_data: (deleteMode) ? `list_audio_delete ${listID} ${item._id}` : `audio_info ${item._id}`,
+                    callback_data: (deleteMode) ? `audio_del ${item._id} ${listID}` : `audio_info ${item._id}`,
                     text: String(index + start + 1)
                 });
             } else {
                 if (!button[1]) button[1] = new Array();
 
                 button[1].push({
-                    callback_data: (deleteMode) ? `list_audio_delete ${listID} ${item._id}` : `audio_info ${item._id}`,
+                    callback_data: (deleteMode) ? `audio_del ${item._id} ${listID}` : `audio_info ${item._id}`,
                     text: String(index + start + 1)
                 });
             }
