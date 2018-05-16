@@ -104,6 +104,15 @@ export class Telegram {
                 case "list_create":
                     this.listCreateCallback(query, data);
                     break;
+                case "list_audio_add":
+                    this.listAudioAddCallback(query, data);
+                    break;
+                case "list_audio":
+                    this.listAudioCallback(query, data);
+                    break;
+                case "list_audio_delete":
+                    this.listAudioDeleteCallback(query, data);
+                    break;
                 case "list_rename":
                     this.listRenameCallback(query, data);
                     break;
@@ -199,16 +208,13 @@ export class Telegram {
     private async playlistCallback(msg: CallbackQuery, data: string[]) {
         if (!msg.message) return;
 
-        const start = parseInt(data[2], 10);
-        const view = await ((data[1]) ? this.genPlaylistView(start, new ObjectID(data[1])) : this.genPlaylistView(start));
+        const view = await ((data[1]) ? this.genPlaylistView(parseInt(data[2], 10), new ObjectID(data[1])) : this.genPlaylistView(parseInt(data[2], 10)));
 
-        if (view.button) {
-            this.bot.editMessageText(view.text, {
-                chat_id: msg.message.chat.id,
-                message_id: msg.message.message_id,
-                reply_markup: { inline_keyboard: view.button }
-            });
-        }
+        this.bot.editMessageText(view.text, {
+            chat_id: msg.message.chat.id,
+            message_id: msg.message.message_id,
+            reply_markup: { inline_keyboard: view.button }
+        });
     }
 
     private async listInfoCallback(msg: CallbackQuery, data: string[]) {
@@ -229,7 +235,12 @@ export class Telegram {
         const user = await this.getUser(msg.from.id);
         if (!user || !user._id.equals(new ObjectID(data[1]))) return;
 
-        const message = await this.queueSendMessage(msg.message.chat.id, "Enter name for new playlist");
+        const message = await this.queueSendMessage(msg.message.chat.id, "Enter name for new playlist", {
+            reply_markup: {
+                force_reply: true,
+                selective: true
+            }
+        });
 
         if (message instanceof Error) throw message;
 
@@ -247,6 +258,35 @@ export class Telegram {
 
             this.bot.removeReplyListener(message.message_id);
         });
+    }
+
+    private async listAudioAddCallback(msg: CallbackQuery, data: string[]) {
+        // TODO
+    }
+
+    private async listAudioCallback(msg: CallbackQuery, data: string[]) {
+        if (!msg.message || data.length < 3) return;
+
+        const view = await this.genAudioListView(new ObjectID(data[2]), parseInt(data[3], 10) || 0, data[1] === "delete");
+
+        if (!view) return;
+
+        if (view.button) {
+            this.bot.editMessageText(view.text, {
+                chat_id: msg.message.chat.id,
+                message_id: msg.message.message_id,
+                reply_markup: { inline_keyboard: view.button }
+            });
+        } else {
+            this.bot.editMessageText(view.text, {
+                chat_id: msg.message.chat.id,
+                message_id: msg.message.message_id
+            });
+        }
+    }
+
+    private async listAudioDeleteCallback(msg: CallbackQuery, data: string[]) {
+        // TODO
     }
 
     private async listRenameCallback(msg: CallbackQuery, data: string[]) {
@@ -288,7 +328,10 @@ export class Telegram {
 
         if (data[2]) {
             this.list.delete(new ObjectID(data[1]));
-            this.bot.editMessageReplyMarkup({ inline_keyboard: [[{ text: "Deleted" }]] });
+            this.bot.editMessageReplyMarkup(
+                { inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] },
+                { chat_id: msg.message.chat.id, message_id: msg.message.message_id }
+            );
         } else {
             this.bot.sendMessage(msg.message.chat.id, `Are you sure delete list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `list_delete ${data[1]} true` }]] }
@@ -303,17 +346,19 @@ export class Telegram {
         const button: InlineKeyboardButton[][] = new Array();
 
         array.map((item, index) => {
-            if (index < array.length / 2) {
+            if (index < 5) {
                 if (!button[0]) button[0] = new Array();
+
                 button[0].push({
                     callback_data: `list_info ${item._id.toHexString()}`,
-                    text: start + index + "1"
+                    text: String(start + index + 1)
                 });
             } else {
                 if (!button[1]) button[1] = new Array();
+
                 button[1].push({
                     callback_data: `list_info ${item._id.toHexString()}`,
-                    text: start + index + "1"
+                    text: String(start + index + 1)
                 });
             }
         });
@@ -344,24 +389,75 @@ export class Telegram {
         }
 
         return {
-            button: (button.length > 0) ? button : null,
-            text: "Playlist:\n" + array.map((item, index) => `${start + index + 1} ${item.name} (${item.audio.length} sounds)`).join("\n")
+            button,
+            text: "Playlist:\n" + array.map((item, index) => `${start + index + 1}. ${item.name} (${item.audio.length} sounds)`).join("\n")
         };
     }
 
-    private async genListInfoView(id: ObjectID) {
-        const list = await this.list.get(id);
+    private async genListInfoView(listID: ObjectID) {
+        const list = await this.list.get(listID);
         const button: InlineKeyboardButton[][] = new Array(new Array(), new Array());
 
         if (!list) throw ERR_LIST_NOT_FOUND;
-        button[0].push({ text: "Add sounds", callback_data: `list_audio_add ${id.toHexString()}` });
-        button[0].push({ text: "Show sounds", callback_data: `list_audio_show ${id.toHexString()}` });
-        button[1].push({ text: "Rename", callback_data: `list_rename ${id.toHexString()}` });
-        button[1].push({ text: "Delete", callback_data: `list_delete ${id.toHexString()}` });
+        button[0].push({ text: "Add sounds", callback_data: `list_audio_add ${listID.toHexString()}` });
+        button[0].push({ text: "Show sounds", callback_data: `list_audio show ${listID.toHexString()}` });
+        button[0].push({ text: "Delete sounds", callback_data: `list_audio delete ${listID.toHexString()}` });
+        button[1].push({ text: "Rename", callback_data: `list_rename ${listID.toHexString()}` });
+        button[1].push({ text: "Delete", callback_data: `list_delete ${listID.toHexString()}` });
 
         return {
             button,
             text: `ID: ${list._id.toHexString()}\nName: ${list.name}\nOwner: ${list.owner}\nSounds: ${list.audio.length}`
+        };
+    }
+
+    private async genAudioListView(listID: ObjectID, start = 0, deleteMode = false) {
+        const list = await this.list.get(listID);
+        if (!list) return;
+        const button: InlineKeyboardButton[][] = new Array();
+        const audio = await Promise.all(list.audio.slice(start, start + 10).map(item => this.audio.get(item)));
+
+        audio.forEach((item, index) => {
+            if (!item) return;
+
+            if (index < 5) {
+                if (!button[0]) button[0] = new Array();
+
+                button[0].push({
+                    callback_data: (deleteMode) ? `list_audio_delete ${listID} ${item._id}` : `audio_info ${item._id}`,
+                    text: String(index + start + 1)
+                });
+            } else {
+                if (!button[1]) button[1] = new Array();
+
+                button[1].push({
+                    callback_data: (deleteMode) ? `list_audio_delete ${listID} ${item._id}` : `audio_info ${item._id}`,
+                    text: String(index + start + 1)
+                });
+            }
+        });
+
+        if (0 < await list.audio.length) {
+            button.push(new Array());
+
+            if (start - 10 >= 0) {
+                button[button.length - 1].push({
+                    callback_data: `list_audio ${(deleteMode) ? "delete" : "show"} ${listID} ${start - 10}`,
+                    text: "<"
+                });
+            }
+            if (start + 10 < list.audio.length) {
+                button[button.length - 1].push({
+                    callback_data: `list_audio ${(deleteMode) ? "delete" : "show"} ${listID} ${start + 10}`,
+                    text: ">"
+                });
+            }
+        }
+
+        return {
+            button: (button.length > 0) ? button : null,
+            text: (deleteMode) ? "Choose sound to delete\n" : "Sound list:\n" +
+                audio.map((item, index) => (item) ? `${start + index + 1}. ${item.title} ${(item.artist) ? `(${item.artist})` : ""}` : item).join("\n")
         };
     }
 
