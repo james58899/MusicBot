@@ -338,7 +338,7 @@ export class Telegram {
         if (user) {
             button.push(new Array());
             button[button.length - 1].push({
-                callback_data: `list_create`,
+                callback_data: `list_create ${user}`,
                 text: "Create new playlist"
             });
         }
