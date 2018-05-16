@@ -225,7 +225,7 @@ export class Telegram {
         if (!msg.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(msg.from.id);
-        if (!user || !list || list.owner.equals(user._id)) return;
+        if (!user || !list || !list.owner.equals(user._id)) return;
 
         const message = await this.queueSendMessage(msg.message.chat.id, "What new name you want?", {
             reply_markup: {
