@@ -20,7 +20,7 @@ export class Telegram {
     private bot: TelegramBot;
     private me!: User;
     private messageQueue = new Queue(1);
-    // private audioAddSession = new Array<ObjectID>();
+    private audioAddSession = new Map<number, ObjectID>();
 
     constructor(core: Core) {
         if (!core.config.telegram.token) throw ERR_MISSING_TOKEN;
@@ -88,38 +88,41 @@ export class Telegram {
         });
 
         // Inline button
-        this.bot.on("callback_query", (query: CallbackQuery) => {
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
-
+        this.bot.on("callback_query", async (query: CallbackQuery) => {
             if (!query.data) return;
             const data = query.data.split(" ");
 
             switch (data[0]) {
-                case "list":
-                    this.playlistCallback(query, data);
+                case "AudioInfo":
+                    this.audioInfoCallback(query, data);
                     break;
-                case "list_info":
-                    this.listInfoCallback(query, data);
+                case "List":
+                    await this.playlistCallback(query, data);
                     break;
-                case "list_create":
-                    this.listCreateCallback(query, data);
+                case "ListInfo":
+                    await this.listInfoCallback(query, data);
                     break;
-                case "list_audio_add":
-                    this.listAudioAddCallback(query, data);
+                case "ListCreate":
+                    await this.listCreateCallback(query, data);
                     break;
-                case "list_audio":
-                    this.listAudioCallback(query, data);
+                case "ListAudioAdd":
+                    await this.listAudioAddCallback(query, data);
                     break;
-                case "list_rename":
-                    this.listRenameCallback(query, data);
+                case "ListAudioDel":
+                    await this.listAudioDeleteCallback(query, data);
                     break;
-                case "list_delete":
-                    this.listDeleteCallback(query, data);
+                case "ListAudio":
+                    await this.listAudioCallback(query, data);
                     break;
-                case "audio_del":
-                    this.audioDeleteCallback(query, data);
+                case "ListRename":
+                    await this.listRenameCallback(query, data);
+                    break;
+                case "ListDelete":
+                    await this.listDeleteCallback(query, data);
                     break;
             }
+
+            this.bot.answerCallbackQuery({ callback_query_id: query.id });
         });
 
         this.bot.on("error", err => console.error(err));
@@ -205,6 +208,15 @@ export class Telegram {
     }
 
     // Callbacks
+    private async audioInfoCallback(msg: CallbackQuery, data: string[]) {
+        if (!msg.message || !data[1]) return;
+
+        const audio = await this.audio.get(new ObjectID(data[1]));
+        if (!audio || !audio._id) return;
+
+        this.bot.editMessageText(`ID: ${audio._id}\nTitle: ${audio.title}`, { chat_id: msg.message.chat.id, message_id: msg.message.message_id });
+    }
+
     private async playlistCallback(msg: CallbackQuery, data: string[]) {
         if (!msg.message) return;
 
@@ -261,7 +273,44 @@ export class Telegram {
     }
 
     private async listAudioAddCallback(msg: CallbackQuery, data: string[]) {
-        // TODO
+        if (!msg.message || !data[1]) return;
+        const list = await this.list.get(new ObjectID(data[1]));
+        const user = await this.getUser(msg.from.id);
+        if (!user || !list || !list.owner.equals(user._id)) return;
+
+        if (data[2] === "done") {
+            this.audioAddSession.delete(msg.message.chat.id);
+            this.bot.editMessageText(
+                "Now this list have " + list.audio.length + " sounds!",
+                { chat_id: msg.message.chat.id, message_id: msg.message.message_id }
+            );
+        } else {
+            this.audioAddSession.set(msg.message.chat.id, list._id);
+            this.queueSendMessage(msg.message.chat.id, "Send me audio file or sound ID you want add to list " + list.name, {
+                reply_markup: { inline_keyboard: [[{ text: "Done", callback_data: `ListAudioAdd ${list._id.toHexString()} done` }]] }
+            });
+        }
+    }
+
+    private async listAudioDeleteCallback(msg: CallbackQuery, data: string[]) {
+        if (!msg.message || data.length < 3) return;
+
+        if (data[3]) {
+            this.list.delAudio(new ObjectID(data[1]), new ObjectID(data[2]));
+            this.bot.editMessageReplyMarkup(
+                { inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] },
+                { chat_id: msg.message.chat.id, message_id: msg.message.message_id }
+            );
+        } else {
+            const audioID = new ObjectID(data[2]);
+            const list = await this.list.get(new ObjectID(data[1]));
+            const audio = await this.audio.get(audioID);
+            if (!list || !audio || !list.audio.find(id => id.equals(audioID))) return;
+
+            this.bot.sendMessage(msg.message.chat.id, `Are you sure delete ${audio.title} from list ${list.name}?`, {
+                reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` }]] }
+            });
+        }
     }
 
     private async listAudioCallback(msg: CallbackQuery, data: string[]) {
@@ -282,14 +331,6 @@ export class Telegram {
                 chat_id: msg.message.chat.id,
                 message_id: msg.message.message_id
             });
-        }
-    }
-
-    private async audioDeleteCallback(msg: CallbackQuery, data: string[]) {
-        if (data.length === 2) {
-            // TODO delete Audio
-        } else {
-            // TODO remove Audio from list
         }
     }
 
@@ -338,7 +379,7 @@ export class Telegram {
             );
         } else {
             this.bot.sendMessage(msg.message.chat.id, `Are you sure delete list ${list.name}?`, {
-                reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `list_delete ${data[1]} true` }]] }
+                reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListDelete ${data[1]} y` }]] }
             });
         }
     }
@@ -354,14 +395,14 @@ export class Telegram {
                 if (!button[0]) button[0] = new Array();
 
                 button[0].push({
-                    callback_data: `list_info ${item._id.toHexString()}`,
+                    callback_data: `ListInfo ${item._id.toHexString()}`,
                     text: String(start + index + 1)
                 });
             } else {
                 if (!button[1]) button[1] = new Array();
 
                 button[1].push({
-                    callback_data: `list_info ${item._id.toHexString()}`,
+                    callback_data: `ListInfo ${item._id.toHexString()}`,
                     text: String(start + index + 1)
                 });
             }
@@ -372,13 +413,13 @@ export class Telegram {
 
             if (start - 10 >= 0) {
                 button[button.length - 1].push({
-                    callback_data: `list ${(user) ? user.toHexString() : undefined} ${start - 10}`,
+                    callback_data: `List ${(user) ? user.toHexString() : undefined} ${start - 10}`,
                     text: "<"
                 });
             }
             if (start + 10 < await list.count()) {
                 button[button.length - 1].push({
-                    callback_data: `list ${(user) ? user.toHexString() : undefined} ${start + 10}`,
+                    callback_data: `List ${(user) ? user.toHexString() : undefined} ${start + 10}`,
                     text: ">"
                 });
             }
@@ -387,7 +428,7 @@ export class Telegram {
         if (user) {
             button.push(new Array());
             button[button.length - 1].push({
-                callback_data: `list_create ${user}`,
+                callback_data: `ListCreate ${user}`,
                 text: "Create new playlist"
             });
         }
@@ -403,11 +444,11 @@ export class Telegram {
         const button: InlineKeyboardButton[][] = new Array(new Array(), new Array());
 
         if (!list) throw ERR_LIST_NOT_FOUND;
-        button[0].push({ text: "Add sounds", callback_data: `list_audio_add ${listID.toHexString()}` });
-        button[0].push({ text: "Show sounds", callback_data: `list_audio show ${listID.toHexString()}` });
-        button[0].push({ text: "Delete sounds", callback_data: `list_audio delete ${listID.toHexString()}` });
-        button[1].push({ text: "Rename", callback_data: `list_rename ${listID.toHexString()}` });
-        button[1].push({ text: "Delete", callback_data: `list_delete ${listID.toHexString()}` });
+        button[0].push({ text: "Add sounds", callback_data: `ListAudioAdd ${listID.toHexString()}` });
+        button[0].push({ text: "Show sounds", callback_data: `ListAudio show ${listID.toHexString()}` });
+        button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
+        button[1].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
+        button[1].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
 
         return {
             button,
@@ -428,14 +469,14 @@ export class Telegram {
                 if (!button[0]) button[0] = new Array();
 
                 button[0].push({
-                    callback_data: (deleteMode) ? `audio_del ${item._id} ${listID}` : `audio_info ${item._id}`,
+                    callback_data: (deleteMode) ? `ListAudioDel ${listID} ${item._id}` : `AudioInfo ${item._id}`,
                     text: String(index + start + 1)
                 });
             } else {
                 if (!button[1]) button[1] = new Array();
 
                 button[1].push({
-                    callback_data: (deleteMode) ? `audio_del ${item._id} ${listID}` : `audio_info ${item._id}`,
+                    callback_data: (deleteMode) ? `ListAudioDel ${listID} ${item._id}` : `AudioInfo ${item._id}`,
                     text: String(index + start + 1)
                 });
             }
@@ -446,13 +487,13 @@ export class Telegram {
 
             if (start - 10 >= 0) {
                 button[button.length - 1].push({
-                    callback_data: `list_audio ${(deleteMode) ? "delete" : "show"} ${listID} ${start - 10}`,
+                    callback_data: `ListAudio ${(deleteMode) ? "delete" : "show"} ${listID} ${start - 10}`,
                     text: "<"
                 });
             }
             if (start + 10 < list.audio.length) {
                 button[button.length - 1].push({
-                    callback_data: `list_audio ${(deleteMode) ? "delete" : "show"} ${listID} ${start + 10}`,
+                    callback_data: `ListAudio ${(deleteMode) ? "delete" : "show"} ${listID} ${start + 10}`,
                     text: ">"
                 });
             }
@@ -460,7 +501,7 @@ export class Telegram {
 
         return {
             button: (button.length > 0) ? button : null,
-            text: ((deleteMode) ? "Choose sound to delete\n" : "Sound list:\n") +
+            text: ((deleteMode) ? "Choose sound to delete:\n" : "Sound list:\n") +
                 audio.map((item, index) => (item) ? `${start + index + 1}. ${item.title} ${(item.artist) ? `(${item.artist})` : ""}` : item).join("\n")
         };
     }
@@ -482,13 +523,13 @@ export class Telegram {
 
         if (msg.audio && msg.audio.title) {
             try {
-                const sound = await this.audio.add(sender._id, file, {
+                const audio = await this.audio.add(sender._id, file, {
                     artist: msg.audio.performer,
                     duration: msg.audio.duration,
                     title: msg.audio.title
                 });
 
-                if (sound) this.sendDone(replyMessage, sound);
+                if (audio) this.processDone(replyMessage, audio);
             } catch (e) {
                 this.sendError(replyMessage, "An error occured when adding song：" + e.message);
             }
@@ -500,18 +541,18 @@ export class Telegram {
                 return;
             }
 
-            const sound = await this.audio.add(sender._id, file, {
+            const audio = await this.audio.add(sender._id, file, {
                 artist: msg.audio.performer,
                 duration: msg.audio.duration,
                 title
             });
 
-            if (sound) this.sendDone(replyMessage, sound);
+            if (audio) this.processDone(replyMessage, audio);
         }
     }
 
     private async processFile(msg: Message, title?: string) {
-        if (msg.from == null || !msg.document) return;
+        if (!msg.from || !msg.document) return;
 
         const sender = await this.getUser(msg.from.id);
 
@@ -521,15 +562,14 @@ export class Telegram {
         }
 
         const source = "tg://" + msg.document.file_id;
-
         const replyMessage = await this.sendProcessing(msg);
 
         if (replyMessage instanceof Error) throw replyMessage;
 
         try {
-            const sound = await this.audio.add(sender._id, source, { title });
+            const audio = await this.audio.add(sender._id, source, { title });
 
-            if (sound) this.sendDone(replyMessage, sound); else this.sendError(replyMessage, "failed");
+            if (audio) this.processDone(replyMessage, audio); else this.sendError(replyMessage, "failed");
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
                 try {
@@ -556,8 +596,8 @@ export class Telegram {
         }
 
         try {
-            const sound = await this.audio.add(sender._id, link);
-            if (sound) this.sendDone(msg, sound);
+            const audio = await this.audio.add(sender._id, link);
+            if (audio) this.processDone(msg, audio);
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
                 try {
@@ -577,20 +617,6 @@ export class Telegram {
         return this.queueSendMessage(msg.chat.id, "Processing...", {
             reply_to_message_id: msg.message_id
         });
-    }
-
-    private async sendDone(msg: Message, sound: IAudioData) {
-        const message = `ID: ${sound._id}\nTitle: ${sound.title}`;
-        if (msg.from && msg.from.id === this.me.id) {
-            return this.bot.editMessageText(message, {
-                chat_id: msg.chat.id,
-                message_id: msg.message_id
-            });
-        } else {
-            return this.queueSendMessage(msg.chat.id, message, {
-                reply_to_message_id: msg.message_id
-            });
-        }
     }
 
     private async sendError(msg: Message, errorMessage: string) {
@@ -637,6 +663,25 @@ export class Telegram {
                 this.bot.removeReplyListener(needTitle.message_id);
             });
         });
+    }
+
+    private async processDone(msg: Message, audio: IAudioData) {
+        const session = this.audioAddSession.get(msg.chat.id);
+        if (session && audio._id) {
+            this.list.addAudio(session, audio._id);
+        }
+
+        const message = (session) ? "Added to list!" : `ID: ${audio._id}\nTitle: ${audio.title}`;
+        if (msg.from && msg.from.id === this.me.id) {
+            return this.bot.editMessageText(message, {
+                chat_id: msg.chat.id,
+                message_id: msg.message_id
+            });
+        } else {
+            return this.queueSendMessage(msg.chat.id, message, {
+                reply_to_message_id: msg.message_id
+            });
+        }
     }
 
     // Misc
