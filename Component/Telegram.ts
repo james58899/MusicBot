@@ -87,6 +87,21 @@ export class Telegram {
             }
         });
 
+        // Audio ID
+        this.bot.onText(/([0-9a-f]{24})/i, async (msg, match) => {
+            const session = this.audioAddSession.get(msg.chat.id);
+            if (!session || !match) return;
+
+            const audio = await this.audio.get(new ObjectID(match[1]));
+            if (!audio || !audio._id) {
+                this.queueSendMessage(msg.chat.id, "Sound ID not found in database", { reply_to_message_id: msg.message_id });
+                return;
+            }
+
+            this.list.addAudio(session, audio._id);
+            this.queueSendMessage(msg.chat.id, "Added to list!", { reply_to_message_id: msg.message_id });
+        });
+
         // Inline button
         this.bot.on("callback_query", async (query: CallbackQuery) => {
             if (!query.data) return;
