@@ -83,7 +83,7 @@ export class ListManager {
 
         return (await this.database.findOneAndUpdate(
             { _id: id },
-            { $pull: audio },
+            { $pull: { audio } },
             { returnOriginal: false }
         )).value;
     }
