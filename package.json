@@ -9,20 +9,19 @@
     "build": "tsc --pretty"
   },
   "dependencies": {
-    "bson-ext": "^2.0.0",
     "eris": "^0.8.5",
     "fluent-ffmpeg": "^2.1.2",
-    "mongodb": "^3.0.8",
+    "mongodb": "^3.1.0-beta4",
     "node-telegram-bot-api": "^0.30.0",
     "promise-queue": "^2.2.5",
     "shuffle-array": "^1.0.1",
-    "ytdl-core": "^0.20.3"
+    "ytdl-core": "^0.20.4"
   },
   "devDependencies": {
     "@types/bson": "^1.0.8",
     "@types/fluent-ffmpeg": "^2.1.6",
     "@types/mongodb": "^3.0.18",
-    "@types/node": "^10.0.6",
+    "@types/node": "^10.1.0",
     "@types/node-telegram-bot-api": "^0.28.3",
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^0.0.28",
@@ -32,11 +31,12 @@
   "optionalDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.14",
     "@ffprobe-installer/ffprobe": "^1.0.8",
+    "bson-ext": "^2.0.0",
     "bufferutil": "^3.0.5",
     "erlpack": "github:discordapp/erlpack",
     "eventemitter3": "^3.1.0",
     "node-opus": "^0.3.0",
     "sodium-native": "^2.1.6",
-    "uws": "^9.148.0"
+    "uws": "^10.148.0"
   }
 }
