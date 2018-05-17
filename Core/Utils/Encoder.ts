@@ -1,6 +1,6 @@
 import { execFileSync } from "child_process";
 import FFmpeg from "fluent-ffmpeg";
-import { rename } from "fs/promises";
+import { promises as fsp } from "fs";
 import path from "path";
 import { getMediaInfo } from "./MediaInfo";
 import { sleep } from "./PromiseUtils";
@@ -47,7 +47,7 @@ export class Encoder {
                 .on("error", reject)
                 .on("end", async () => {
                     await sleep(1000);
-                    await rename(savePath + ".tmp", savePath);
+                    await fsp.rename(savePath + ".tmp", savePath);
                     if ((await getMediaInfo(savePath)).duration !== duration) {
                         reject(Error("Duration mismatch"));
                     } else {

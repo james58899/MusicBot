@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { exists, existsSync } from "fs";
-import { unlink } from "fs/promises";
+import { promises as fsp } from "fs";
 import { Collection, ObjectID } from "mongodb";
 import { cpus } from "os";
 import { resolve } from "path";
@@ -111,7 +111,7 @@ export class AudioManager {
         if (!audio) return;
 
         const file = this.getCachePath(audio);
-        if (existsSync(file)) unlink(file);
+        if (existsSync(file)) fsp.unlink(file);
         return this.database.deleteOne({ _id: id });
     }
 
