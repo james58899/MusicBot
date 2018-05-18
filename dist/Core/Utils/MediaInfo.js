@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const child_process_1 = require("child_process");
 let ffprobe;
 try {
-    child_process_1.execFileSync("ffprobe");
+    child_process_1.execFileSync("ffprobe", { stdio: "ignore" });
     ffprobe = "ffprobe";
 }
 catch (err) {
