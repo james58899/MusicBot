@@ -84,5 +84,5 @@ typings/
 # Ingore local sound data
 Data
 
-# Typescript Output
-dist
+# Typescript mapper file
+dist/**/*.map
