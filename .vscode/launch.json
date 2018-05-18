@@ -7,13 +7,27 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Launch",
             "program": "${workspaceFolder}\\dist\\index.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "tsc: build - tsconfig.json"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch (Deep cache check)",
+            "program": "${workspaceFolder}\\dist\\index.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "args": [
+                "--deep-check"
+            ]
         }
     ]
 }
