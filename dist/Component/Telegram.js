@@ -610,7 +610,7 @@ class Telegram {
         if (session && audio._id) {
             this.list.addAudio(session, audio._id);
         }
-        const message = (session) ? "Added to list!" : `ID: ${audio._id}\nTitle: ${audio.title}`;
+        const message = `ID: ${audio._id}\nTitle: ${audio.title}${(session) ? "\n\nAdded to list!" : ""}`;
         if (msg.from && msg.from.id === this.me.id) {
             return this.bot.editMessageText(message, {
                 chat_id: msg.chat.id,
