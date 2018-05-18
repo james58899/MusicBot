@@ -549,18 +549,22 @@ export class Telegram {
                 this.sendError(replyMessage, "An error occured when adding song：" + e.message);
             }
         } else {
-            let title;
-            try {
-                title = await retry(() => this.sendNeedTitle(msg), 3);
-            } catch (error) {
-                return;
-            }
+            let audio = await this.audio.checkExist(file);
 
-            const audio = await this.audio.add(sender._id, file, {
-                artist: msg.audio.performer,
-                duration: msg.audio.duration,
-                title
-            });
+            if (!audio) {
+                let title;
+                try {
+                    title = await retry(() => this.sendNeedTitle(msg), 3);
+                } catch (error) {
+                    return;
+                }
+
+                audio = await this.audio.add(sender._id, file, {
+                    artist: msg.audio.performer,
+                    duration: msg.audio.duration,
+                    title
+                });
+            }
 
             if (audio) this.processDone(replyMessage, audio);
         }
@@ -661,15 +665,15 @@ export class Telegram {
         }) as Message;
 
         return new Promise<string>((resolve, reject) => {
-            this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, title => {
+            this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, reply => {
                 // If not origin sender
-                if (!title.from || !msg.from || title.from.id !== msg.from.id) return;
+                if (!reply.from || !msg.from || reply.from.id !== msg.from.id) return;
 
-                if (title.text) {
-                    resolve(title.text);
+                if (reply.text) {
+                    resolve(reply.text);
                 } else {
                     this.queueSendMessage(msg.chat.id, "It doesn't look like a title.", {
-                        reply_to_message_id: title.message_id,
+                        reply_to_message_id: reply.message_id,
                     }).then(() => {
                         reject(ERR_NOT_VALID_TITLE);
                     });

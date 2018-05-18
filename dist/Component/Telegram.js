@@ -476,18 +476,21 @@ class Telegram {
             }
         }
         else {
-            let title;
-            try {
-                title = await PromiseUtils_1.retry(() => this.sendNeedTitle(msg), 3);
+            let audio = await this.audio.checkExist(file);
+            if (!audio) {
+                let title;
+                try {
+                    title = await PromiseUtils_1.retry(() => this.sendNeedTitle(msg), 3);
+                }
+                catch (error) {
+                    return;
+                }
+                audio = await this.audio.add(sender._id, file, {
+                    artist: msg.audio.performer,
+                    duration: msg.audio.duration,
+                    title
+                });
             }
-            catch (error) {
-                return;
-            }
-            const audio = await this.audio.add(sender._id, file, {
-                artist: msg.audio.performer,
-                duration: msg.audio.duration,
-                title
-            });
             if (audio)
                 this.processDone(replyMessage, audio);
         }
@@ -585,15 +588,15 @@ class Telegram {
             reply_to_message_id: msg.message_id
         });
         return new Promise((resolve, reject) => {
-            this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, title => {
-                if (!title.from || !msg.from || title.from.id !== msg.from.id)
+            this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, reply => {
+                if (!reply.from || !msg.from || reply.from.id !== msg.from.id)
                     return;
-                if (title.text) {
-                    resolve(title.text);
+                if (reply.text) {
+                    resolve(reply.text);
                 }
                 else {
                     this.queueSendMessage(msg.chat.id, "It doesn't look like a title.", {
-                        reply_to_message_id: title.message_id,
+                        reply_to_message_id: reply.message_id,
                     }).then(() => {
                         reject(ERR_NOT_VALID_TITLE);
                     });

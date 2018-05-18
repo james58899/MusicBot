@@ -178,7 +178,7 @@ export class AudioManager {
         });
     }
 
-    private checkExist(source?: string, hash?: string) {
+    public checkExist(source?: string, hash?: string) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({ $or: [{ source }, { hash }] });
