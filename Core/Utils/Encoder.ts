@@ -14,7 +14,7 @@ export class Encoder {
 
         // Test system ffmpeg
         try {
-            execFileSync("ffmpeg");
+            execFileSync("ffmpeg", { stdio: "ignore" });
         } catch (err) {
             this.ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
         }

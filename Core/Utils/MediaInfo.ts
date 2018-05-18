@@ -4,7 +4,7 @@ import { IAudioMetadata } from "../URLParser";
 let ffprobe: string;
 // Test system ffprobe
 try {
-    execFileSync("ffprobe");
+    execFileSync("ffprobe", { stdio: "ignore" });
     ffprobe = "ffprobe";
 } catch (err) {
     ffprobe = require("@ffprobe-installer/ffprobe").path;
