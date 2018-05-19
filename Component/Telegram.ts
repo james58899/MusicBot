@@ -136,9 +136,9 @@ export class Telegram {
                 case "ListDelete":
                     await this.listDeleteCallback(query, data);
                     break;
+                default:
+                    this.bot.answerCallbackQuery({ callback_query_id: query.id });
             }
-
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
         });
 
         this.bot.on("error", err => console.error(err));
@@ -224,46 +224,46 @@ export class Telegram {
     }
 
     // Callbacks
-    private async audioInfoCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message || !data[1]) return;
+    private async audioInfoCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message || !data[1]) return;
 
         const audio = await this.audio.get(new ObjectID(data[1]));
         if (!audio) return;
 
-        this.bot.editMessageText(`ID: ${audio._id}\nTitle: ${audio.title}`, { chat_id: msg.message.chat.id, message_id: msg.message.message_id });
+        this.bot.editMessageText(`ID: ${audio._id}\nTitle: ${audio.title}`, { chat_id: query.message.chat.id, message_id: query.message.message_id });
     }
 
-    private async playlistCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message) return;
+    private async playlistCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message) return;
 
         const view = await ((data[1]) ? this.genPlaylistView(parseInt(data[2], 10), new ObjectID(data[1])) : this.genPlaylistView(parseInt(data[2], 10)));
 
         this.bot.editMessageText(view.text, {
-            chat_id: msg.message.chat.id,
-            message_id: msg.message.message_id,
+            chat_id: query.message.chat.id,
+            message_id: query.message.message_id,
             reply_markup: { inline_keyboard: view.button }
         });
     }
 
-    private async listInfoCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message) return;
+    private async listInfoCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message) return;
 
         const view = await this.genListInfoView(new ObjectID(data[1]));
         const options: EditMessageTextOptions = {
-            chat_id: msg.message.chat.id,
-            message_id: msg.message.message_id,
+            chat_id: query.message.chat.id,
+            message_id: query.message.message_id,
             reply_markup: { inline_keyboard: view.button }
         };
 
         this.bot.editMessageText(view.text, options);
     }
 
-    private async listCreateCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message || !data[1]) return;
-        const user = await this.getUser(msg.from.id);
+    private async listCreateCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message || !data[1]) return;
+        const user = await this.getUser(query.from.id);
         if (!user || !user._id.equals(new ObjectID(data[1]))) return;
 
-        const message = await this.queueSendMessage(msg.message.chat.id, "Enter name for new playlist", {
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter name for new playlist", {
             reply_markup: {
                 force_reply: true,
                 selective: true
@@ -273,7 +273,7 @@ export class Telegram {
         if (message instanceof Error) throw message;
 
         this.bot.onReplyToMessage(message.chat.id, message.message_id, reply => {
-            if (!reply.from || reply.from.id !== msg.from.id) return;
+            if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
                 this.list.create(reply.text, user._id);
@@ -286,36 +286,40 @@ export class Telegram {
 
             this.bot.removeReplyListener(message.message_id);
         });
+
+        this.bot.answerCallbackQuery({ callback_query_id: query.id });
     }
 
-    private async listAudioAddCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message || !data[1]) return;
+    private async listAudioAddCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
-        const user = await this.getUser(msg.from.id);
+        const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id)) return;
 
         if (data[2] === "done") {
-            this.audioAddSession.delete(msg.message.chat.id);
+            this.audioAddSession.delete(query.message.chat.id);
             this.bot.editMessageText(
                 "Now this list have " + list.audio.length + " sounds!",
-                { chat_id: msg.message.chat.id, message_id: msg.message.message_id }
+                { chat_id: query.message.chat.id, message_id: query.message.message_id }
             );
         } else {
-            this.audioAddSession.set(msg.message.chat.id, list._id);
-            this.queueSendMessage(msg.message.chat.id, "Send me audio file or sound ID you want add to list " + list.name, {
+            this.audioAddSession.set(query.message.chat.id, list._id);
+            this.queueSendMessage(query.message.chat.id, "Send me audio file or sound ID you want add to list " + list.name, {
                 reply_markup: { inline_keyboard: [[{ text: "Done", callback_data: `ListAudioAdd ${list._id.toHexString()} done` }]] }
             });
+
+            this.bot.answerCallbackQuery({ callback_query_id: query.id });
         }
     }
 
-    private async listAudioDeleteCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message || data.length < 3) return;
+    private async listAudioDeleteCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message || data.length < 3) return;
 
         if (data[3]) {
             this.list.delAudio(new ObjectID(data[1]), new ObjectID(data[2]));
             this.bot.editMessageReplyMarkup(
                 { inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] },
-                { chat_id: msg.message.chat.id, message_id: msg.message.message_id }
+                { chat_id: query.message.chat.id, message_id: query.message.message_id }
             );
         } else {
             const audioID = new ObjectID(data[2]);
@@ -323,14 +327,16 @@ export class Telegram {
             const audio = await this.audio.get(audioID);
             if (!list || !audio || !list.audio.find(id => id.equals(audioID))) return;
 
-            this.bot.sendMessage(msg.message.chat.id, `Are you sure delete ${audio.title} from list ${list.name}?`, {
+            this.bot.sendMessage(query.message.chat.id, `Are you sure delete ${audio.title} from list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` }]] }
             });
+
+            this.bot.answerCallbackQuery({ callback_query_id: query.id });
         }
     }
 
-    private async listAudioCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message || data.length < 3) return;
+    private async listAudioCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message || data.length < 3) return;
 
         const view = await this.genAudioListView(new ObjectID(data[2]), parseInt(data[3], 10) || 0, data[1] === "delete");
 
@@ -338,25 +344,25 @@ export class Telegram {
 
         if (view.button) {
             this.bot.editMessageText(view.text, {
-                chat_id: msg.message.chat.id,
-                message_id: msg.message.message_id,
+                chat_id: query.message.chat.id,
+                message_id: query.message.message_id,
                 reply_markup: { inline_keyboard: view.button }
             });
         } else {
             this.bot.editMessageText(view.text, {
-                chat_id: msg.message.chat.id,
-                message_id: msg.message.message_id
+                chat_id: query.message.chat.id,
+                message_id: query.message.message_id
             });
         }
     }
 
-    private async listRenameCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message || !data[1]) return;
+    private async listRenameCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
-        const user = await this.getUser(msg.from.id);
+        const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id)) return;
 
-        const message = await this.queueSendMessage(msg.message.chat.id, "Enter new name", {
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter new name", {
             reply_markup: {
                 force_reply: true,
                 selective: true,
@@ -366,7 +372,7 @@ export class Telegram {
         if (message instanceof Error) throw message;
 
         this.bot.onReplyToMessage(message.chat.id, message.message_id, reply => {
-            if (!reply.from || reply.from.id !== msg.from.id) return;
+            if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
                 this.list.rename(list._id, reply.text);
@@ -377,26 +383,29 @@ export class Telegram {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
+            this.bot.answerCallbackQuery({ callback_query_id: query.id });
             this.bot.removeReplyListener(message.message_id);
         });
     }
 
-    private async listDeleteCallback(msg: CallbackQuery, data: string[]) {
-        if (!msg.message || !data[1]) return;
+    private async listDeleteCallback(query: CallbackQuery, data: string[]) {
+        if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
-        const user = await this.getUser(msg.from.id);
+        const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id)) return;
 
         if (data[2]) {
             this.list.delete(new ObjectID(data[1]));
             this.bot.editMessageReplyMarkup(
                 { inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] },
-                { chat_id: msg.message.chat.id, message_id: msg.message.message_id }
+                { chat_id: query.message.chat.id, message_id: query.message.message_id }
             );
         } else {
-            this.bot.sendMessage(msg.message.chat.id, `Are you sure delete list ${list.name}?`, {
+            this.bot.sendMessage(query.message.chat.id, `Are you sure delete list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListDelete ${data[1]} y` }]] }
             });
+
+            this.bot.answerCallbackQuery({ callback_query_id: query.id });
         }
     }
 
