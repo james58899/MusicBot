@@ -39,7 +39,7 @@ class AudioManager {
     async add(sender, source, metadata = {}) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        let exist = await this.checkExist(source);
+        let exist = await this.search({ source }).next();
         if (exist)
             return exist;
         const info = await PromiseUtils_1.retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
@@ -54,7 +54,7 @@ class AudioManager {
         if (duration > this.config.length)
             throw exports.ERR_MAX_LENGTH;
         const hash = crypto_1.createHash("md5").update(title + artist + duration + size).digest("hex");
-        exist = await this.checkExist(hash);
+        exist = await this.search({ hash }).next();
         if (exist)
             return exist;
         const audio = (await this.database.insertOne({
@@ -93,8 +93,8 @@ class AudioManager {
         if (!audio)
             return;
         const file = this.getCachePath(audio);
-        if (fs_1.existsSync(file))
-            fs_2.promises.unlink(file);
+        if (fs_2.existsSync(file))
+            fs_1.promises.unlink(file);
         return this.database.deleteOne({ _id: id });
     }
     get(id) {
@@ -109,7 +109,7 @@ class AudioManager {
     }
     async getFile(audio) {
         const path = this.getCachePath(audio);
-        return await util_1.promisify(fs_1.exists)(path) ? path : false;
+        return await util_1.promisify(fs_2.exists)(path) ? path : false;
     }
     checkCache(deep = false) {
         if (deep)
@@ -117,7 +117,7 @@ class AudioManager {
         return new Promise((done, reject) => {
             this.search().forEach(async (audio) => {
                 const file = this.getCachePath(audio);
-                if (!await util_1.promisify(fs_1.exists)(file)) {
+                if (!await util_1.promisify(fs_2.exists)(file)) {
                     if (!audio.source) {
                         this.delete(audio._id);
                         return;
@@ -153,11 +153,6 @@ class AudioManager {
             }, reject);
             done();
         });
-    }
-    checkExist(source, hash) {
-        if (!this.database)
-            throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.findOne({ $or: [{ source }, { hash }] });
     }
     getCachePath(audio) {
         return path_1.resolve(this.config.save, audio.hash + ".ogg");

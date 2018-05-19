@@ -91,7 +91,6 @@ export class AudioManager {
         }
     }
 
-    // TODO
     public edit(id: ObjectID, data: IAudioData) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 

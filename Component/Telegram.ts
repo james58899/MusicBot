@@ -1,5 +1,6 @@
 import { ObjectID } from "bson";
 import TelegramBot, { CallbackQuery, EditMessageTextOptions, InlineKeyboardButton, Message, User } from "node-telegram-bot-api";
+import { basename } from "path";
 import Queue from "promise-queue";
 import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
@@ -570,7 +571,7 @@ export class Telegram {
         }
     }
 
-    private async processFile(msg: Message, title?: string) {
+    private async processFile(msg: Message) {
         if (!msg.from || !msg.document) return;
 
         const sender = await this.getUser(msg.from.id);
@@ -582,32 +583,33 @@ export class Telegram {
 
         const source = "tg://" + msg.document.file_id;
         const replyMessage = await this.sendProcessing(msg);
+        let audio;
 
         if (replyMessage instanceof Error) throw replyMessage;
 
         try {
-            const audio = await this.audio.add(sender._id, source, { title });
-
-            if (audio) this.processDone(replyMessage, audio); else this.sendError(replyMessage, "failed");
+            audio = await this.audio.add(sender._id, source);
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
                 try {
-                    title = await retry(() => this.sendNeedTitle(msg), 3);
+                    const title = await retry(() => this.sendNeedTitle(msg, msg.document!.file_name), 3);
+                    audio = await this.audio.add(sender._id, source, { title });
                 } catch (error) {
-                    return;
+                    this.sendError(replyMessage, "Failed to process the file:" + error.message);
                 }
-
-                this.processFile(msg, title);
             } else {
                 this.sendError(replyMessage, "Failed to process the file:" + error.message);
             }
         }
+
+        if (audio) this.processDone(replyMessage, audio);
     }
 
-    private async processLink(msg: Message, link: string, title?: string) {
+    private async processLink(msg: Message, link: string) {
         if (msg.from == null) return;
 
         const sender = await this.getUser(msg.from.id);
+        let audio;
 
         if (!sender) {
             this.sendError(msg, ERR_NOT_REGISTER);
@@ -615,21 +617,21 @@ export class Telegram {
         }
 
         try {
-            const audio = await this.audio.add(sender._id, link);
-            if (audio) this.processDone(msg, audio);
+            audio = await this.audio.add(sender._id, link);
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
                 try {
-                    title = await retry(() => this.sendNeedTitle(msg), 3);
+                    const title = await retry(() => this.sendNeedTitle(msg, basename(link)), 3);
+                    audio = await this.audio.add(sender._id, link, { title });
                 } catch (error) {
-                    return;
+                    this.sendError(msg, `Failed to process the link ${link}: ${error.message}`);
                 }
-
-                this.processLink(msg, link, title);
             } else {
                 this.sendError(msg, `Failed to process the link ${link}: ${error.message}`);
             }
         }
+
+        if (audio) this.processDone(msg, audio);
     }
 
     private async sendProcessing(msg: Message) {
@@ -655,31 +657,47 @@ export class Telegram {
         }
     }
 
-    private async sendNeedTitle(msg: Message): Promise<string> {
+    private async sendNeedTitle(msg: Message, filename?: string): Promise<string> {
+        if (filename) filename = filename.replace(/\.\w+$/i, "");
         const needTitle = await this.queueSendMessage(msg.chat.id, "The music doesn't have a title.\nPlease add one for it!", {
             reply_markup: {
                 force_reply: true,
+                inline_keyboard: (filename) ? [[{ text: "Use filename", callback_data: `setTitle/${msg.message_id}/${filename}` }]] : undefined,
                 selective: true,
             },
             reply_to_message_id: msg.message_id
         }) as Message;
 
         return new Promise<string>((resolve, reject) => {
+            const callbackListener = (query: CallbackQuery) => {
+                if (query.data) {
+                    const data = query.data.split("/");
+                    if (!query.message || data.length !== 3 || data[0] !== "setTitle" || parseInt(data[1], 10) !== msg.message_id) return;
+
+                    resolve(data[2]);
+
+                    this.bot.deleteMessage(query.message.chat.id, String(query.message.message_id));
+                    this.bot.removeReplyListener(needTitle.message_id);
+                    this.bot.removeListener("callback_query", callbackListener);
+                }
+            };
+
+            this.bot.on("callback_query", callbackListener);
+
             this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, reply => {
                 // If not origin sender
                 if (!reply.from || !msg.from || reply.from.id !== msg.from.id) return;
 
                 if (reply.text) {
+                    this.queueSendMessage(reply.chat.id, "Title set", { reply_to_message_id: reply.message_id });
                     resolve(reply.text);
                 } else {
-                    this.queueSendMessage(msg.chat.id, "It doesn't look like a title.", {
-                        reply_to_message_id: reply.message_id,
-                    }).then(() => {
-                        reject(ERR_NOT_VALID_TITLE);
-                    });
+                    this.queueSendMessage(reply.chat.id, "It doesn't look like a title.", { reply_to_message_id: reply.message_id, });
+                    reject(ERR_NOT_VALID_TITLE);
                 }
 
                 this.bot.removeReplyListener(needTitle.message_id);
+                this.bot.removeListener("callback_query", callbackListener);
             });
         });
     }
