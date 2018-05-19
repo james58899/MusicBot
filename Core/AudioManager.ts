@@ -1,14 +1,14 @@
 import { createHash } from "crypto";
-import { exists, existsSync } from "fs";
 import { promises as fsp } from "fs";
-import { Collection, ObjectID } from "mongodb";
+import { exists, existsSync } from "fs";
+import { Collection, FilterQuery, ObjectID } from "mongodb";
 import { cpus } from "os";
 import { resolve } from "path";
 import Queue from "promise-queue";
 import { promisify } from "util";
 import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
-import { IAudioMetadata, UrlParser } from "./URLParser";
+import { UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
 import { retry } from "./Utils/PromiseUtils";
 
@@ -17,7 +17,7 @@ export const ERR_NOT_AUDIO = Error("This doesn't look like audio");
 export const ERR_MAX_LENGTH = Error("Audio length exceeds limit");
 
 export interface IAudioData {
-    _id?: ObjectID;
+    _id: ObjectID;
     title: string;
     artist?: string;
     duration: number;
@@ -53,7 +53,7 @@ export class AudioManager {
     public async add(sender: ObjectID, source: string, metadata: { title?: string, artist?: string, duration?: number, size?: number } = {}) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        let exist = await this.checkExist(source);
+        let exist = await this.search({ source }).next();
         if (exist) return exist;
 
         const info = await retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
@@ -70,7 +70,7 @@ export class AudioManager {
 
         const hash = createHash("md5").update(title + artist + duration + size).digest("hex");
 
-        exist = await this.checkExist(hash);
+        exist = await this.search({ hash }).next();
         if (exist) return exist;
 
         const audio: IAudioData = (await this.database.insertOne({
@@ -80,7 +80,7 @@ export class AudioManager {
             sender,
             source,
             title,
-        } as IAudioData)).ops[0];
+        })).ops[0];
 
         try {
             await retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), audio.hash, audio.duration)));
@@ -91,6 +91,7 @@ export class AudioManager {
         }
     }
 
+    // TODO
     public edit(id: ObjectID, data: IAudioData) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
@@ -121,7 +122,7 @@ export class AudioManager {
         return this.database.findOne({ _id: id });
     }
 
-    public search(metadata?: IAudioMetadata) {
+    public search(metadata?: FilterQuery<IAudioData>) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.find(metadata);
@@ -176,12 +177,6 @@ export class AudioManager {
 
             done();
         });
-    }
-
-    public checkExist(source?: string, hash?: string) {
-        if (!this.database) throw ERR_DB_NOT_INIT;
-
-        return this.database.findOne({ $or: [{ source }, { hash }] });
     }
 
     private getCachePath(audio: IAudioData) {

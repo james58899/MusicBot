@@ -93,7 +93,7 @@ export class Telegram {
             if (!session || !match) return;
 
             const audio = await this.audio.get(new ObjectID(match[1]));
-            if (!audio || !audio._id) {
+            if (!audio) {
                 this.queueSendMessage(msg.chat.id, "Sound ID not found in database", { reply_to_message_id: msg.message_id });
                 return;
             }
@@ -227,7 +227,7 @@ export class Telegram {
         if (!msg.message || !data[1]) return;
 
         const audio = await this.audio.get(new ObjectID(data[1]));
-        if (!audio || !audio._id) return;
+        if (!audio) return;
 
         this.bot.editMessageText(`ID: ${audio._id}\nTitle: ${audio.title}`, { chat_id: msg.message.chat.id, message_id: msg.message.message_id });
     }
@@ -531,14 +531,14 @@ export class Telegram {
             return;
         }
 
-        const file = "tg://" + msg.audio.file_id;
+        const source = "tg://" + msg.audio.file_id;
         const replyMessage = await this.sendProcessing(msg);
 
         if (replyMessage instanceof Error) throw replyMessage;
 
         if (msg.audio && msg.audio.title) {
             try {
-                const audio = await this.audio.add(sender._id, file, {
+                const audio = await this.audio.add(sender._id, source, {
                     artist: msg.audio.performer,
                     duration: msg.audio.duration,
                     title: msg.audio.title
@@ -549,7 +549,7 @@ export class Telegram {
                 this.sendError(replyMessage, "An error occured when adding song：" + e.message);
             }
         } else {
-            let audio = await this.audio.checkExist(file);
+            let audio = await this.audio.search({ source }).next();
 
             if (!audio) {
                 let title;
@@ -559,7 +559,7 @@ export class Telegram {
                     return;
                 }
 
-                audio = await this.audio.add(sender._id, file, {
+                audio = await this.audio.add(sender._id, source, {
                     artist: msg.audio.performer,
                     duration: msg.audio.duration,
                     title
@@ -686,9 +686,7 @@ export class Telegram {
 
     private async processDone(msg: Message, audio: IAudioData) {
         const session = this.audioAddSession.get(msg.chat.id);
-        if (session && audio._id) {
-            this.list.addAudio(session, audio._id);
-        }
+        if (session) this.list.addAudio(session, audio._id);
 
         const message = `ID: ${audio._id}\nTitle: ${audio.title}${(session) ? "\n\nAdded to list!" : ""}`;
         if (msg.from && msg.from.id === this.me.id) {
