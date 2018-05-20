@@ -247,8 +247,9 @@ export class Telegram {
 
     private async listInfoCallback(query: CallbackQuery, data: string[]) {
         if (!query.message) return;
-
-        const view = await this.genListInfoView(new ObjectID(data[1]));
+        const user = await this.getUser(query.from.id);
+        if (!user) return;
+        const view = await this.genListInfoView(new ObjectID(data[1]), user._id);
         const options: EditMessageTextOptions = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
@@ -464,16 +465,16 @@ export class Telegram {
         };
     }
 
-    private async genListInfoView(listID: ObjectID) {
+    private async genListInfoView(listID: ObjectID, user: ObjectID) {
         const list = await this.list.get(listID);
         const button: InlineKeyboardButton[][] = new Array(new Array(), new Array());
 
         if (!list) throw ERR_LIST_NOT_FOUND;
-        button[0].push({ text: "Add sounds", callback_data: `ListAudioAdd ${listID.toHexString()}` });
+        if (list.owner.equals(user)) button[0].push({ text: "Add sounds", callback_data: `ListAudioAdd ${listID.toHexString()}` });
         button[0].push({ text: "Show sounds", callback_data: `ListAudio show ${listID.toHexString()}` });
-        button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
-        button[1].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
-        button[1].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
+        if (list.owner.equals(user)) button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
+        if (list.owner.equals(user)) button[1].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
+        if (list.owner.equals(user)) button[1].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
 
         return {
             button,
