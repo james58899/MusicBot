@@ -9,6 +9,7 @@ const path_1 = require("path");
 const promise_queue_1 = __importDefault(require("promise-queue"));
 const AudioManager_1 = require("../Core/AudioManager");
 const PromiseUtils_1 = require("../Core/Utils/PromiseUtils");
+const url_1 = require("url");
 exports.BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
 const ERR_NOT_VALID_TITLE = Error("Not valid title");
@@ -538,6 +539,7 @@ class Telegram {
     async processLink(msg, link) {
         if (msg.from == null)
             return;
+        link = encodeURI(decodeURIComponent(url_1.parse(link).href));
         const sender = await this.getUser(msg.from.id);
         let audio;
         if (!sender) {
@@ -550,7 +552,7 @@ class Telegram {
         catch (error) {
             if (error === AudioManager_1.ERR_MISSING_TITLE) {
                 try {
-                    const title = await PromiseUtils_1.retry(() => this.sendNeedTitle(msg, path_1.basename(link)), 3);
+                    const title = await PromiseUtils_1.retry(() => this.sendNeedTitle(msg, path_1.basename(url_1.parse(decodeURI(link)).pathname)), 3);
                     audio = await this.audio.add(sender._id, link, { title });
                 }
                 catch (error) {
@@ -599,15 +601,15 @@ class Telegram {
         });
         return new Promise((resolve, reject) => {
             const callbackListener = (query) => {
-                if (query.data) {
-                    const data = query.data.split("/");
-                    if (!query.message || data.length !== 3 || data[0] !== "setTitle" || parseInt(data[1], 10) !== msg.message_id)
-                        return;
-                    resolve(data[2]);
-                    this.bot.deleteMessage(query.message.chat.id, String(query.message.message_id));
-                    this.bot.removeReplyListener(needTitle.message_id);
-                    this.bot.removeListener("callback_query", callbackListener);
-                }
+                if (!query.data || !msg.from || query.from.id !== msg.from.id)
+                    return;
+                const data = query.data.split("/");
+                if (data.length !== 3 || data[0] !== "setTitle" || parseInt(data[1], 10) !== msg.message_id)
+                    return;
+                resolve(data[2]);
+                this.bot.deleteMessage(needTitle.chat.id, String(needTitle.message_id));
+                this.bot.removeReplyListener(needTitle.message_id);
+                this.bot.removeListener("callback_query", callbackListener);
             };
             this.bot.on("callback_query", callbackListener);
             this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, reply => {

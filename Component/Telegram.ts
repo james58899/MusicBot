@@ -7,6 +7,7 @@ import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManage
 import { ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
 import { retry, sleep } from "../Core/Utils/PromiseUtils";
+import { parse } from "url";
 
 export const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
@@ -617,6 +618,8 @@ export class Telegram {
     private async processLink(msg: Message, link: string) {
         if (msg.from == null) return;
 
+        link = encodeURI(decodeURIComponent(parse(link).href!));
+
         const sender = await this.getUser(msg.from.id);
         let audio;
 
@@ -630,7 +633,7 @@ export class Telegram {
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
                 try {
-                    const title = await retry(() => this.sendNeedTitle(msg, basename(link)), 3);
+                    const title = await retry(() => this.sendNeedTitle(msg, basename(parse(decodeURI(link)).pathname!)), 3);
                     audio = await this.audio.add(sender._id, link, { title });
                 } catch (error) {
                     this.sendError(msg, `Failed to process the link ${link}: ${error.message}`);
@@ -679,16 +682,16 @@ export class Telegram {
 
         return new Promise<string>((resolve, reject) => {
             const callbackListener = (query: CallbackQuery) => {
-                if (query.data) {
-                    const data = query.data.split("/");
-                    if (!query.message || data.length !== 3 || data[0] !== "setTitle" || parseInt(data[1], 10) !== msg.message_id) return;
+                if (!query.data || !msg.from || query.from.id !== msg.from.id) return;
 
-                    resolve(data[2]);
+                const data = query.data.split("/");
+                if (data.length !== 3 || data[0] !== "setTitle" || parseInt(data[1], 10) !== msg.message_id) return;
 
-                    this.bot.deleteMessage(query.message.chat.id, String(query.message.message_id));
-                    this.bot.removeReplyListener(needTitle.message_id);
-                    this.bot.removeListener("callback_query", callbackListener);
-                }
+                resolve(data[2]);
+
+                this.bot.deleteMessage(needTitle.chat.id, String(needTitle.message_id));
+                this.bot.removeReplyListener(needTitle.message_id);
+                this.bot.removeListener("callback_query", callbackListener);
             };
 
             this.bot.on("callback_query", callbackListener);
