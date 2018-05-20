@@ -13,7 +13,7 @@ class Encoder {
     constructor(config) {
         this.config = config.audio;
         try {
-            child_process_1.execFileSync("ffmpeg", { stdio: "ignore" });
+            child_process_1.execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
         }
         catch (err) {
             this.ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
