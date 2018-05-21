@@ -90,7 +90,7 @@ export class Telegram {
         });
 
         // Audio ID
-        this.bot.onText(/([0-9a-f]{24})/i, async (msg, match) => {
+        this.bot.onText(/^([0-9a-f]{24})$/i, async (msg, match) => {
             const session = this.audioAddSession.get(msg.chat.id);
             if (!session || !match) return;
 
