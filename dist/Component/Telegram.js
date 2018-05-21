@@ -7,9 +7,9 @@ const bson_1 = require("bson");
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const path_1 = require("path");
 const promise_queue_1 = __importDefault(require("promise-queue"));
+const url_1 = require("url");
 const AudioManager_1 = require("../Core/AudioManager");
 const PromiseUtils_1 = require("../Core/Utils/PromiseUtils");
-const url_1 = require("url");
 exports.BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
 const ERR_NOT_VALID_TITLE = Error("Not valid title");
@@ -201,7 +201,10 @@ class Telegram {
     async listInfoCallback(query, data) {
         if (!query.message)
             return;
-        const view = await this.genListInfoView(new bson_1.ObjectID(data[1]));
+        const user = await this.getUser(query.from.id);
+        if (!user)
+            return;
+        const view = await this.genListInfoView(new bson_1.ObjectID(data[1]), user._id);
         const options = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
@@ -395,16 +398,20 @@ class Telegram {
             text: "Playlist:\n" + array.map((item, index) => `${start + index + 1}. ${item.name} (${item.audio.length} sounds)`).join("\n")
         };
     }
-    async genListInfoView(listID) {
+    async genListInfoView(listID, user) {
         const list = await this.list.get(listID);
         const button = new Array(new Array(), new Array());
         if (!list)
             throw ERR_LIST_NOT_FOUND;
-        button[0].push({ text: "Add sounds", callback_data: `ListAudioAdd ${listID.toHexString()}` });
+        if (list.owner.equals(user))
+            button[0].push({ text: "Add sounds", callback_data: `ListAudioAdd ${listID.toHexString()}` });
         button[0].push({ text: "Show sounds", callback_data: `ListAudio show ${listID.toHexString()}` });
-        button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
-        button[1].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
-        button[1].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
+        if (list.owner.equals(user))
+            button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
+        if (list.owner.equals(user))
+            button[1].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
+        if (list.owner.equals(user))
+            button[1].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
         return {
             button,
             text: `ID: ${list._id.toHexString()}\nName: ${list.name}\nOwner: ${list.owner}\nSounds: ${list.audio.length}`

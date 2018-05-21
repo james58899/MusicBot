@@ -8,7 +8,6 @@ import { IUserData, UserManager } from "../Core/UserManager";
 
 export const BIND_TYPE = "discord";
 const ERR_MISSING_TOKEN = Error("Discord token missing");
-const ERR_CAN_NOT_GET_LIST = Error("Can not get playlist from database");
 const ERR_CAN_NOT_GET_AUDIO = Error("Can not get audio from database");
 const ERR_MISSING_AUDIO_FILE = Error("Audio missing in cache");
 const MESSAGE_HI = "Hi!\nWant some music?";
@@ -91,6 +90,9 @@ export class Discord {
             description: "Register or bind account",
             usage: "[token]"
         });
+        this.bot.registerCommand("bind", this.commandBind.bind(this), {
+            description: "Generate bind token"
+        });
     }
 
     private async commandHi(msg: Message) {
@@ -105,9 +107,8 @@ export class Discord {
     }
 
     private async commandPlay(msg: Message, args: string[]) {
-        const channel = msg.channel as TextChannel;
         const list = await this.list.get(new ObjectID(args[0]));
-        const voice = this.bot.voiceConnections.get(channel.guild.id);
+        const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
         const mode = (args[1]) ? ((args[1].toLocaleLowerCase() === "random") ? PlayMode.random : PlayMode.normal) : PlayMode.normal;
 
         if (!list) {
@@ -145,8 +146,14 @@ export class Discord {
                 if (status.index >= status.list.audio.length) {
                     // refresh list
                     const newList = await this.list.get(status.list._id);
-                    if (newList) status.list = newList; else throw ERR_CAN_NOT_GET_LIST;
-                    if (status.mode === PlayMode.random) shuffle(newList.audio);
+                    if (newList) {
+                        status.list = newList;
+                    } else {
+                        this.playing.delete(voice.id);
+                        return;
+                    }
+
+                    if (status.mode === PlayMode.random) shuffle(status.list.audio);
                     status.index = 0;
                 }
 
@@ -189,6 +196,17 @@ export class Discord {
         }
 
         msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
+    }
+
+    private async commandBind(msg: Message) {
+        const user = await this.user.get(BIND_TYPE, msg.author.id);
+
+        if (!user) {
+            this.bot.createMessage(msg.channel.id, "You are not register!");
+            return;
+        }
+
+        this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`);
     }
 
     private async procseeFile(msg: Message) {

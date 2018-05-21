@@ -2,12 +2,12 @@ import { ObjectID } from "bson";
 import TelegramBot, { CallbackQuery, EditMessageTextOptions, InlineKeyboardButton, Message, User } from "node-telegram-bot-api";
 import { basename } from "path";
 import Queue from "promise-queue";
+import { parse } from "url";
 import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
 import { ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
 import { retry, sleep } from "../Core/Utils/PromiseUtils";
-import { parse } from "url";
 
 export const BIND_TYPE = "telegram";
 const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
