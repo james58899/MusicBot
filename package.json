@@ -23,7 +23,7 @@
     "@types/bson": "^1.0.8",
     "@types/fluent-ffmpeg": "^2.1.6",
     "@types/mongodb": "^3.0.18",
-    "@types/node": "^10.1.0",
+    "@types/node": "^10.1.2",
     "@types/node-telegram-bot-api": "^0.28.3",
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^0.0.28",
