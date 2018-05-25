@@ -122,7 +122,9 @@ export class Discord {
         }
 
         // Init playing status
+        let isPlaying = false;
         if (mode === PlayMode.random) shuffle(list.audio);
+        if (this.playing.has(voice.id)) isPlaying = true;
         this.playing.set(voice.id, {
             index: 0,
             list,
@@ -131,7 +133,7 @@ export class Discord {
         });
 
         // Start play
-        if (!voice.playing) {
+        if (!isPlaying) {
             this.play(voice, this.playing.get(voice.id)!);
             voice.on("end", async () => {
                 // check status

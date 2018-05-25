@@ -95,15 +95,18 @@ class Discord {
             msg.channel.createMessage(MESSAGE_NOT_IN_VOICE);
             return;
         }
+        let isPlaying = false;
         if (mode === PlayMode.random)
             shuffle_array_1.default(list.audio);
+        if (this.playing.has(voice.id))
+            isPlaying = true;
         this.playing.set(voice.id, {
             index: 0,
             list,
             mode,
             statusMessage: await this.bot.createMessage(msg.channel.id, await this.genPlayingMessage(list, 0))
         });
-        if (!voice.playing) {
+        if (!isPlaying) {
             this.play(voice, this.playing.get(voice.id));
             voice.on("end", async () => {
                 const status = this.playing.get(voice.id);
