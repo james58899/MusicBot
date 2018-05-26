@@ -179,6 +179,7 @@ export class Discord {
 
         if (voice) {
             this.bot.leaveVoiceChannel(voice.channelID);
+            this.playing.delete(voice.id);
         } else {
             msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
         }
