@@ -20,7 +20,6 @@
     "ytdl-core": "^0.20.4"
   },
   "devDependencies": {
-    "@types/bson": "^1.0.8",
     "@types/fluent-ffmpeg": "^2.1.6",
     "@types/mongodb": "^3.0.18",
     "@types/node": "^10.1.2",

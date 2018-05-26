@@ -1,4 +1,4 @@
-import { ObjectID } from "bson";
+import { ObjectID } from "mongodb";
 import TelegramBot, { CallbackQuery, EditMessageTextOptions, InlineKeyboardButton, Message, User } from "node-telegram-bot-api";
 import { basename } from "path";
 import Queue from "promise-queue";

@@ -62,7 +62,7 @@
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/@ffprobe-installer/win32-x64/-/win32-x64-4.0.2.tgz#3e18e27008250693bceb300a75d277e8e1ad51fa"
 
-"@types/bson@*", "@types/bson@^1.0.8":
+"@types/bson@*":
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/@types/bson/-/bson-1.0.8.tgz#6ad272b3f049e9598ec33aed09cf56d8946b75f1"
   dependencies:

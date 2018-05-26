@@ -1,5 +1,5 @@
-import { ObjectID } from "bson";
 import { CommandClient, Message, MessageContent, TextChannel, VoiceConnection } from "eris";
+import { ObjectID } from "mongodb";
 import shuffle from "shuffle-array";
 import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, ERR_NOT_AUDIO, IAudioData } from "../Core/AudioManager";

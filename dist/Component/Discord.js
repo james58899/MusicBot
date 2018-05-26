@@ -3,8 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const bson_1 = require("bson");
 const eris_1 = require("eris");
+const mongodb_1 = require("mongodb");
 const shuffle_array_1 = __importDefault(require("shuffle-array"));
 const AudioManager_1 = require("../Core/AudioManager");
 exports.BIND_TYPE = "discord";
@@ -84,7 +84,7 @@ class Discord {
         }
     }
     async commandPlay(msg, args) {
-        const list = await this.list.get(new bson_1.ObjectID(args[0]));
+        const list = await this.list.get(new mongodb_1.ObjectID(args[0]));
         const voice = this.bot.voiceConnections.get(msg.channel.guild.id);
         const mode = (args[1]) ? ((args[1].toLocaleLowerCase() === "random") ? PlayMode.random : PlayMode.normal) : PlayMode.normal;
         if (!list) {

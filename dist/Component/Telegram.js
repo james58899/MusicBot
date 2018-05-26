@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const bson_1 = require("bson");
+const mongodb_1 = require("mongodb");
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const path_1 = require("path");
 const promise_queue_1 = __importDefault(require("promise-queue"));
@@ -72,7 +72,7 @@ class Telegram {
             const session = this.audioAddSession.get(msg.chat.id);
             if (!session || !match)
                 return;
-            const audio = await this.audio.get(new bson_1.ObjectID(match[1]));
+            const audio = await this.audio.get(new mongodb_1.ObjectID(match[1]));
             if (!audio) {
                 this.queueSendMessage(msg.chat.id, "Sound ID not found in database", { reply_to_message_id: msg.message_id });
                 return;
@@ -183,7 +183,7 @@ class Telegram {
     async audioInfoCallback(query, data) {
         if (!query.message || !data[1])
             return;
-        const audio = await this.audio.get(new bson_1.ObjectID(data[1]));
+        const audio = await this.audio.get(new mongodb_1.ObjectID(data[1]));
         if (!audio)
             return;
         this.bot.editMessageText(`ID: ${audio._id}\nTitle: ${audio.title}`, { chat_id: query.message.chat.id, message_id: query.message.message_id });
@@ -191,7 +191,7 @@ class Telegram {
     async playlistCallback(query, data) {
         if (!query.message)
             return;
-        const view = await ((data[1]) ? this.genPlaylistView(parseInt(data[2], 10), new bson_1.ObjectID(data[1])) : this.genPlaylistView(parseInt(data[2], 10)));
+        const view = await ((data[1]) ? this.genPlaylistView(parseInt(data[2], 10), new mongodb_1.ObjectID(data[1])) : this.genPlaylistView(parseInt(data[2], 10)));
         this.bot.editMessageText(view.text, {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
@@ -204,7 +204,7 @@ class Telegram {
         const user = await this.getUser(query.from.id);
         if (!user)
             return;
-        const view = await this.genListInfoView(new bson_1.ObjectID(data[1]), user._id);
+        const view = await this.genListInfoView(new mongodb_1.ObjectID(data[1]), user._id);
         const options = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
@@ -216,7 +216,7 @@ class Telegram {
         if (!query.message || !data[1])
             return;
         const user = await this.getUser(query.from.id);
-        if (!user || !user._id.equals(new bson_1.ObjectID(data[1])))
+        if (!user || !user._id.equals(new mongodb_1.ObjectID(data[1])))
             return;
         const message = await this.queueSendMessage(query.message.chat.id, "Enter name for new playlist", {
             reply_markup: {
@@ -245,7 +245,7 @@ class Telegram {
     async listAudioAddCallback(query, data) {
         if (!query.message || !data[1])
             return;
-        const list = await this.list.get(new bson_1.ObjectID(data[1]));
+        const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id))
             return;
@@ -265,12 +265,12 @@ class Telegram {
         if (!query.message || data.length < 3)
             return;
         if (data[3]) {
-            this.list.delAudio(new bson_1.ObjectID(data[1]), new bson_1.ObjectID(data[2]));
+            this.list.delAudio(new mongodb_1.ObjectID(data[1]), new mongodb_1.ObjectID(data[2]));
             this.bot.editMessageReplyMarkup({ inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] }, { chat_id: query.message.chat.id, message_id: query.message.message_id });
         }
         else {
-            const audioID = new bson_1.ObjectID(data[2]);
-            const list = await this.list.get(new bson_1.ObjectID(data[1]));
+            const audioID = new mongodb_1.ObjectID(data[2]);
+            const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
             const audio = await this.audio.get(audioID);
             if (!list || !audio || !list.audio.find(id => id.equals(audioID)))
                 return;
@@ -283,7 +283,7 @@ class Telegram {
     async listAudioCallback(query, data) {
         if (!query.message || data.length < 3)
             return;
-        const view = await this.genAudioListView(new bson_1.ObjectID(data[2]), parseInt(data[3], 10) || 0, data[1] === "delete");
+        const view = await this.genAudioListView(new mongodb_1.ObjectID(data[2]), parseInt(data[3], 10) || 0, data[1] === "delete");
         if (!view)
             return;
         if (view.button) {
@@ -303,7 +303,7 @@ class Telegram {
     async listRenameCallback(query, data) {
         if (!query.message || !data[1])
             return;
-        const list = await this.list.get(new bson_1.ObjectID(data[1]));
+        const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id))
             return;
@@ -334,12 +334,12 @@ class Telegram {
     async listDeleteCallback(query, data) {
         if (!query.message || !data[1])
             return;
-        const list = await this.list.get(new bson_1.ObjectID(data[1]));
+        const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id))
             return;
         if (data[2]) {
-            this.list.delete(new bson_1.ObjectID(data[1]));
+            this.list.delete(new mongodb_1.ObjectID(data[1]));
             this.bot.editMessageReplyMarkup({ inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] }, { chat_id: query.message.chat.id, message_id: query.message.message_id });
         }
         else {
