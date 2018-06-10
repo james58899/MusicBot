@@ -138,7 +138,7 @@ export class Telegram {
                     await this.listDeleteCallback(query, data);
                     break;
                 default:
-                    this.bot.answerCallbackQuery({ callback_query_id: query.id });
+                    this.bot.answerCallbackQuery(query.id);
             }
         });
 
@@ -289,7 +289,7 @@ export class Telegram {
             this.bot.removeReplyListener(message.message_id);
         });
 
-        this.bot.answerCallbackQuery({ callback_query_id: query.id });
+        this.bot.answerCallbackQuery(query.id);
     }
 
     private async listAudioAddCallback(query: CallbackQuery, data: string[]) {
@@ -310,7 +310,7 @@ export class Telegram {
                 reply_markup: { inline_keyboard: [[{ text: "Done", callback_data: `ListAudioAdd ${list._id.toHexString()} done` }]] }
             });
 
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
+            this.bot.answerCallbackQuery(query.id);
         }
     }
 
@@ -333,7 +333,7 @@ export class Telegram {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` }]] }
             });
 
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
+            this.bot.answerCallbackQuery(query.id);
         }
     }
 
@@ -385,7 +385,7 @@ export class Telegram {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
+            this.bot.answerCallbackQuery(query.id);
             this.bot.removeReplyListener(message.message_id);
         });
     }
@@ -407,7 +407,7 @@ export class Telegram {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListDelete ${data[1]} y` }]] }
             });
 
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
+            this.bot.answerCallbackQuery(query.id);
         }
     }
 
