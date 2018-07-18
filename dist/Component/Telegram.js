@@ -113,7 +113,7 @@ class Telegram {
                     await this.listDeleteCallback(query, data);
                     break;
                 default:
-                    this.bot.answerCallbackQuery({ callback_query_id: query.id });
+                    this.bot.answerCallbackQuery(query.id);
             }
         });
         this.bot.on("error", err => console.error(err));
@@ -240,7 +240,7 @@ class Telegram {
             }
             this.bot.removeReplyListener(message.message_id);
         });
-        this.bot.answerCallbackQuery({ callback_query_id: query.id });
+        this.bot.answerCallbackQuery(query.id);
     }
     async listAudioAddCallback(query, data) {
         if (!query.message || !data[1])
@@ -258,7 +258,7 @@ class Telegram {
             this.queueSendMessage(query.message.chat.id, "Send me audio file or sound ID you want add to list " + list.name, {
                 reply_markup: { inline_keyboard: [[{ text: "Done", callback_data: `ListAudioAdd ${list._id.toHexString()} done` }]] }
             });
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
+            this.bot.answerCallbackQuery(query.id);
         }
     }
     async listAudioDeleteCallback(query, data) {
@@ -277,7 +277,7 @@ class Telegram {
             this.bot.sendMessage(query.message.chat.id, `Are you sure delete ${audio.title} from list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` }]] }
             });
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
+            this.bot.answerCallbackQuery(query.id);
         }
     }
     async listAudioCallback(query, data) {
@@ -327,7 +327,7 @@ class Telegram {
             else {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
+            this.bot.answerCallbackQuery(query.id);
             this.bot.removeReplyListener(message.message_id);
         });
     }
@@ -346,7 +346,7 @@ class Telegram {
             this.bot.sendMessage(query.message.chat.id, `Are you sure delete list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListDelete ${data[1]} y` }]] }
             });
-            this.bot.answerCallbackQuery({ callback_query_id: query.id });
+            this.bot.answerCallbackQuery(query.id);
         }
     }
     async genPlaylistView(start = 0, user) {

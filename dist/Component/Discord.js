@@ -38,10 +38,6 @@ class Discord {
                 type: 2
             });
         });
-        this.bot.on("messageCreate", msg => {
-            if (msg.attachments.length > 0)
-                this.procseeFile(msg);
-        });
         this.registerCommand();
         this.bot.connect();
     }

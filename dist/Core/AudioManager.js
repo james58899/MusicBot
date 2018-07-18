@@ -42,7 +42,13 @@ class AudioManager {
         let exist = await this.search({ source }).next();
         if (exist)
             return exist;
-        const info = await PromiseUtils_1.retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
+        let info;
+        try {
+            info = await PromiseUtils_1.retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
+        }
+        catch (error) {
+            throw exports.ERR_NOT_AUDIO;
+        }
         const title = metadata.title || info.title;
         const artist = metadata.artist || info.artist;
         const duration = metadata.duration || info.duration;
