@@ -60,6 +60,7 @@ export class AudioManager {
         try {
             info = await retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
         } catch (error) {
+            console.error(error);
             throw ERR_NOT_AUDIO;
         }
 

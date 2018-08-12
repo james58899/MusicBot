@@ -47,6 +47,7 @@ class AudioManager {
             info = await PromiseUtils_1.retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
         }
         catch (error) {
+            console.error(error);
             throw exports.ERR_NOT_AUDIO;
         }
         const title = metadata.title || info.title;
