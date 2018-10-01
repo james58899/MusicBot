@@ -7,7 +7,6 @@
   "license": "MIT",
   "scripts": {
     "tslint": "tslint --project .",
-    "precommit": "npm run tslint",
     "build": "tsc --pretty"
   },
   "dependencies": {
@@ -38,5 +37,10 @@
     "erlpack": "github:discordapp/erlpack",
     "eventemitter3": "^3.1.0",
     "sodium-native": "^2.2.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run tslint"
+    }
   }
 }
