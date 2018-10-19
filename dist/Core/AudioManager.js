@@ -25,6 +25,7 @@ class AudioManager {
         this.config = core.config.audio;
         const encoder = new Encoder_1.Encoder(core.config);
         this.encode = encoder.encode.bind(encoder);
+        this.listManager = core.listManager;
         if (core.database.client) {
             this.database = core.database.client.collection("user");
             this.database.createIndex({ hash: 1 }, { unique: true });
@@ -99,9 +100,10 @@ class AudioManager {
         const audio = await this.get(id);
         if (!audio)
             return;
+        await this.listManager.delAudioAll(id);
         const file = this.getCachePath(audio);
-        if (fs_2.existsSync(file))
-            fs_1.promises.unlink(file);
+        if (fs_1.existsSync(file))
+            fs_2.promises.unlink(file);
         return this.database.deleteOne({ _id: id });
     }
     get(id) {
@@ -116,7 +118,7 @@ class AudioManager {
     }
     async getFile(audio) {
         const path = this.getCachePath(audio);
-        return await util_1.promisify(fs_2.exists)(path) ? path : false;
+        return await util_1.promisify(fs_1.exists)(path) ? path : false;
     }
     checkCache(deep = false) {
         if (deep)
@@ -124,7 +126,7 @@ class AudioManager {
         return new Promise((done, reject) => {
             this.search().forEach(async (audio) => {
                 const file = this.getCachePath(audio);
-                if (!await util_1.promisify(fs_2.exists)(file)) {
+                if (!await util_1.promisify(fs_1.exists)(file)) {
                     if (!audio.source) {
                         this.delete(audio._id);
                         return;
