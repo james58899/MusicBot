@@ -87,4 +87,10 @@ export class ListManager {
             { returnOriginal: false }
         )).value;
     }
+
+    public async delAudioAll(audio: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return this.database.updateMany({}, { $pull: { audio } });
+    }
 }

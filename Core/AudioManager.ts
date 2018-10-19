@@ -1,12 +1,13 @@
 import { createHash } from "crypto";
-import { promises as fsp } from "fs";
 import { exists, existsSync } from "fs";
+import { promises as fsp } from "fs";
 import { Collection, FilterQuery, ObjectID } from "mongodb";
 import { cpus } from "os";
 import { resolve } from "path";
 import Queue from "promise-queue";
 import { promisify } from "util";
 import { Core } from "..";
+import { ListManager } from "./ListManager";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
@@ -31,6 +32,7 @@ export class AudioManager {
     private config: any;
     private encode: Encoder["encode"];
     private database?: Collection<IAudioData>;
+    private listManager: ListManager;
     private metadataQueue = new Queue(cpus().length);
     private encodeQueue = new Queue(cpus().length);
 
@@ -38,6 +40,7 @@ export class AudioManager {
         this.config = core.config.audio;
         const encoder = new Encoder(core.config);
         this.encode = encoder.encode.bind(encoder);
+        this.listManager = core.listManager;
 
         if (core.database.client) {
             this.database = core.database.client.collection("user");
@@ -113,11 +116,17 @@ export class AudioManager {
     public async delete(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
+        // check audio exist
         const audio = await this.get(id);
         if (!audio) return;
 
+        // delete from all list
+        await this.listManager.delAudioAll(id);
+
+        // delete file
         const file = this.getCachePath(audio);
         if (existsSync(file)) fsp.unlink(file);
+
         return this.database.deleteOne({ _id: id });
     }
 
