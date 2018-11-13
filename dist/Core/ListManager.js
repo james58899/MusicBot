@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const MongoDB_1 = require("./MongoDB");
 class ListManager {
     constructor(core) {
+        this.audioManager = core.audioManager;
         if (core.database.client) {
             this.database = core.database.client.collection("list");
             this.database.createIndex({ owner: 1 });
@@ -62,6 +63,14 @@ class ListManager {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
         return this.database.updateMany({}, { $pull: { audio } });
+    }
+    async checkAudioExist() {
+        this.getAll().forEach(list => {
+            list.audio.forEach(async (audio) => {
+                if (!await this.audioManager.get(audio))
+                    this.delAudioAll(audio);
+            });
+        });
     }
 }
 exports.ListManager = ListManager;

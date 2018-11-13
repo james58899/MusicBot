@@ -17,11 +17,12 @@ class Core {
         this.listManager = new ListManager_1.ListManager(this);
         if (!fs_1.existsSync(path_1.resolve(this.config.audio.save)))
             fs_1.mkdirSync(path_1.resolve(this.config.audio.save));
-        this.database.on("connect", () => {
+        this.database.on("connect", async () => {
             new Telegram_1.Telegram(this);
             new Discord_1.Discord(this);
             if (process.argv.indexOf("--deep-check") !== -1) {
-                this.audioManager.checkCache(true);
+                await this.audioManager.checkCache(true);
+                this.listManager.checkAudioExist();
             }
             else {
                 this.audioManager.checkCache();
