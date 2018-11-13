@@ -18,14 +18,15 @@ export class Core {
         if (!existsSync(resolve(this.config.audio.save))) mkdirSync(resolve(this.config.audio.save));
 
         // Wait DB connect
-        this.database.on("connect", () => {
+        this.database.on("connect", async () => {
             // tslint:disable-next-line:no-unused-expression
             new Telegram(this);
             // tslint:disable-next-line:no-unused-expression
             new Discord(this);
 
             if (process.argv.indexOf("--deep-check") !== -1) {
-                this.audioManager.checkCache(true);
+                await this.audioManager.checkCache(true);
+                this.listManager.checkAudioExist();
             } else {
                 this.audioManager.checkCache();
             }

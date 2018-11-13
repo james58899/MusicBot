@@ -1,5 +1,6 @@
 import { Collection, ObjectID } from "mongodb";
 import { Core } from "..";
+import { AudioManager } from "./AudioManager";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 
 export interface IAudioList {
@@ -11,8 +12,11 @@ export interface IAudioList {
 
 export class ListManager {
     private database?: Collection<IAudioList>;
+    private audioManager?: AudioManager;
 
     constructor(core: Core) {
+        this.audioManager = core.audioManager;
+
         if (core.database.client) {
             this.database = core.database.client.collection("list");
             this.database.createIndex({ owner: 1 });
@@ -92,5 +96,13 @@ export class ListManager {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.updateMany({}, { $pull: { audio } });
+    }
+
+    public async checkAudioExist() {
+        this.getAll().forEach(list => {
+            list.audio.forEach(async audio => {
+                if (!await this.audioManager!!.get(audio)) this.delAudioAll(audio);
+            });
+        });
     }
 }
