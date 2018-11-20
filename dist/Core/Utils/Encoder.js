@@ -44,7 +44,7 @@ class Encoder {
                 .on("end", async () => {
                 await PromiseUtils_1.sleep(1000);
                 await fs_1.promises.rename(savePath + ".tmp", savePath);
-                if ((await MediaInfo_1.getMediaInfo(savePath)).duration !== duration) {
+                if (Math.abs((await MediaInfo_1.getMediaInfo(savePath)).duration - duration) > 1) {
                     reject(Error("Duration mismatch"));
                 }
                 else {

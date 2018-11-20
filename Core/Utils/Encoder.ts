@@ -48,7 +48,7 @@ export class Encoder {
                 .on("end", async () => {
                     await sleep(1000);
                     await fsp.rename(savePath + ".tmp", savePath);
-                    if ((await getMediaInfo(savePath)).duration !== duration) {
+                    if (Math.abs((await getMediaInfo(savePath)).duration - duration) > 1) {
                         reject(Error("Duration mismatch"));
                     } else {
                         resolve(savePath);
