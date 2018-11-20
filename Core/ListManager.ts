@@ -12,10 +12,16 @@ export interface IAudioList {
 
 export class ListManager {
     private database?: Collection<IAudioList>;
-    private audioManager?: AudioManager;
+    private audioManager!: AudioManager;
 
     constructor(core: Core) {
-        this.audioManager = core.audioManager;
+        core.on("init", core => {
+            this.audioManager = core.audioManager;
+        });
+
+        core.on("ready", () => {
+            if (!this.audioManager) throw Error("AudioManager not init");
+        })
 
         if (core.database.client) {
             this.database = core.database.client.collection("list");
@@ -101,7 +107,7 @@ export class ListManager {
     public async checkAudioExist() {
         this.getAll().forEach(list => {
             list.audio.forEach(async audio => {
-                if (!await this.audioManager!!.get(audio)) this.delAudioAll(audio);
+                if (!await this.audioManager.get(audio)) this.delAudioAll(audio);
             });
         });
     }

@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { existsSync, mkdirSync } from "fs";
 import { resolve } from "path";
 import { Discord } from "./Component/Discord";
@@ -7,7 +8,7 @@ import { ListManager } from "./Core/ListManager";
 import { MongoDB } from "./Core/MongoDB";
 import { UserManager } from "./Core/UserManager";
 
-export class Core {
+export class Core extends EventEmitter {
     public readonly config = require(resolve("config.json"));
     public readonly database = new MongoDB(this.config);
     public readonly audioManager = new AudioManager(this);
@@ -15,10 +16,16 @@ export class Core {
     public readonly listManager = new ListManager(this);
 
     constructor() {
+        super();
+
+        this.emit("init", this);
+
         if (!existsSync(resolve(this.config.audio.save))) mkdirSync(resolve(this.config.audio.save));
 
         // Wait DB connect
-        this.database.on("connect", async () => {
+        this.database.on("connect", () => this.emit("ready"));
+
+        this.on("ready", async () => {
             // tslint:disable-next-line:no-unused-expression
             new Telegram(this);
             // tslint:disable-next-line:no-unused-expression

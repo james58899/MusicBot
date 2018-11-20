@@ -744,8 +744,6 @@ export class Telegram {
 
     private async getMetadata(fileId: string) {
         const file = await this.getFile(fileId);
-        if (file instanceof Error) throw file;
-
         return this.audio.urlParser.getMetadata(file);
     }
 

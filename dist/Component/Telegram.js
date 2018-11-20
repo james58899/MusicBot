@@ -661,8 +661,6 @@ class Telegram {
     }
     async getMetadata(fileId) {
         const file = await this.getFile(fileId);
-        if (file instanceof Error)
-            throw file;
         return this.audio.urlParser.getMetadata(file);
     }
     queueSendMessage(chatId, text, options) {

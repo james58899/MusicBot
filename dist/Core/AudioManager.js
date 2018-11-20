@@ -25,7 +25,13 @@ class AudioManager {
         this.config = core.config.audio;
         const encoder = new Encoder_1.Encoder(core.config);
         this.encode = encoder.encode.bind(encoder);
-        this.listManager = core.listManager;
+        core.on("init", core => {
+            this.listManager = core.listManager;
+        });
+        core.on("ready", () => {
+            if (!this.listManager)
+                throw Error("ListManager hot init");
+        });
         if (core.database.client) {
             this.database = core.database.client.collection("user");
             this.database.createIndex({ hash: 1 }, { unique: true });
