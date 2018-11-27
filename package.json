@@ -21,11 +21,11 @@
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.8",
     "@types/mongodb": "^3.1.14",
-    "@types/node": "^10.12.9",
+    "@types/node": "^10.12.10",
     "@types/node-telegram-bot-api": "^0.30.3",
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^0.0.28",
-    "husky": "^1.1.4",
+    "husky": "^1.2.0",
     "tslint": "^5.11.0",
     "typescript": "^3.1.6"
   },
