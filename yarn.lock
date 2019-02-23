@@ -874,10 +874,10 @@ lodash@^4.13.1, lodash@^4.17.10:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
   integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
 
-m3u8stream@^0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/m3u8stream/-/m3u8stream-0.6.0.tgz#a78378d491b66a1207e206f368a9259b074a0c7b"
-  integrity sha512-h78ollIa7zeq0nzx1+wI/EH0soUpe9A7sC6zw/+/tuRwYdIXedOytvI69+6eP/FU4Ph0cT6kQsw73j5tKXIbgg==
+m3u8stream@^0.6.2:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/m3u8stream/-/m3u8stream-0.6.2.tgz#c2c62ddce88156d80378dd59be010c8b8e9d120b"
+  integrity sha512-WsuM2bd5pPN80xvfrB+1DZqr4M7+kJl8byi6+ZCy6cmVjEiHhmr/desN53Ngsa6Hs13kYumeVgT4wL0oIJ+v6g==
   dependencies:
     miniget "^1.4.0"
     sax "^1.2.4"
@@ -1511,12 +1511,12 @@ ws@^6.0.0:
   dependencies:
     async-limiter "~1.0.0"
 
-ytdl-core@^0.28.0:
-  version "0.28.0"
-  resolved "https://registry.yarnpkg.com/ytdl-core/-/ytdl-core-0.28.0.tgz#5f1ed2c9071f13c9c55e6e7187941f4ed32a2efe"
-  integrity sha512-pk1nd0MPZLyMOENUOCFLBJ/m59XFqSWPzSY2UhdG7PHBwYtROAY5QRLoYEG0V21h7i3KUeHbnFq8czio5gPKYA==
+ytdl-core@^0.29.1:
+  version "0.29.1"
+  resolved "https://registry.yarnpkg.com/ytdl-core/-/ytdl-core-0.29.1.tgz#2d7a1505d47a34a02551639a8d4092af959c4902"
+  integrity sha512-J/TW3rupqE6y+TczHTTFjuwf23tweA9fasmnbU/5yYH0O2IRFLcwgHbbvEPt3t8mtXWGX207+TWH7uuJpB1FKQ==
   dependencies:
     html-entities "^1.1.3"
-    m3u8stream "^0.6.0"
+    m3u8stream "^0.6.2"
     miniget "^1.4.0"
     sax "^1.1.3"
