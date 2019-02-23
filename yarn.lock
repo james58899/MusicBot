@@ -91,12 +91,11 @@
   resolved "https://registry.yarnpkg.com/@types/events/-/events-1.2.0.tgz#81a6731ce4df43619e5c8c945383b3e62a89ea86"
   integrity sha512-KEIlhXnIutzKwRbQkGWb/I4HFqBuUykAdHgDED6xqwXJfONCjF5VoE0cXEiurh3XauygxzeDzgtXUqvLkxFzzA==
 
-"@types/fluent-ffmpeg@^2.1.8":
-  version "2.1.8"
-  resolved "https://registry.yarnpkg.com/@types/fluent-ffmpeg/-/fluent-ffmpeg-2.1.8.tgz#a9ffff2140d641ec898ebdddaa1e6e7e962d7943"
-  integrity sha512-dbEJwEPpKlJPujNTSj7HM03T9rurGDEdrbh/BHR5lJ1A6uYx9VrOP+/GjJMsO5hXjf2hpk/41wBC/H9TmKIm9A==
+"@types/fluent-ffmpeg@^2.1.9":
+  version "2.1.9"
+  resolved "https://registry.yarnpkg.com/@types/fluent-ffmpeg/-/fluent-ffmpeg-2.1.9.tgz#260e155b14b1c7f9cdccab7e1600c1f74444f25a"
+  integrity sha512-ASkD4gb8FngbTZe8x4iM5bKWmswHYGSuA5A5sauBroIDA7B7Uu7hrk+W7pEUQLG63fR+Zo2iDpSVWyTeoPuwRA==
   dependencies:
-    "@types/events" "*"
     "@types/node" "*"
 
 "@types/form-data@*":
