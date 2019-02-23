@@ -86,11 +86,6 @@
   resolved "https://registry.yarnpkg.com/@types/caseless/-/caseless-0.12.1.tgz#9794c69c8385d0192acc471a540d1f8e0d16218a"
   integrity sha512-FhlMa34NHp9K5MY1Uz8yb+ZvuX0pnvn3jScRSNAb75KHGB8d3rEU6hqMs3Z2vjuytcMfRg6c5CHMc3wtYyD2/A==
 
-"@types/events@*":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@types/events/-/events-1.2.0.tgz#81a6731ce4df43619e5c8c945383b3e62a89ea86"
-  integrity sha512-KEIlhXnIutzKwRbQkGWb/I4HFqBuUykAdHgDED6xqwXJfONCjF5VoE0cXEiurh3XauygxzeDzgtXUqvLkxFzzA==
-
 "@types/fluent-ffmpeg@^2.1.9":
   version "2.1.9"
   resolved "https://registry.yarnpkg.com/@types/fluent-ffmpeg/-/fluent-ffmpeg-2.1.9.tgz#260e155b14b1c7f9cdccab7e1600c1f74444f25a"
@@ -113,12 +108,11 @@
     "@types/bson" "*"
     "@types/node" "*"
 
-"@types/node-telegram-bot-api@^0.30.3":
-  version "0.30.3"
-  resolved "https://registry.yarnpkg.com/@types/node-telegram-bot-api/-/node-telegram-bot-api-0.30.3.tgz#a44016c07268694e2f7a9f5e4c55844f691841df"
-  integrity sha512-yw8k5g/Y/U0fe97GSv0bvd4ae7h3v/r/wVDu/ugqOsstGjFcg4QeyS1rqR0Gh9blIsOuCNXEV2THCdYqR7IvnQ==
+"@types/node-telegram-bot-api@^0.30.4":
+  version "0.30.4"
+  resolved "https://registry.yarnpkg.com/@types/node-telegram-bot-api/-/node-telegram-bot-api-0.30.4.tgz#9101c57f95547f9b9b8990b905ebbb59e26f4a91"
+  integrity sha512-u/8mqhnHKsBhzWQ9Pf1ReBcUlfl+TF1+4ruI2s+9jhl833ruqLDTwPsfe1RN0ysgcN//bI85FHzLNJfuGFGxHg==
   dependencies:
-    "@types/events" "*"
     "@types/node" "*"
     "@types/request" "*"
 
