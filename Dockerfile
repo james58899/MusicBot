@@ -2,7 +2,7 @@ FROM node:lts
 WORKDIR /app
 
 ADD . .
-RUN yarn && yarn build:prod || true && rm -rf node_modules && yarn remove --production=true @ffmpeg-installer/ffmpeg @ffprobe-installer/ffprobe
+RUN yarn remove @ffmpeg-installer/ffmpeg @ffprobe-installer/ffprobe && yarn build:prod || true && rm -rf node_modules && yarn --production
 
 FROM node:lts-alpine
 WORKDIR /app
