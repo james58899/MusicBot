@@ -9,7 +9,8 @@ async function retry(fun, time = 5, interval = 5000) {
             return await run;
         }
         catch (error) {
-            tryTime++;
+            if (++tryTime > 0)
+                interval = interval * 2;
         }
         await sleep(interval);
     } while (tryTime < time);
