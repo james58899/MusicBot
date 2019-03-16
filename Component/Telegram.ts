@@ -100,7 +100,7 @@ export class Telegram {
                 return;
             }
 
-            this.list.addAudio(session, audio._id);
+            this.list.addAudio(session, audio._id!);
             this.queueSendMessage(msg.chat.id, "Added to list!", { reply_to_message_id: msg.message_id });
         });
 
@@ -180,7 +180,7 @@ export class Telegram {
 
         this.queueSendMessage(
             msg.chat.id,
-            `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`
+            `Register token: ${this.user.createBindToken(user._id!!)}\nExpires after one hour`
         );
     }
 
@@ -193,7 +193,7 @@ export class Telegram {
         } else {
             this.queueSendMessage(
                 msg.chat.id,
-                `ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`
+                `ID: ${user._id!}\nName: ${user.name}\nBind: ${user.bind!.map(i => `${i.type}(${i.id})`).join(", ")}`
             );
         }
     }
@@ -214,7 +214,7 @@ export class Telegram {
         if (args[1] && args[1].toLocaleLowerCase() === "all") {
             view = await this.genPlaylistView();
         } else {
-            view = await this.genPlaylistView(0, user._id);
+            view = await this.genPlaylistView(0, user._id!);
         }
 
         if (view.button) {
@@ -250,7 +250,7 @@ export class Telegram {
         if (!query.message) return;
         const user = await this.getUser(query.from.id);
         if (!user) return;
-        const view = await this.genListInfoView(new ObjectID(data[1]), user._id);
+        const view = await this.genListInfoView(new ObjectID(data[1]), user._id!);
         const options: EditMessageTextOptions = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
@@ -263,7 +263,7 @@ export class Telegram {
     private async listCreateCallback(query: CallbackQuery, data: string[]) {
         if (!query.message || !data[1]) return;
         const user = await this.getUser(query.from.id);
-        if (!user || !user._id.equals(new ObjectID(data[1]))) return;
+        if (!user || !user._id!.equals(new ObjectID(data[1]))) return;
 
         const message = await this.queueSendMessage(query.message.chat.id, "Enter name for new playlist", {
             reply_markup: {
@@ -278,7 +278,7 @@ export class Telegram {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
-                this.list.create(reply.text, user._id);
+                this.list.create(reply.text, user._id!);
                 this.queueSendMessage(reply.chat.id, "Success!", {
                     reply_to_message_id: reply.message_id
                 });
@@ -296,7 +296,7 @@ export class Telegram {
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
-        if (!user || !list || !list.owner.equals(user._id)) return;
+        if (!user || !list || !list.owner.equals(user._id!)) return;
 
         if (data[2] === "done") {
             this.audioAddSession.delete(query.message.chat.id);
@@ -362,7 +362,7 @@ export class Telegram {
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
-        if (!user || !list || !list.owner.equals(user._id)) return;
+        if (!user || !list || !list.owner.equals(user._id!)) return;
 
         const message = await this.queueSendMessage(query.message.chat.id, "Enter new name", {
             reply_markup: {
@@ -394,7 +394,7 @@ export class Telegram {
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
-        if (!user || !list || !list.owner.equals(user._id)) return;
+        if (!user || !list || !list.owner.equals(user._id!)) return;
 
         if (data[2]) {
             this.list.delete(new ObjectID(data[1]));
@@ -550,7 +550,7 @@ export class Telegram {
 
         if (msg.audio && msg.audio.title) {
             try {
-                const audio = await this.audio.add(sender._id, source, {
+                const audio = await this.audio.add(sender._id!, source, {
                     artist: msg.audio.performer,
                     duration: msg.audio.duration,
                     title: msg.audio.title
@@ -571,7 +571,7 @@ export class Telegram {
                     return;
                 }
 
-                audio = await this.audio.add(sender._id, source, {
+                audio = await this.audio.add(sender._id!, source, {
                     artist: msg.audio.performer,
                     duration: msg.audio.duration,
                     title
@@ -599,12 +599,12 @@ export class Telegram {
         if (replyMessage instanceof Error) throw replyMessage;
 
         try {
-            audio = await this.audio.add(sender._id, source);
+            audio = await this.audio.add(sender._id!, source);
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
                 try {
                     const title = await retry(() => this.sendNeedTitle(msg, msg.document!.file_name), 3);
-                    audio = await this.audio.add(sender._id, source, { title });
+                    audio = await this.audio.add(sender._id!, source, { title });
                 } catch (error) {
                     this.sendError(replyMessage, "Failed to process the file:" + error.message);
                 }
@@ -630,12 +630,12 @@ export class Telegram {
         }
 
         try {
-            audio = await this.audio.add(sender._id, link);
+            audio = await this.audio.add(sender._id!, link);
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
                 try {
                     const title = await retry(() => this.sendNeedTitle(msg, basename(parse(decodeURI(link)).pathname!)), 3);
-                    audio = await this.audio.add(sender._id, link, { title });
+                    audio = await this.audio.add(sender._id!, link, { title });
                 } catch (error) {
                     this.sendError(msg, `Failed to process the link ${link}: ${error.message}`);
                 }
@@ -717,7 +717,7 @@ export class Telegram {
 
     private async processDone(msg: Message, audio: IAudioData) {
         const session = this.audioAddSession.get(msg.chat.id);
-        if (session) this.list.addAudio(session, audio._id);
+        if (session) this.list.addAudio(session, audio._id!);
 
         const message = `ID: ${audio._id}\nTitle: ${audio.title}${(session) ? "\n\nAdded to list!" : ""}`;
         if (msg.from && msg.from.id === this.me.id) {

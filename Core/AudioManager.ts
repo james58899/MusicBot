@@ -18,7 +18,7 @@ export const ERR_NOT_AUDIO = Error("This doesn't look like audio");
 export const ERR_MAX_LENGTH = Error("Audio length exceeds limit");
 
 export interface IAudioData {
-    _id: ObjectID;
+    _id?: ObjectID;
     title: string;
     artist?: string;
     duration: number;

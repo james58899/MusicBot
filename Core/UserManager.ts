@@ -7,9 +7,9 @@ export const ERR_USER_EXIST = Error("User exist");
 export const ERR_BIND_TOKEN_NOT_FOUND = Error("Bind token not found");
 
 export interface IUserData {
-    _id: ObjectID;
+    _id?: ObjectID;
     name: string;
-    bind: IBindData[];
+    bind?: IBindData[];
 }
 
 export interface IBindData {

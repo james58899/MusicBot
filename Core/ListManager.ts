@@ -15,13 +15,13 @@ export class ListManager {
     private audioManager!: AudioManager;
 
     constructor(core: Core) {
-        core.on("init", core => {
+        core.on("init", _ => {
             this.audioManager = core.audioManager;
         });
 
         core.on("ready", () => {
             if (!this.audioManager) throw Error("AudioManager not init");
-        })
+        });
 
         if (core.database.client) {
             this.database = core.database.client.collection("list");

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const MongoDB_1 = require("./MongoDB");
 class ListManager {
     constructor(core) {
-        core.on("init", core => {
+        core.on("init", _ => {
             this.audioManager = core.audioManager;
         });
         core.on("ready", () => {

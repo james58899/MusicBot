@@ -198,7 +198,7 @@ export class Discord {
             user = await this.user.create(msg.author.username, { type: BIND_TYPE, id: msg.author.id });
         }
 
-        msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
+        msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind!.map(i => `${i.type}(${i.id})`).join(", ")}`);
     }
 
     private async commandBind(msg: Message) {
@@ -209,7 +209,7 @@ export class Discord {
             return;
         }
 
-        this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`);
+        this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id!)}\nExpires after one hour`);
     }
 
     private async procseeFile(msg: Message) {
@@ -220,10 +220,10 @@ export class Discord {
         msg.attachments.forEach(async file => {
             let audio: IAudioData;
             try {
-                audio = await this.audio.add(user._id, file.url);
+                audio = await this.audio.add(user._id!, file.url);
             } catch (error) {
                 if (error === ERR_NOT_AUDIO) return;
-                if (error === ERR_MISSING_TITLE) audio = await this.audio.add(user._id, file.url, { title: file.filename }); else throw error;
+                if (error === ERR_MISSING_TITLE) audio = await this.audio.add(user._id!, file.url, { title: file.filename }); else throw error;
             }
 
             msg.channel.createMessage(`ID: ${audio._id}\nTitle: ${audio.title}`);
