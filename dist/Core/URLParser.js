@@ -34,4 +34,3 @@ class UrlParser {
     }
 }
 exports.UrlParser = UrlParser;
-//# sourceMappingURL=URLParser.js.map

@@ -26,10 +26,19 @@ export class Core extends EventEmitter {
         this.database.on("connect", () => this.emit("ready"));
 
         this.on("ready", async () => {
-            // tslint:disable-next-line:no-unused-expression
-            new Telegram(this);
-            // tslint:disable-next-line:no-unused-expression
-            new Discord(this);
+            try {
+                // tslint:disable-next-line:no-unused-expression
+                new Telegram(this);
+            } catch (error) {
+                console.error(error);
+            }
+
+            try {
+                // tslint:disable-next-line:no-unused-expression
+                new Discord(this);
+            } catch (error) {
+                console.error(error);
+            }
 
             if (process.argv.indexOf("--deep-check") !== -1) {
                 await this.audioManager.checkCache(true);

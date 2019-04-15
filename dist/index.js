@@ -22,8 +22,18 @@ class Core extends events_1.EventEmitter {
             fs_1.mkdirSync(path_1.resolve(this.config.audio.save));
         this.database.on("connect", () => this.emit("ready"));
         this.on("ready", async () => {
-            new Telegram_1.Telegram(this);
-            new Discord_1.Discord(this);
+            try {
+                new Telegram_1.Telegram(this);
+            }
+            catch (error) {
+                console.error(error);
+            }
+            try {
+                new Discord_1.Discord(this);
+            }
+            catch (error) {
+                console.error(error);
+            }
             if (process.argv.indexOf("--deep-check") !== -1) {
                 await this.audioManager.checkCache(true);
                 this.listManager.checkAudioExist();
@@ -36,4 +46,3 @@ class Core extends events_1.EventEmitter {
 }
 exports.Core = Core;
 new Core();
-//# sourceMappingURL=index.js.map
