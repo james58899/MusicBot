@@ -178,7 +178,7 @@ export class AudioManager {
                 } else if (deep) {
                     const metadata = this.metadataQueue.add(() => this.urlParser.getMetadata(file));
 
-                    if ((await metadata).duration !== audio.duration) {
+                    if (Math.abs((await metadata).duration - audio.duration) > 1) {
                         if (!audio.source) {
                             this.delete(audio._id!);
                             return;
