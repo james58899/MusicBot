@@ -142,8 +142,8 @@ class AudioManager {
                         const source = await this.urlParser.getFile(audio.source);
                         await PromiseUtils_1.retry(() => this.encodeQueue.add(async () => this.encode(source, audio.hash, audio.duration)));
                     }
-                    catch (_a) {
-                        console.error(`Failed to download ${audio.title}`);
+                    catch (e) {
+                        console.error(`Failed to download ${audio.title}`, e);
                         this.delete(audio._id);
                     }
                 }
@@ -159,8 +159,8 @@ class AudioManager {
                             const source = await this.urlParser.getFile(audio.source);
                             await PromiseUtils_1.retry(() => this.encodeQueue.add(() => this.encode(source, audio.hash, audio.duration)));
                         }
-                        catch (_b) {
-                            console.error(`Failed to download ${audio.title}`);
+                        catch (e) {
+                            console.error(`Failed to download ${audio.title}`, e);
                             this.delete(audio._id);
                         }
                     }

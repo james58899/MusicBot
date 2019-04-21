@@ -171,8 +171,8 @@ export class AudioManager {
                     try {
                         const source = await this.urlParser.getFile(audio.source);
                         await retry(() => this.encodeQueue.add(async () => this.encode(source, audio.hash, audio.duration)));
-                    } catch {
-                        console.error(`Failed to download ${audio.title}`);
+                    } catch (e) {
+                        console.error(`Failed to download ${audio.title}`, e);
                         this.delete(audio._id!);
                     }
                 } else if (deep) {
@@ -188,8 +188,8 @@ export class AudioManager {
                         try {
                             const source = await this.urlParser.getFile(audio.source);
                             await retry(() => this.encodeQueue.add(() => this.encode(source, audio.hash, audio.duration)));
-                        } catch {
-                            console.error(`Failed to download ${audio.title}`);
+                        } catch (e) {
+                            console.error(`Failed to download ${audio.title}`, e);
                             this.delete(audio._id!);
                         }
                     }
