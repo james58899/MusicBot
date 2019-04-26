@@ -555,19 +555,20 @@ export class Telegram {
                 });
             }
         }
-
-        if (admin) {
-            button.push(new Array());
-            button[button.length - 1].push({
-                callback_data: `ListSwitch Owned`,
-                text: "Mode: Admin"
-            });
-        } else {
-            button.push(new Array());
-            button[button.length - 1].push({
-                callback_data: `ListSwitch Admin`,
-                text: "Mode: Owned"
-            });
+        if (user) {
+            if (admin) {
+                button.push(new Array());
+                button[button.length - 1].push({
+                    callback_data: `ListSwitch Owned`,
+                    text: "Mode: Admin"
+                });
+            } else {
+                button.push(new Array());
+                button[button.length - 1].push({
+                    callback_data: `ListSwitch Admin`,
+                    text: "Mode: Owned"
+                });
+            }
         }
 
         if (user) {
