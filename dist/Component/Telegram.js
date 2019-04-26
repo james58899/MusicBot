@@ -106,6 +106,15 @@ class Telegram {
                 case "ListAudio":
                     await this.listAudioCallback(query, data);
                     break;
+                case "ListSwitch":
+                    await this.listSwitch(query, data);
+                    break;
+                case "ListAdminAdd":
+                    await this.listAdminAddCallback(query, data);
+                    break;
+                case "ListAdminRemove":
+                    await this.listAdminRemoveCallback(query, data);
+                    break;
                 case "ListRename":
                     await this.listRenameCallback(query, data);
                     break;
@@ -212,6 +221,20 @@ class Telegram {
         };
         this.bot.editMessageText(view.text, options);
     }
+    async listSwitch(query, data) {
+        if (!query.message)
+            return;
+        const user = await this.getUser(query.from.id);
+        if (!user)
+            return;
+        const view = await this.genPlaylistView(0, user._id, (data[1] === "Admin"));
+        const options = {
+            chat_id: query.message.chat.id,
+            message_id: query.message.message_id,
+            reply_markup: { inline_keyboard: view.button }
+        };
+        this.bot.editMessageText(view.text, options);
+    }
     async listCreateCallback(query, data) {
         if (!query.message || !data[1])
             return;
@@ -247,7 +270,7 @@ class Telegram {
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
-        if (!user || !list || !list.owner.equals(user._id))
+        if (!user || !list || !(list.owner.equals(user._id) || list.admin.find(id => id.equals(user._id))))
             return;
         if (data[2] === "done") {
             this.audioAddSession.delete(query.message.chat.id);
@@ -300,6 +323,90 @@ class Telegram {
             });
         }
     }
+    async listAdminAddCallback(query, data) {
+        if (!query.message || !data[1])
+            return;
+        const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
+        const user = await this.getUser(query.from.id);
+        if (!user || !list || !list.owner.equals(user._id))
+            return;
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's telegram id to add admin", {
+            reply_markup: {
+                force_reply: true,
+                selective: true,
+            }
+        });
+        if (message instanceof Error)
+            throw message;
+        this.bot.onReplyToMessage(message.chat.id, message.message_id, async (reply) => {
+            if (!reply.from || reply.from.id !== query.from.id)
+                return;
+            if (reply.text) {
+                if (parseInt(reply.text, 10) === reply.from.id) {
+                    this.queueSendMessage(reply.chat.id, "You are adding your self!");
+                }
+                else {
+                    const userToAdd = await this.getUser(parseInt(reply.text, 10));
+                    if (!userToAdd) {
+                        this.queueSendMessage(reply.chat.id, "User not found or not registered!");
+                    }
+                    else {
+                        this.list.addAdmin(list._id, userToAdd._id);
+                        this.queueSendMessage(reply.chat.id, "Success!", {
+                            reply_to_message_id: reply.message_id
+                        });
+                    }
+                }
+            }
+            else {
+                this.queueSendMessage(reply.chat.id, "Invalid name!");
+            }
+            this.bot.answerCallbackQuery(query.id);
+            this.bot.removeReplyListener(message.message_id);
+        });
+    }
+    async listAdminRemoveCallback(query, data) {
+        if (!query.message || !data[1])
+            return;
+        const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
+        const user = await this.getUser(query.from.id);
+        if (!user || !list || !list.owner.equals(user._id))
+            return;
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's telegram id to remove admin", {
+            reply_markup: {
+                force_reply: true,
+                selective: true,
+            }
+        });
+        if (message instanceof Error)
+            throw message;
+        this.bot.onReplyToMessage(message.chat.id, message.message_id, async (reply) => {
+            if (!reply.from || reply.from.id !== query.from.id)
+                return;
+            if (reply.text) {
+                if (parseInt(reply.text, 10) === reply.from.id) {
+                    this.queueSendMessage(reply.chat.id, "You are removing your self!");
+                }
+                else {
+                    const userToRemove = await this.getUser(parseInt(reply.text, 10));
+                    if (!userToRemove) {
+                        this.queueSendMessage(reply.chat.id, "User not found or not registered!");
+                    }
+                    else {
+                        this.list.removeAdmin(list._id, userToRemove._id);
+                        this.queueSendMessage(reply.chat.id, "Success!", {
+                            reply_to_message_id: reply.message_id
+                        });
+                    }
+                }
+            }
+            else {
+                this.queueSendMessage(reply.chat.id, "Invalid name!");
+            }
+            this.bot.answerCallbackQuery(query.id);
+            this.bot.removeReplyListener(message.message_id);
+        });
+    }
     async listRenameCallback(query, data) {
         if (!query.message || !data[1])
             return;
@@ -349,8 +456,8 @@ class Telegram {
             this.bot.answerCallbackQuery(query.id);
         }
     }
-    async genPlaylistView(start = 0, user) {
-        const list = (user) ? this.list.getFromOwner(user) : this.list.getAll();
+    async genPlaylistView(start = 0, user, admin = false) {
+        const list = (user) ? (admin) ? this.list.getFromAdmin(user) : this.list.getFromOwner(user) : this.list.getAll();
         const array = await list.skip(start).limit(10).toArray();
         const button = new Array();
         array.map((item, index) => {
@@ -386,6 +493,20 @@ class Telegram {
                 });
             }
         }
+        if (admin) {
+            button.push(new Array());
+            button[button.length - 1].push({
+                callback_data: `ListSwitch Owned`,
+                text: "Mode: Admin"
+            });
+        }
+        else {
+            button.push(new Array());
+            button[button.length - 1].push({
+                callback_data: `ListSwitch Admin`,
+                text: "Mode: Owned"
+            });
+        }
         if (user) {
             button.push(new Array());
             button[button.length - 1].push({
@@ -400,21 +521,25 @@ class Telegram {
     }
     async genListInfoView(listID, user) {
         const list = await this.list.get(listID);
-        const button = new Array(new Array(), new Array());
+        const button = new Array(new Array(), new Array(), new Array());
         if (!list)
             throw ERR_LIST_NOT_FOUND;
-        if (list.owner.equals(user))
+        if (list.owner.equals(user) || list.admin.find(id => id.equals(user)))
             button[0].push({ text: "Add sounds", callback_data: `ListAudioAdd ${listID.toHexString()}` });
         button[0].push({ text: "Show sounds", callback_data: `ListAudio show ${listID.toHexString()}` });
-        if (list.owner.equals(user))
+        if (list.owner.equals(user) || list.admin.find(id => id.equals(user)))
             button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
         if (list.owner.equals(user))
-            button[1].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
+            button[1].push({ text: "Add Admin", callback_data: `ListAdminAdd ${listID.toHexString()}` });
         if (list.owner.equals(user))
-            button[1].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
+            button[1].push({ text: "Remove Admin", callback_data: `ListAdminRemove ${listID.toHexString()}` });
+        if (list.owner.equals(user))
+            button[2].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
+        if (list.owner.equals(user))
+            button[2].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
         return {
             button,
-            text: `ID: ${list._id.toHexString()}\nName: ${list.name}\nOwner: ${list.owner}\nSounds: ${list.audio.length}`
+            text: `ID: ${list._id.toHexString()}\nName: ${list.name}\nOwner: ${list.owner}\nSounds: ${list.audio.length}\nAdmins: ${list.admin}`
         };
     }
     async genAudioListView(listID, start = 0, deleteMode = false) {
@@ -672,3 +797,4 @@ class Telegram {
     }
 }
 exports.Telegram = Telegram;
+//# sourceMappingURL=Telegram.js.map

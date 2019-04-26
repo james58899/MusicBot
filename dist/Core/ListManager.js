@@ -25,9 +25,10 @@ class ListManager {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
         return (await this.database.insertOne({
+            admin: Array(),
             audio: Array(),
             name,
-            owner,
+            owner
         })).ops[0];
     }
     get(id) {
@@ -45,6 +46,11 @@ class ListManager {
             throw MongoDB_1.ERR_DB_NOT_INIT;
         return this.database.find({ owner });
     }
+    getFromAdmin(admin) {
+        if (!this.database)
+            throw MongoDB_1.ERR_DB_NOT_INIT;
+        return this.database.find({ admin });
+    }
     async rename(id, name) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
@@ -54,6 +60,16 @@ class ListManager {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
         this.database.deleteOne({ _id: id });
+    }
+    async addAdmin(id, admin) {
+        if (!this.database)
+            throw MongoDB_1.ERR_DB_NOT_INIT;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $addToSet: { admin } }, { returnOriginal: false })).value;
+    }
+    async removeAdmin(id, admin) {
+        if (!this.database)
+            throw MongoDB_1.ERR_DB_NOT_INIT;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $pull: { admin } }, { returnOriginal: false })).value;
     }
     async addAudio(id, audio) {
         if (!this.database)
@@ -80,3 +96,4 @@ class ListManager {
     }
 }
 exports.ListManager = ListManager;
+//# sourceMappingURL=ListManager.js.map

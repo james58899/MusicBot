@@ -4,6 +4,7 @@ import { AudioManager } from "./AudioManager";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 
 export interface IAudioList {
+    admin: any;
     _id: ObjectID;
     name: string;
     owner: ObjectID;
@@ -38,9 +39,10 @@ export class ListManager {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.insertOne({
+            admin: Array<ObjectID>(),
             audio: Array<ObjectID>(),
             name,
-            owner,
+            owner
         } as IAudioList)).ops[0] as IAudioList;
     }
 
@@ -62,6 +64,12 @@ export class ListManager {
         return this.database.find({ owner });
     }
 
+    public getFromAdmin(admin: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+        // Not working when admin is more than one
+        return this.database.find({admin});
+    }
+
     public async rename(id: ObjectID, name: string) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
@@ -76,6 +84,26 @@ export class ListManager {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         this.database.deleteOne({ _id: id });
+    }
+
+    public async addAdmin(id: ObjectID, admin: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $addToSet: { admin } },
+            { returnOriginal: false }
+        )).value;
+    }
+
+    public async removeAdmin(id: ObjectID, admin: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $pull: { admin } },
+            { returnOriginal: false }
+        )).value;
     }
 
     public async addAudio(id: ObjectID, audio: ObjectID) {
