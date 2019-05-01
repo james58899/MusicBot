@@ -131,11 +131,11 @@ export class Telegram {
                 case "ListAudio":
                     await this.listAudioCallback(query, data);
                     break;
-                case "ListAdminAdd":
-                    await this.listAdminAddCallback(query, data);
+                case "AddAdmin":
+                    await this.AddAdminCallback(query, data);
                     break;
-                case "ListAdminRemove":
-                    await this.listAdminRemoveCallback(query, data);
+                case "RemoveAdmin":
+                    await this.RemoveAdminCallback(query, data);
                     break;
                 case "ListRename":
                     await this.listRenameCallback(query, data);
@@ -364,7 +364,7 @@ export class Telegram {
         }
     }
 
-    private async listAdminAddCallback(query: CallbackQuery, data: string[]) {
+    private async AddAdminCallback(query: CallbackQuery, data: string[]) {
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
@@ -405,7 +405,7 @@ export class Telegram {
         });
     }
 
-    private async listAdminRemoveCallback(query: CallbackQuery, data: string[]) {
+    private async RemoveAdminCallback(query: CallbackQuery, data: string[]) {
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
@@ -562,8 +562,8 @@ export class Telegram {
         if (list.owner.equals(user) || list.admin.find(id => id.equals(user))) button[0].push({ text: "Add sounds", callback_data: `ListAudioAdd ${listID.toHexString()}` });
         button[0].push({ text: "Show sounds", callback_data: `ListAudio show ${listID.toHexString()}` });
         if (list.owner.equals(user) || list.admin.find(id => id.equals(user))) button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
-        if (list.owner.equals(user)) button[1].push({ text: "Add Admin", callback_data: `ListAdminAdd ${listID.toHexString()}` });
-        if (list.owner.equals(user)) button[1].push({ text: "Remove Admin", callback_data: `ListAdminRemove ${listID.toHexString()}` });
+        if (list.owner.equals(user)) button[1].push({ text: "Add Admin", callback_data: `AddAdmin ${listID.toHexString()}` });
+        if (list.owner.equals(user)) button[1].push({ text: "Remove Admin", callback_data: `RemoveAdmin ${listID.toHexString()}` });
         if (list.owner.equals(user)) button[2].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
         if (list.owner.equals(user)) button[2].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
 

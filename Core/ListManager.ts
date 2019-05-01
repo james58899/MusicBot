@@ -4,7 +4,7 @@ import { AudioManager } from "./AudioManager";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 
 export interface IAudioList {
-    admin: any;
+    admin: ObjectID[];
     _id: ObjectID;
     name: string;
     owner: ObjectID;
