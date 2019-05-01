@@ -106,9 +106,6 @@ class Telegram {
                 case "ListAudio":
                     await this.listAudioCallback(query, data);
                     break;
-                case "ListSwitch":
-                    await this.listSwitch(query, data);
-                    break;
                 case "ListAdminAdd":
                     await this.listAdminAddCallback(query, data);
                     break;
@@ -214,20 +211,6 @@ class Telegram {
         if (!user)
             return;
         const view = await this.genListInfoView(new mongodb_1.ObjectID(data[1]), user._id);
-        const options = {
-            chat_id: query.message.chat.id,
-            message_id: query.message.message_id,
-            reply_markup: { inline_keyboard: view.button }
-        };
-        this.bot.editMessageText(view.text, options);
-    }
-    async listSwitch(query, data) {
-        if (!query.message)
-            return;
-        const user = await this.getUser(query.from.id);
-        if (!user)
-            return;
-        const view = await this.genPlaylistView(0, user._id, (data[1] === "Admin"));
         const options = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
@@ -456,8 +439,8 @@ class Telegram {
             this.bot.answerCallbackQuery(query.id);
         }
     }
-    async genPlaylistView(start = 0, user, admin = false) {
-        const list = (user) ? (admin) ? this.list.getFromAdmin(user) : this.list.getFromOwner(user) : this.list.getAll();
+    async genPlaylistView(start = 0, user) {
+        const list = (user) ? this.list.getFromPermission(user) : this.list.getAll();
         const array = await list.skip(start).limit(10).toArray();
         const button = new Array();
         array.map((item, index) => {
@@ -490,22 +473,6 @@ class Telegram {
                 button[button.length - 1].push({
                     callback_data: `List ${(user) ? user.toHexString() : undefined} ${start + 10}`,
                     text: ">"
-                });
-            }
-        }
-        if (user) {
-            if (admin) {
-                button.push(new Array());
-                button[button.length - 1].push({
-                    callback_data: `ListSwitch Owned`,
-                    text: "Mode: Admin"
-                });
-            }
-            else {
-                button.push(new Array());
-                button[button.length - 1].push({
-                    callback_data: `ListSwitch Admin`,
-                    text: "Mode: Owned"
                 });
             }
         }

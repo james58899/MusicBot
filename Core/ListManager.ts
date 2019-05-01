@@ -58,16 +58,10 @@ export class ListManager {
         return this.database.find();
     }
 
-    public getFromOwner(owner: ObjectID) {
+    public getFromPermission(user: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.find({ owner });
-    }
-
-    public getFromAdmin(admin: ObjectID) {
-        if (!this.database) throw ERR_DB_NOT_INIT;
-        // Not working when admin is more than one
-        return this.database.find({admin});
+        return this.database.find({ $or : [{owner: user}, {admin: user}]});
     }
 
     public async rename(id: ObjectID, name: string) {

@@ -41,15 +41,10 @@ class ListManager {
             throw MongoDB_1.ERR_DB_NOT_INIT;
         return this.database.find();
     }
-    getFromOwner(owner) {
+    getFromPermission(user) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.find({ owner });
-    }
-    getFromAdmin(admin) {
-        if (!this.database)
-            throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.find({ admin });
+        return this.database.find({ $or: [{ owner: user }, { admin: user }] });
     }
     async rename(id, name) {
         if (!this.database)
