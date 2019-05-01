@@ -106,11 +106,11 @@ class Telegram {
                 case "ListAudio":
                     await this.listAudioCallback(query, data);
                     break;
-                case "ListAdminAdd":
-                    await this.listAdminAddCallback(query, data);
+                case "AddAdmin":
+                    await this.AddAdminCallback(query, data);
                     break;
-                case "ListAdminRemove":
-                    await this.listAdminRemoveCallback(query, data);
+                case "RemoveAdmin":
+                    await this.RemoveAdminCallback(query, data);
                     break;
                 case "ListRename":
                     await this.listRenameCallback(query, data);
@@ -306,14 +306,14 @@ class Telegram {
             });
         }
     }
-    async listAdminAddCallback(query, data) {
+    async AddAdminCallback(query, data) {
         if (!query.message || !data[1])
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id))
             return;
-        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's telegram id to add admin", {
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's ID to add admin", {
             reply_markup: {
                 force_reply: true,
                 selective: true,
@@ -325,13 +325,13 @@ class Telegram {
             if (!reply.from || reply.from.id !== query.from.id)
                 return;
             if (reply.text) {
-                if (parseInt(reply.text, 10) === reply.from.id) {
+                const userToAdd = await this.user.getFromID(new mongodb_1.ObjectID(reply.text));
+                if (reply.text === user._id.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are adding your self!");
                 }
                 else {
-                    const userToAdd = await this.getUser(parseInt(reply.text, 10));
                     if (!userToAdd) {
-                        this.queueSendMessage(reply.chat.id, "User not found or not registered!");
+                        this.queueSendMessage(reply.chat.id, "User not found!");
                     }
                     else {
                         this.list.addAdmin(list._id, userToAdd._id);
@@ -348,14 +348,14 @@ class Telegram {
             this.bot.removeReplyListener(message.message_id);
         });
     }
-    async listAdminRemoveCallback(query, data) {
+    async RemoveAdminCallback(query, data) {
         if (!query.message || !data[1])
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id))
             return;
-        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's telegram id to remove admin", {
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's ID to remove admin", {
             reply_markup: {
                 force_reply: true,
                 selective: true,
@@ -367,13 +367,13 @@ class Telegram {
             if (!reply.from || reply.from.id !== query.from.id)
                 return;
             if (reply.text) {
-                if (parseInt(reply.text, 10) === reply.from.id) {
+                const userToRemove = await this.user.getFromID(new mongodb_1.ObjectID(reply.text));
+                if (reply.text === user._id.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are removing your self!");
                 }
                 else {
-                    const userToRemove = await this.getUser(parseInt(reply.text, 10));
                     if (!userToRemove) {
-                        this.queueSendMessage(reply.chat.id, "User not found or not registered!");
+                        this.queueSendMessage(reply.chat.id, "User not found!");
                     }
                     else {
                         this.list.removeAdmin(list._id, userToRemove._id);
@@ -499,9 +499,9 @@ class Telegram {
         if (list.owner.equals(user) || list.admin.find(id => id.equals(user)))
             button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
         if (list.owner.equals(user))
-            button[1].push({ text: "Add Admin", callback_data: `ListAdminAdd ${listID.toHexString()}` });
+            button[1].push({ text: "Add Admin", callback_data: `AddAdmin ${listID.toHexString()}` });
         if (list.owner.equals(user))
-            button[1].push({ text: "Remove Admin", callback_data: `ListAdminRemove ${listID.toHexString()}` });
+            button[1].push({ text: "Remove Admin", callback_data: `RemoveAdmin ${listID.toHexString()}` });
         if (list.owner.equals(user))
             button[2].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
         if (list.owner.equals(user))
@@ -766,4 +766,3 @@ class Telegram {
     }
 }
 exports.Telegram = Telegram;
-//# sourceMappingURL=Telegram.js.map

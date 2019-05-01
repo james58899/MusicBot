@@ -46,4 +46,3 @@ class Core extends events_1.EventEmitter {
 }
 exports.Core = Core;
 new Core();
-//# sourceMappingURL=index.js.map

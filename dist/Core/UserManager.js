@@ -23,6 +23,11 @@ class UserManager {
             throw MongoDB_1.ERR_DB_NOT_INIT;
         return this.database.findOne({ bind: { $elemMatch: { type, id } } });
     }
+    getFromID(id) {
+        if (!this.database)
+            throw MongoDB_1.ERR_DB_NOT_INIT;
+        return this.database.findOne({ _id: id });
+    }
     async create(name, bind) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
@@ -56,4 +61,3 @@ class UserManager {
     }
 }
 exports.UserManager = UserManager;
-//# sourceMappingURL=UserManager.js.map
