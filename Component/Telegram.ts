@@ -370,7 +370,7 @@ export class Telegram {
         const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id!)) return;
 
-        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's telegram id to add admin", {
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's ID to add admin", {
             reply_markup: {
                 force_reply: true,
                 selective: true,
@@ -383,12 +383,12 @@ export class Telegram {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
-                if (parseInt(reply.text, 10) === reply.from.id) {
+                const userToAdd = await this.user.getFromID(new ObjectID(reply.text));
+                if (reply.text === user._id!.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are adding your self!");
                 } else {
-                    const userToAdd = await this.getUser(parseInt(reply.text, 10));
                     if (!userToAdd) {
-                        this.queueSendMessage(reply.chat.id, "User not found or not registered!");
+                        this.queueSendMessage(reply.chat.id, "User not found!");
                     } else {
                         this.list.addAdmin(list._id, userToAdd!._id!);
                         this.queueSendMessage(reply.chat.id, "Success!", {
@@ -411,7 +411,7 @@ export class Telegram {
         const user = await this.getUser(query.from.id);
         if (!user || !list || !list.owner.equals(user._id!)) return;
 
-        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's telegram id to remove admin", {
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's ID to remove admin", {
             reply_markup: {
                 force_reply: true,
                 selective: true,
@@ -424,12 +424,12 @@ export class Telegram {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
-                if (parseInt(reply.text, 10) === reply.from.id) {
+                const userToRemove = await this.user.getFromID(new ObjectID(reply.text));
+                if (reply.text === user._id!.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are removing your self!");
                 } else {
-                    const userToRemove = await this.getUser(parseInt(reply.text, 10));
                     if (!userToRemove) {
-                        this.queueSendMessage(reply.chat.id, "User not found or not registered!");
+                        this.queueSendMessage(reply.chat.id, "User not found!");
                     } else {
                         this.list.removeAdmin(list._id, userToRemove!._id!);
                         this.queueSendMessage(reply.chat.id, "Success!", {
