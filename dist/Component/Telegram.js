@@ -155,7 +155,7 @@ class Telegram {
     async commandInfo(msg) {
         if (!msg.from)
             return;
-        const user = await this.user.get(exports.BIND_TYPE, msg.from.id);
+        const user = await this.user.get(msg.from.id, exports.BIND_TYPE);
         if (!user) {
             this.queueSendMessage(msg.chat.id, ERR_NOT_REGISTER);
         }
@@ -325,7 +325,7 @@ class Telegram {
             if (!reply.from || reply.from.id !== query.from.id)
                 return;
             if (reply.text) {
-                const userToAdd = await this.user.getFromID(new mongodb_1.ObjectID(reply.text));
+                const userToAdd = await this.user.get(new mongodb_1.ObjectID(reply.text));
                 if (reply.text === user._id.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are adding your self!");
                 }
@@ -367,7 +367,7 @@ class Telegram {
             if (!reply.from || reply.from.id !== query.from.id)
                 return;
             if (reply.text) {
-                const userToRemove = await this.user.getFromID(new mongodb_1.ObjectID(reply.text));
+                const userToRemove = await this.user.get(new mongodb_1.ObjectID(reply.text));
                 if (reply.text === user._id.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are removing your self!");
                 }
@@ -747,7 +747,7 @@ class Telegram {
         }
     }
     getUser(id) {
-        return this.user.get(exports.BIND_TYPE, id);
+        return this.user.get(id, exports.BIND_TYPE);
     }
     getFile(fileId) {
         fileId = fileId.replace("tg://", "");

@@ -193,7 +193,7 @@ export class Telegram {
     private async commandInfo(msg: Message) {
         if (!msg.from) return;
 
-        const user = await this.user.get(BIND_TYPE, msg.from.id);
+        const user = await this.user.get(msg.from.id, BIND_TYPE );
         if (!user) {
             this.queueSendMessage(msg.chat.id, ERR_NOT_REGISTER);
         } else {
@@ -302,7 +302,7 @@ export class Telegram {
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
-        if (!user || !list || !(list.owner.equals(user._id!) || list.admin.find(id => id.equals(user._id)))) return;
+        if (!user || !list || !(list.owner.equals(user._id!) || list.admin.find(id => id.equals(user._id!)))) return;
 
         if (data[2] === "done") {
             this.audioAddSession.delete(query.message.chat.id);
@@ -383,7 +383,7 @@ export class Telegram {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
-                const userToAdd = await this.user.getFromID(new ObjectID(reply.text));
+                const userToAdd = await this.user.get(new ObjectID(reply.text));
                 if (reply.text === user._id!.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are adding your self!");
                 } else {
@@ -424,7 +424,7 @@ export class Telegram {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
-                const userToRemove = await this.user.getFromID(new ObjectID(reply.text));
+                const userToRemove = await this.user.get(new ObjectID(reply.text));
                 if (reply.text === user._id!.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are removing your self!");
                 } else {
@@ -824,7 +824,7 @@ export class Telegram {
 
     // Misc
     private getUser(id: number) {
-        return this.user.get(BIND_TYPE, id);
+        return this.user.get(id, BIND_TYPE);
     }
 
     private getFile(fileId: string) {

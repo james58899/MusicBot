@@ -18,20 +18,20 @@ class UserManager {
             });
         }
     }
-    get(type, id) {
+    get(id, type) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.findOne({ bind: { $elemMatch: { type, id } } });
-    }
-    getFromID(id) {
-        if (!this.database)
-            throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.findOne({ _id: id });
+        if (type) {
+            return this.database.findOne({ bind: { $elemMatch: { type, id } } });
+        }
+        else {
+            return this.database.findOne({ _id: id });
+        }
     }
     async create(name, bind) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        if (await this.get(bind.type, bind.id))
+        if (await this.get(bind.id, bind.type))
             throw exports.ERR_USER_EXIST;
         return this.bind((await this.database.insertOne({ name })).ops[0]._id, bind);
     }
@@ -39,7 +39,7 @@ class UserManager {
         const id = this.bindToken.get(token);
         if (!id)
             throw exports.ERR_BIND_TOKEN_NOT_FOUND;
-        if (await this.get(bind.type, bind.id))
+        if (await this.get(bind.id, bind.type))
             throw exports.ERR_USER_EXIST;
         return this.bind(id, bind);
     }

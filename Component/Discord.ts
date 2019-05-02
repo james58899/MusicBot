@@ -202,7 +202,7 @@ export class Discord {
     }
 
     private async commandBind(msg: Message) {
-        const user = await this.user.get(BIND_TYPE, msg.author.id);
+        const user = await this.user.get(msg.author.id, BIND_TYPE);
 
         if (!user) {
             this.bot.createMessage(msg.channel.id, "You are not register!");
@@ -213,7 +213,7 @@ export class Discord {
     }
 
     private async procseeFile(msg: Message) {
-        const user = await this.user.get(BIND_TYPE, msg.author.id);
+        const user = await this.user.get(msg.author.id, BIND_TYPE);
 
         if (!user) return;
 
