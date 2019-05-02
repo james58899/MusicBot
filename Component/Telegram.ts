@@ -383,10 +383,12 @@ export class Telegram {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
-                const userToAdd = await this.user.get(new ObjectID(reply.text));
-                if (reply.text === user._id!.toHexString()) {
+                if (!ObjectID.isValid(reply.text)) {
+                    this.queueSendMessage(reply.chat.id, "ID Invalid!");
+                } else if (reply.text === user._id!.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are adding your self!");
                 } else {
+                    const userToAdd = await this.user.get(new ObjectID(reply.text));
                     if (!userToAdd) {
                         this.queueSendMessage(reply.chat.id, "User not found!");
                     } else {
@@ -424,10 +426,12 @@ export class Telegram {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
-                const userToRemove = await this.user.get(new ObjectID(reply.text));
-                if (reply.text === user._id!.toHexString()) {
+                if (!ObjectID.isValid(reply.text)) {
+                    this.queueSendMessage(reply.chat.id, "ID Invalid!");
+                } else if (reply.text === user._id!.toHexString()) {
                     this.queueSendMessage(reply.chat.id, "You are removing your self!");
                 } else {
+                    const userToRemove = await this.user.get(new ObjectID(reply.text));
                     if (!userToRemove) {
                         this.queueSendMessage(reply.chat.id, "User not found!");
                     } else {
