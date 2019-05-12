@@ -61,7 +61,7 @@ export class ListManager {
     public getFromPermission(user: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.find({ $or : [{owner: user}, {admin: user}]});
+        return this.database.find({ $or: [{ owner: user }, { admin: user }] });
     }
 
     public async rename(id: ObjectID, name: string) {

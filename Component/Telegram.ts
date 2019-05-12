@@ -193,7 +193,7 @@ export class Telegram {
     private async commandInfo(msg: Message) {
         if (!msg.from) return;
 
-        const user = await this.user.get(msg.from.id, BIND_TYPE );
+        const user = await this.user.get(msg.from.id, BIND_TYPE);
         if (!user) {
             this.queueSendMessage(msg.chat.id, ERR_NOT_REGISTER);
         } else {

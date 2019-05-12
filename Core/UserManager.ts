@@ -33,7 +33,7 @@ export class UserManager {
         }
     }
 
-    public get(id: string | number | ObjectID, type?: string ) {
+    public get(id: string | number | ObjectID, type?: string) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         if (type) {
