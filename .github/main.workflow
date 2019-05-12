@@ -1,6 +1,11 @@
-workflow "TSLint" {
-  on = "push"
+workflow "Push" {
   resolves = ["Run TSLint"]
+  on = "push"
+}
+
+workflow "PR" {
+  resolves = ["Run TSLint"]
+  on = "pull_request"
 }
 
 action "Init" {
