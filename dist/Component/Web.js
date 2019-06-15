@@ -172,8 +172,13 @@ class Web {
         if (!list) {
             throw Error("HTTP404");
         }
+        const audios = await this.audio.search({
+            _id: {
+                $in: list.audio.map(id => new mongodb_1.ObjectID(id))
+            }
+        }).toArray();
         res.json({
-            audios: list.audio,
+            audios,
             msg: "OK"
         });
     }
