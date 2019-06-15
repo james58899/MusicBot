@@ -22,7 +22,7 @@ class Web {
         this.user = core.userManager;
         this.audio = core.audioManager;
         this.list = core.listManager;
-        this.tgToken = core.config.telegram.token;
+        this.digest = crypto_1.default.createHash("sha256").update(core.config.telegram.token).digest();
         this.upload = core.config.web.upload;
         this.server = express_1.default();
         this.middlewares();
@@ -250,15 +250,15 @@ class Web {
         if (!tgStr)
             return null;
         const tg = JSON.parse(tgStr);
-        const payload = [
-            `auth_date=${tg.auth_date}`,
-            `first_name=${tg.first_name}`,
-            `id=${tg.id}`,
-            `username=${tg.username}`
-        ].join("\n");
-        const hmac = crypto_1.default.createHmac("sha256", this.tgToken);
+        const hash = tg.hash;
+        delete tg.hash;
+        const payload = Object.keys(tg).sort().map(key => {
+            return `${key}=${tg[key]}`;
+        }).join("\n");
+        const hmac = crypto_1.default.createHmac("sha256", this.digest);
         hmac.update(payload);
-        if (hmac.digest("hex") !== tg.hash) {
+        if (hmac.digest("hex") !== hash) {
+            return null;
         }
         return this.user.get(exports.BIND_TYPE, tg.id);
     }

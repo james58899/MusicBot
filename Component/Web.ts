@@ -23,7 +23,7 @@ export class Web {
     private audio: AudioManager;
     private user: UserManager;
     private list: ListManager;
-    private tgToken: string;
+    private digest: string;
     private upload: string;
     private server: Application;
 
@@ -34,7 +34,7 @@ export class Web {
         this.audio = core.audioManager;
         this.list = core.listManager;
 
-        this.tgToken = core.config.telegram.token;
+        this.digest = crypto.createHash("sha256").update(core.config.telegram.token).digest();
         this.upload = core.config.web.upload;
 
         // Create Server
@@ -277,16 +277,15 @@ export class Web {
         const tgStr = req.get("X-Auth");
         if (!tgStr) return null;
         const tg = JSON.parse(tgStr);
-        const payload = [
-            `auth_date=${tg.auth_date}`,
-            `first_name=${tg.first_name}`,
-            `id=${tg.id}`,
-            `username=${tg.username}`
-        ].join("\n");
-        const hmac = crypto.createHmac("sha256", this.tgToken);
+        const hash = tg.hash;
+        delete tg.hash;
+        const payload = Object.keys(tg).sort().map(key => {
+            return `${key}=${tg[key]}`;
+        }).join("\n");
+        const hmac = crypto.createHmac("sha256", this.digest);
         hmac.update(payload);
-        if (hmac.digest("hex") !== tg.hash) {
-            // return null;
+        if (hmac.digest("hex") !== hash) {
+            return null;
         }
         return this.user.get(BIND_TYPE, tg.id);
     }
