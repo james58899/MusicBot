@@ -193,8 +193,24 @@ class Web {
                 throw Error("HTTP403");
             }
             const audios = [];
-            await Promise.all(req.files.map(async (file) => {
-                const path = file.path;
+            const paths = [];
+            if (req.files) {
+                req.files.forEach((file) => {
+                    paths.push(file.path);
+                });
+            }
+            if (req.body) {
+                const body = req.body;
+                if (body.uris) {
+                    if (typeof body.uris === "string") {
+                        paths.push(...JSON.parse(body.uris));
+                    }
+                    else {
+                        paths.push(...body.uris);
+                    }
+                }
+            }
+            await Promise.all(paths.map(async (path) => {
                 const audio = await this.processFile(path, user);
                 if (audio) {
                     await this.list.addAudio(list._id, audio._id);
@@ -209,7 +225,9 @@ class Web {
             });
         }
         finally {
-            await Promise.all(req.files.map(async (file) => await fs_1.promises.unlink(file.path)));
+            if (req.files) {
+                await Promise.all(req.files.map(async (file) => await fs_1.promises.unlink(file.path)));
+            }
         }
     }
     async deleteListAudio(req, res) {
@@ -278,6 +296,9 @@ class Web {
         }
         catch (error) {
             if (error === AudioManager_1.ERR_MISSING_TITLE) {
+                return null;
+            }
+            else if (error === AudioManager_1.ERR_NOT_AUDIO) {
                 return null;
             }
             else {

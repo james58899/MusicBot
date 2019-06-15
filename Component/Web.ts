@@ -5,7 +5,7 @@ import { promises as fsp } from "fs";
 import { ObjectID } from "mongodb";
 import multer from "multer";
 import { Core } from "..";
-import { AudioManager, ERR_MISSING_TITLE, IAudioData } from "../Core/AudioManager";
+import { AudioManager, ERR_MISSING_TITLE, ERR_NOT_AUDIO, IAudioData } from "../Core/AudioManager";
 import { IAudioList, ListManager } from "../Core/ListManager";
 import { IUserData, UserManager } from "../Core/UserManager";
 // import { retry, sleep } from "../Core/Utils/PromiseUtils";
@@ -23,7 +23,7 @@ export class Web {
     private audio: AudioManager;
     private user: UserManager;
     private list: ListManager;
-    private digest: string;
+    private digest: Buffer;
     private upload: string;
     private server: Application;
 
@@ -218,8 +218,23 @@ export class Web {
                 throw Error("HTTP403");
             }
             const audios: IAudioData[] = [];
-            await Promise.all((req as any).files.map(async (file: any) => {
-                const path = file.path;
+            const paths: string[] = [];
+            if ((req as any).files) {
+                (req as any).files.forEach((file: any) => {
+                    paths.push(file.path);
+                });
+            }
+            if ((req as any).body) {
+                const body = (req as any).body;
+                if (body.uris) {
+                    if (typeof body.uris === "string") {
+                        paths.push(...JSON.parse(body.uris));
+                    } else {
+                        paths.push(...body.uris);
+                    }
+                }
+            }
+            await Promise.all(paths.map(async (path) => {
                 const audio = await this.processFile(path, user);
                 if (audio) {
                     await this.list.addAudio(list._id!, audio._id!);
@@ -233,7 +248,9 @@ export class Web {
                 msg: "OK"
             });
         } finally {
-            await Promise.all((req as any).files.map(async (file: any) => await fsp.unlink(file.path)));
+            if ((req as any).files) {
+                await Promise.all((req as any).files.map(async (file: any) => await fsp.unlink(file.path)));
+            }
         }
     }
 
@@ -307,6 +324,9 @@ export class Web {
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
                 // show error ?
+                return null;
+            } else if (error === ERR_NOT_AUDIO) {
+                // not audio file
                 return null;
             } else {
                 // unkown dead
