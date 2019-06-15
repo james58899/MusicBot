@@ -234,7 +234,7 @@ export class Web {
                     }
                 }
             }
-            await Promise.all(paths.map(async (path) => {
+            await Promise.all(paths.map(async path => {
                 const audio = await this.processFile(path, user);
                 if (audio) {
                     await this.list.addAudio(list._id!, audio._id!);

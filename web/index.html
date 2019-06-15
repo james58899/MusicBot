@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title> OKTW MusicBot Web </title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@1.5.14/dist/vuetify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1/dist/vue-resource.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-telegram-login@2.1.0/dist/vue-telegram-login.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify-upload-button@2.0.0/dist/vuetify-upload-button.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@1.5.14/dist/vuetify.min.css" rel="stylesheet">
+    <style>
+      .selected {
+          background-color: lightgray !important;
+      }
+      .remove-shadow {
+          box-shadow: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" @dragover.prevent="onDragOver" @drop.prevent="onDrop" @paste.prevent="onPaste">
+      <v-app>
+        <v-dialog v-model="drop.overlay" persistent content-class="remove-shadow text-xs-center">
+          <span class="display-2">將檔案拖曳至此處以上傳至歌單</span>
+        </v-dialog>
+        <v-dialog v-model="upload.uploading" persistent max-width="320px">
+          <v-card>
+            <v-card-title class="title"> 上傳中 </v-card-title>
+            <v-card-text>
+              <span>已完成 {{ upload.done }} / 總共 {{ upload.total }} 個檔案</span>
+              <v-progress-linear :value="uploadTotalProgress"></v-progress-linear>
+              <span>正在{{ upload.encoding ? "處理" : "上傳"}} {{ upload.current }}</span>
+              <v-progress-linear :indeterminate="upload.single === false" :value="upload.single || 0"></v-progress-linear>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
+        <v-toolbar app clipped-left>
+          <v-toolbar-side-icon @click.stop="showDrawer = !showDrawer"></v-toolbar-side-icon>
+          <v-toolbar-title> OKTW MusicBot </v-toolbar-title>
+          <v-spacer></v-spacer>
+          <vue-telegram-login mode="callback" :telegram-login="tgBotName" @callback="onAuth"></vue-telegram-login>
+        </v-toolbar>
+        <v-navigation-drawer fixed clipped v-model="showDrawer" app>
+          <v-toolbar flat>
+            <v-toolbar-title> 播放清單 </v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn icon @click="listNewInput" v-if="loggedIn">
+              <v-icon>add</v-icon>
+            </v-btn>
+          </v-toolbar>
+          <v-data-table :items="lists" :headers="listsHeaders">
+            <template #items="{ item }">
+              <tr :class="{ selected: item.index == listSelected }">
+              <td @click="listSelected = item.index">
+                {{ item.index + 1 }}. {{ item.name }}
+              </td>
+              <td class="justify-center layout px-0">
+                <v-btn icon small class="mr-0" v-if="item.own" @click="listEditInput(item)">
+                  <v-icon>edit</v-icon>
+                </v-btn>
+                <v-btn icon small class="ml-0" v-if="item.own" @click="listDeleteConfirm(item)">
+                  <v-icon>delete</v-icon>
+                </v-btn>
+              </td>
+            </template>
+          </v-data-table>
+        </v-navigation-drawer>
+        <v-dialog v-model="listModify.dialog" max-width="30em">
+          <v-card>
+            <v-card-title class="headline">新增播放清單</v-card-title>
+            <v-card-text>
+              <v-form ref="listModify" @submit.prevent="listModifyCall">
+                <v-text-field label="清單名稱" v-model="listModify.name" :rules="listModify.nameRules" required autofocus></v-text-field>
+              </v-form>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn flat @click="listModify.dialog = false">取消</v-btn>
+              <v-btn flat @click="listModifyCall">確定</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-dialog v-model="itemDelete.dialog" max-width="30em">
+          <v-card>
+            <v-card-title class="headline">確認刪除</v-card-title>
+            <v-card-text>確定要刪除{{ itemActing.name || itemActing.title }}嗎?</v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn flat @click="itemDelete.dialog = false">取消</v-btn>
+              <v-btn flat @click="itemDeleteCall">刪除</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-content>
+          <v-toolbar flat>
+            <v-toolbar-title class="title"> {{ list.name }} </v-toolbar-title>
+            <v-spacer></v-spacer>
+            <upload-btn icon large multiple fixed-width="44px" ref="audioAdd" v-if="loggedIn" @file-update="audioAdd">
+              <template slot="icon">
+                <v-icon>add</v-icon>
+              </template>
+            </upload-btn>
+          </v-toolbar>
+          <v-data-table :items="audios" :headers="audiosHeaders">
+            <template #items="{ item }">
+              <tr :class="{ selected: item.index == audioSelected }" @click="audioSelected = item.index">
+              <td>
+                {{ item.title }}
+              </td>
+              <td>
+                {{ item.artist }}
+              </td>
+              <td>
+                {{ item.duration }}
+              </td>
+              <td class="justify-center layout px-0">
+                <v-btn icon small v-if="list.own" @click="audioDeleteConfirm(item)">
+                  <v-icon>delete</v-icon>
+                </v-btn>
+              </td>
+            </template>
+          </v-data-table>
+        </v-content>
+      </v-app>
+    </div>
+    <script src="main.js"></script>
+  </body>
+</html>
