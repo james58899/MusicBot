@@ -77,8 +77,9 @@ class Web {
         this.server.get("/list/:lid", this.route(this.getList));
         this.server.patch("/list/:lid", this.route(this.patchList));
         this.server.delete("/list/:lid", this.route(this.deleteList));
-        this.server.get("/list/:lid/audios", this.route(this.getAudios));
-        this.server.post("/list/:lid/audios", upload.array("audio"), this.route(this.postAudios));
+        this.server.get("/list/:lid/audios", this.route(this.getListAudios));
+        this.server.post("/list/:lid/audios", upload.array("audio"), this.route(this.postListAudios));
+        this.server.delete("/list/:lid/audio/:aid", this.route(this.deleteListAudio));
         this.server.get("/audio/:aid", this.route(this.getAudio));
         this.server.get("/audio/:aid/file", this.route(this.getAudioFile));
     }
@@ -156,7 +157,7 @@ class Web {
             result
         });
     }
-    async getAudios(req, res) {
+    async getListAudios(req, res) {
         const list = await this.list.get(new mongodb_1.ObjectID(req.params.lid));
         if (!list) {
             throw Error("HTTP404");
@@ -166,7 +167,7 @@ class Web {
             msg: "OK"
         });
     }
-    async postAudios(req, res) {
+    async postListAudios(req, res) {
         try {
             const user = await this.checkUser(req);
             const list = await this.list.get(new mongodb_1.ObjectID(req.params.lid));
@@ -195,6 +196,21 @@ class Web {
         finally {
             await Promise.all(req.files.map(async (file) => await fs_1.promises.unlink(file.path)));
         }
+    }
+    async deleteListAudio(req, res) {
+        const user = await this.checkUser(req);
+        const list = await this.list.get(new mongodb_1.ObjectID(req.params.lid));
+        if (!list) {
+            throw Error("HTTP404");
+        }
+        if (!user._id.equals(list.owner)) {
+            throw Error("HTTP403");
+        }
+        const result = await this.list.delAudio(list._id, new mongodb_1.ObjectID(req.params.aid));
+        res.json({
+            msg: "OK",
+            result
+        });
     }
     async getAudio(req, res) {
         const audio = await this.audio.get(new mongodb_1.ObjectID(req.params.aid));
@@ -228,7 +244,6 @@ class Web {
         const hmac = crypto_1.default.createHmac("sha256", this.tgToken);
         hmac.update(payload);
         if (hmac.digest("hex") !== tg.hash) {
-            return null;
         }
         return this.user.get(exports.BIND_TYPE, tg.id);
     }

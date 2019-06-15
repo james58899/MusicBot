@@ -95,8 +95,9 @@ export class Web {
         this.server.get("/list/:lid", this.route(this.getList));
         this.server.patch("/list/:lid", this.route(this.patchList));
         this.server.delete("/list/:lid", this.route(this.deleteList));
-        this.server.get("/list/:lid/audios", this.route(this.getAudios));
-        this.server.post("/list/:lid/audios", upload.array("audio"), this.route(this.postAudios));
+        this.server.get("/list/:lid/audios", this.route(this.getListAudios));
+        this.server.post("/list/:lid/audios", upload.array("audio"), this.route(this.postListAudios));
+        this.server.delete("/list/:lid/audio/:aid", this.route(this.deleteListAudio));
         this.server.get("/audio/:aid", this.route(this.getAudio));
         this.server.get("/audio/:aid/file", this.route(this.getAudioFile));
     }
@@ -181,7 +182,7 @@ export class Web {
         });
     }
 
-    private async getAudios(req: Request, res: Response) {
+    private async getListAudios(req: Request, res: Response) {
         const list = await this.list.get(new ObjectID(req.params.lid));
         if (!list) {
             throw Error("HTTP404");
@@ -192,7 +193,7 @@ export class Web {
         });
     }
 
-    private async postAudios(req: Request, res: Response) {
+    private async postListAudios(req: Request, res: Response) {
         try {
             const user = await this.checkUser(req);
             const list = await this.list.get(new ObjectID(req.params.lid));
@@ -220,6 +221,22 @@ export class Web {
         } finally {
             await Promise.all((req as any).files.map(async (file: any) => await fsp.unlink(file.path)));
         }
+    }
+
+    private async deleteListAudio(req: Request, res: Response) {
+        const user = await this.checkUser(req);
+        const list = await this.list.get(new ObjectID(req.params.lid));
+        if (!list) {
+            throw Error("HTTP404");
+        }
+        if (!user._id!.equals(list.owner)) {
+            throw Error("HTTP403");
+        }
+        const result = await this.list.delAudio(list._id, new ObjectID(req.params.aid));
+        res.json({
+            msg: "OK",
+            result
+        });
     }
 
     private async getAudio(req: Request, res: Response) {
@@ -255,7 +272,7 @@ export class Web {
         const hmac = crypto.createHmac("sha256", this.tgToken);
         hmac.update(payload);
         if (hmac.digest("hex") !== tg.hash) {
-            return null;
+            // return null;
         }
         return this.user.get(BIND_TYPE, tg.id);
     }
