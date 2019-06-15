@@ -56,3 +56,4 @@ class UserManager {
     }
 }
 exports.UserManager = UserManager;
+//# sourceMappingURL=UserManager.js.map

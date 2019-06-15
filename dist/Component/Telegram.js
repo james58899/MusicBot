@@ -672,3 +672,4 @@ class Telegram {
     }
 }
 exports.Telegram = Telegram;
+//# sourceMappingURL=Telegram.js.map

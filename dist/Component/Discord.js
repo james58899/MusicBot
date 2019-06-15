@@ -225,3 +225,4 @@ class Discord {
     }
 }
 exports.Discord = Discord;
+//# sourceMappingURL=Discord.js.map

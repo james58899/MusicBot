@@ -5,6 +5,7 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const Discord_1 = require("./Component/Discord");
 const Telegram_1 = require("./Component/Telegram");
+const Web_1 = require("./Component/Web");
 const AudioManager_1 = require("./Core/AudioManager");
 const ListManager_1 = require("./Core/ListManager");
 const MongoDB_1 = require("./Core/MongoDB");
@@ -34,6 +35,12 @@ class Core extends events_1.EventEmitter {
             catch (error) {
                 console.error(error);
             }
+            try {
+                new Web_1.Web(this);
+            }
+            catch (error) {
+                console.error(error);
+            }
             if (process.argv.indexOf("--deep-check") !== -1) {
                 await this.audioManager.checkCache(true);
                 this.listManager.checkAudioExist();
@@ -46,3 +53,4 @@ class Core extends events_1.EventEmitter {
 }
 exports.Core = Core;
 new Core();
+//# sourceMappingURL=index.js.map
