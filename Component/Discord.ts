@@ -212,6 +212,7 @@ export class Discord {
         this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id!)}\nExpires after one hour`);
     }
 
+    // @ts-ignore
     private async procseeFile(msg: Message) {
         const user = await this.user.get(BIND_TYPE, msg.author.id);
 

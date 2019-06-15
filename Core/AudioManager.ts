@@ -41,6 +41,7 @@ export class AudioManager {
         const encoder = new Encoder(core.config);
         this.encode = encoder.encode.bind(encoder);
 
+        // tslint:disable-next-line:no-shadowed-variable
         core.on("init", core => {
             this.listManager = core.listManager;
         });
