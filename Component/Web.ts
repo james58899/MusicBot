@@ -119,8 +119,17 @@ export class Web {
                 own: !!user && user._id!.equals(list.owner)
             };
         }).toArray();
+        const own: any[] = [];
+        const other: any[] = [];
+        lists.forEach(list => {
+            if (list.own) {
+                own.push(list);
+            } else {
+                other.push(list);
+            }
+        });
         res.json({
-            lists,
+            lists: [...own, ...other],
             msg: "OK"
         });
     }
