@@ -3,6 +3,7 @@ import { existsSync, mkdirSync } from "fs";
 import { resolve } from "path";
 import { Discord } from "./Component/Discord";
 import { Telegram } from "./Component/Telegram";
+import { Web } from "./Component/Web";
 import { AudioManager } from "./Core/AudioManager";
 import { ListManager } from "./Core/ListManager";
 import { MongoDB } from "./Core/MongoDB";
@@ -36,6 +37,13 @@ export class Core extends EventEmitter {
             try {
                 // tslint:disable-next-line:no-unused-expression
                 new Discord(this);
+            } catch (error) {
+                console.error(error);
+            }
+
+            try {
+                // tslint:disable-next-line:no-unused-expression
+                new Web(this);
             } catch (error) {
                 console.error(error);
             }
