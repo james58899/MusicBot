@@ -260,9 +260,9 @@ export class Web {
     }
 
     private async getUser(req: Request) {
-        const reqbody = (req as any).body;
-        if (!reqbody.tg) return null;
-        const tg = (typeof reqbody.tg === "string") ? JSON.parse(reqbody.tg) : reqbody.tg;
+        const tgStr = req.get("X-Auth");
+        if (!tgStr) return null;
+        const tg = JSON.parse(tgStr);
         const payload = [
             `auth_date=${tg.auth_date}`,
             `first_name=${tg.first_name}`,
