@@ -15,4 +15,3 @@ class MongoDB extends events_1.EventEmitter {
     }
 }
 exports.MongoDB = MongoDB;
-//# sourceMappingURL=MongoDB.js.map

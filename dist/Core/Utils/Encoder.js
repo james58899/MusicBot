@@ -70,4 +70,3 @@ class Encoder {
     }
 }
 exports.Encoder = Encoder;
-//# sourceMappingURL=Encoder.js.map
