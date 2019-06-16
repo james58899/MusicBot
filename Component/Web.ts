@@ -48,8 +48,7 @@ export class Web {
     }
 
     private async middlewares() {
-        // outdated... workaround
-        this.server.use((express as any).json()); // for parsing application/json
+        this.server.use(express.json()); // for parsing application/json
     }
 
     private async errorHandler() {
