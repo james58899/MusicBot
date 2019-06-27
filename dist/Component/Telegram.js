@@ -657,7 +657,7 @@ class Telegram {
     }
     getFile(fileId) {
         fileId = fileId.replace("tg://", "");
-        return this.bot.getFileLink(fileId);
+        return PromiseUtils_1.retry(() => this.bot.getFileLink(fileId));
     }
     async getMetadata(fileId) {
         const file = await this.getFile(fileId);
