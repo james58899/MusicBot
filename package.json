@@ -22,16 +22,16 @@
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.10",
     "@types/mongodb": "^3.1.28",
-    "@types/node": "^12.0.12",
+    "@types/node": "^12.6.2",
     "@types/node-telegram-bot-api": "^0.31.0",
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^0.0.28",
     "husky": "^3.0.0",
     "tslint": "^5.18.0",
-    "typescript": "^3.5.2"
+    "typescript": "^3.5.3"
   },
   "optionalDependencies": {
-    "@ffmpeg-installer/ffmpeg": "^1.0.18",
+    "@ffmpeg-installer/ffmpeg": "^1.0.19",
     "@ffprobe-installer/ffprobe": "^1.0.12",
     "bson-ext": "^2.0.2",
     "bufferutil": "^4.0.1",
