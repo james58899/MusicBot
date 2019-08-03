@@ -152,7 +152,7 @@ const app = new Vue({
             });
         },
         onDragOver(evt) {
-            if (this.loggedIn && !this.upload.uploading) {
+            if (this.list.own && !this.upload.uploading) {
                 clearTimeout(this.drop.timer);
                 this.drop.timer = setTimeout(() => {
                     this.drop.in = false;
@@ -169,12 +169,12 @@ const app = new Vue({
             }
         },
         onDrop(evt) {
-            if (this.loggedIn && !this.upload.uploading) {
+            if (this.list.own && !this.upload.uploading) {
                 this.audioAdd(evt.dataTransfer.items || evt.dataTransfer.files);
             }
         },
         onPaste(evt) {
-            if (this.loggedIn && !this.upload.uploading) {
+            if (this.list.own && !this.upload.uploading) {
                 this.audioAdd(evt.clipboardData.items);
             }
         },

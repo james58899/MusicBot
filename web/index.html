@@ -99,7 +99,7 @@
           <v-toolbar flat>
             <v-toolbar-title class="title"> {{ list.name }} </v-toolbar-title>
             <v-spacer></v-spacer>
-            <upload-btn icon large multiple fixed-width="44px" ref="audioAdd" v-if="loggedIn" @file-update="audioAdd">
+            <upload-btn icon large multiple fixed-width="44px" ref="audioAdd" v-if="list.own" @file-update="audioAdd">
               <template slot="icon">
                 <v-icon>add</v-icon>
               </template>
