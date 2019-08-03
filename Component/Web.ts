@@ -25,6 +25,7 @@ export class Web {
     private list: ListManager;
     private digest: Buffer;
     private upload: string;
+    private webConfig: any;
     private server: Application;
 
     constructor(core: Core) {
@@ -36,6 +37,10 @@ export class Web {
 
         this.digest = crypto.createHash("sha256").update(core.config.telegram.token).digest();
         this.upload = core.config.web.upload;
+        this.webConfig = {
+            tgBotName: core.config.telegram.botname,
+            title: core.config.web.title,
+        };
 
         // Create Server
         this.server = express();
@@ -88,6 +93,7 @@ export class Web {
         const upload = multer({ dest: this.upload });
 
         this.server.get("/", (req: Request, res: Response) => res.send("MusicBot Web Server"));
+        this.server.get("/config", this.route(this.getConfig));
         this.server.get("/login", this.route(this.getLogin));
         this.server.get("/lists", this.route(this.getLists));
         this.server.post("/lists", this.route(this.postLists));
@@ -99,6 +105,10 @@ export class Web {
         this.server.delete("/list/:lid/audio/:aid", this.route(this.deleteListAudio));
         this.server.get("/audio/:aid", this.route(this.getAudio));
         this.server.get("/audio/:aid/file", this.route(this.getAudioFile));
+    }
+
+    private async getConfig(req: Request, res: Response) {
+        res.json(this.webConfig);
     }
 
     private async getLogin(req: Request, res: Response) {
@@ -322,7 +332,7 @@ export class Web {
             audio = await this.audio.add(sender._id!, file);
         } catch (error) {
             if (error === ERR_MISSING_TITLE) {
-                // show error ?
+                // TODO show error
                 return null;
             } else if (error === ERR_NOT_AUDIO) {
                 // not audio file

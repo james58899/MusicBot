@@ -9,13 +9,15 @@
         "name": "musicbot"
     },
     "telegram": {
-        "token": ""
+        "token": "",
+        "botname": ""
     },
     "discord": {
         "token": "",
         "owner": "self"
     },
     "web": {
-        "upload": "Upload"
+        "upload": "Upload",
+        "title": "MusicBot"
     }
 }

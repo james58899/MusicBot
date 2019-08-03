@@ -24,6 +24,10 @@ class Web {
         this.list = core.listManager;
         this.digest = crypto_1.default.createHash("sha256").update(core.config.telegram.token).digest();
         this.upload = core.config.web.upload;
+        this.webConfig = {
+            tgBotName: core.config.telegram.botname,
+            title: core.config.web.title,
+        };
         this.server = express_1.default();
         this.middlewares();
         this.registerRoutes();
@@ -71,6 +75,7 @@ class Web {
     async registerRoutes() {
         const upload = multer_1.default({ dest: this.upload });
         this.server.get("/", (req, res) => res.send("MusicBot Web Server"));
+        this.server.get("/config", this.route(this.getConfig));
         this.server.get("/login", this.route(this.getLogin));
         this.server.get("/lists", this.route(this.getLists));
         this.server.post("/lists", this.route(this.postLists));
@@ -82,6 +87,9 @@ class Web {
         this.server.delete("/list/:lid/audio/:aid", this.route(this.deleteListAudio));
         this.server.get("/audio/:aid", this.route(this.getAudio));
         this.server.get("/audio/:aid/file", this.route(this.getAudioFile));
+    }
+    async getConfig(req, res) {
+        res.json(this.webConfig);
     }
     async getLogin(req, res) {
         const user = await this.checkUser(req);

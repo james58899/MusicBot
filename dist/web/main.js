@@ -1,7 +1,6 @@
 "use strict";
 const config = {
     base: `${location.pathname}api/`,
-    tgBotName: "test_oktw_musicbot_bot",
     urlRegex: /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i,
 };
 Vue.use(VuetifyUploadButton);
@@ -14,6 +13,9 @@ const app = new Vue({
         return {
             tg: {},
             isMobile: false,
+            configLoaded: false,
+            title: "",
+            tgBotName: "",
             drop: {
                 in: false,
                 overlay: false,
@@ -100,12 +102,10 @@ const app = new Vue({
         if (!this.isMobile) {
             this.showDrawer = true;
         }
+        this.loadConfig();
         this.refresh();
     },
     computed: {
-        tgBotName() {
-            return config.tgBotName;
-        },
         loggedIn() {
             return Object.keys(this.tg).length > 0;
         },
@@ -177,6 +177,13 @@ const app = new Vue({
             if (this.loggedIn && !this.upload.uploading) {
                 this.audioAdd(evt.clipboardData.items);
             }
+        },
+        loadConfig() {
+            this.api("get", "config").then(json => {
+                this.title = json.title;
+                this.tgBotName = json.tgBotName;
+                this.configLoaded = true;
+            });
         },
         refresh() {
             this.getLists();
