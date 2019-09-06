@@ -17,7 +17,7 @@
     "node-telegram-bot-api": "^0.30.0",
     "promise-queue": "^2.2.5",
     "shuffle-array": "^1.0.1",
-    "ytdl-core": "^0.29.5"
+    "ytdl-core": "^0.29.6"
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.10",
