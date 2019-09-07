@@ -2,13 +2,21 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const child_process_1 = require("child_process");
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const fs_1 = require("fs");
-const path_1 = __importDefault(require("path"));
+const os_1 = require("os");
+const path_1 = __importStar(require("path"));
+const request_1 = require("request");
 const MediaInfo_1 = require("./MediaInfo");
-const PromiseUtils_1 = require("./PromiseUtils");
 class Encoder {
     constructor(config) {
         this.config = config.audio;
@@ -20,16 +28,21 @@ class Encoder {
         }
     }
     async encode(input, filename, duration) {
-        const normalize = await this.getNormalize(input);
+        if (!this.cacheDir) {
+            this.cacheDir = await fs_1.promises.mkdtemp(path_1.join(os_1.tmpdir(), "musicbot-"));
+        }
+        const cacheFile = path_1.join(this.cacheDir, filename);
+        await this.download(input, cacheFile);
+        const normalize = await this.getNormalize(cacheFile);
         const savePath = path_1.default.resolve(this.config.save, filename + ".ogg");
         return new Promise((resolve, reject) => {
             const ffmpeg = fluent_ffmpeg_1.default({ timeout: 300 });
             if (this.ffmpegPath)
                 ffmpeg.setFfmpegPath(this.ffmpegPath);
-            ffmpeg.input(input)
+            ffmpeg.input(cacheFile)
                 .withNoVideo()
                 .audioFilters("loudnorm=" +
-                "I=-23:LRA=20:TP=-1:" +
+                "I=-20:LRA=18:TP=-1:" +
                 `measured_I=${normalize.input_i}:` +
                 `measured_LRA=${normalize.input_lra}:` +
                 `measured_tp=${normalize.input_tp}:` +
@@ -37,12 +50,12 @@ class Encoder {
                 `offset=${normalize.target_offset}`)
                 .audioBitrate(this.config.bitrate)
                 .audioCodec("libopus")
+                .outputOptions("-map_metadata", "-1")
                 .duration(this.config.length)
                 .format("ogg")
                 .save(savePath + ".tmp")
-                .on("error", reject)
+                .on("error", err => reject(err))
                 .on("end", async () => {
-                await PromiseUtils_1.sleep(1000);
                 await fs_1.promises.rename(savePath + ".tmp", savePath);
                 if (Math.abs((await MediaInfo_1.getMediaInfo(savePath)).duration - duration) > 1) {
                     reject(Error("Duration mismatch"));
@@ -50,6 +63,7 @@ class Encoder {
                 else {
                     resolve(savePath);
                 }
+                fs_1.promises.unlink(cacheFile);
             });
         });
     }
@@ -60,12 +74,24 @@ class Encoder {
                 ffmpeg.setFfmpegPath(this.ffmpegPath);
             ffmpeg.input(input)
                 .withNoVideo()
-                .audioFilters("loudnorm=print_format=json:I=-23:LRA=20:TP=-1")
+                .audioFilters("loudnorm=print_format=json:I=-20:LRA=18:TP=-1")
                 .duration(this.config.length)
                 .format("null")
                 .save("-")
-                .on("error", reject)
+                .on("error", err => reject(err))
                 .on("end", (stdout, stderr) => resolve(JSON.parse(stderr)));
+        });
+    }
+    async download(input, output) {
+        const stream = fs_1.createWriteStream(output);
+        return new Promise((resolve, reject) => {
+            request_1.get(input)
+                .on("error", err => reject(err))
+                .on("complete", () => {
+                stream.close();
+                resolve();
+            })
+                .pipe(stream);
         });
     }
 }
