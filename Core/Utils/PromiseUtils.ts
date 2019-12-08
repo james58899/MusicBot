@@ -1,3 +1,5 @@
+import { access, constants } from "fs"
+
 export async function retry<T>(fun: () => Promise<T>, time: number = 5, interval: number = 5000) {
     let tryTime = 0;
     let run: Promise<T>;
@@ -17,4 +19,8 @@ export async function retry<T>(fun: () => Promise<T>, time: number = 5, interval
 
 export function sleep(time: number) {
     return new Promise(resolve => setTimeout(resolve, time));
+}
+
+export function exists(file: string) {
+    return new Promise(resolve => {access(file, constants.F_OK, err => err ? resolve(true) : resolve(false))});
 }

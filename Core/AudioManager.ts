@@ -1,17 +1,15 @@
 import { createHash } from "crypto";
-import { exists, existsSync } from "fs";
 import { promises as fsp } from "fs";
 import { Collection, FilterQuery, ObjectID } from "mongodb";
 import { cpus } from "os";
 import { resolve } from "path";
 import Queue from "promise-queue";
-import { promisify } from "util";
 import { Core } from "..";
 import { ListManager } from "./ListManager";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { UrlParser } from "./URLParser";
 import { Encoder } from "./Utils/Encoder";
-import { retry } from "./Utils/PromiseUtils";
+import { exists, retry } from "./Utils/PromiseUtils";
 
 export const ERR_MISSING_TITLE = Error("Missing title");
 export const ERR_NOT_AUDIO = Error("This doesn't look like audio");
@@ -132,7 +130,7 @@ export class AudioManager {
 
         // delete file
         const file = this.getCachePath(audio);
-        if (existsSync(file)) fsp.unlink(file);
+        if (await exists(file)) fsp.unlink(file);
 
         return this.database.deleteOne({ _id: id });
     }
@@ -140,7 +138,7 @@ export class AudioManager {
     public get(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.findOne({ _id: id });
+        return retry(() => this.database!!.findOne({ _id: id }));
     }
 
     public search(metadata?: FilterQuery<IAudioData>) {
@@ -151,7 +149,7 @@ export class AudioManager {
 
     public async getFile(audio: IAudioData) {
         const path = this.getCachePath(audio);
-        return await promisify(exists)(path) ? path : false;
+        return await exists(path) ? path : false;
     }
 
     public async checkCache(deep: boolean = false) {
@@ -161,7 +159,7 @@ export class AudioManager {
             this.search().forEach(async audio => {
                 const file = this.getCachePath(audio);
 
-                if (!await promisify(exists)(file)) {
+                if (!await exists(file)) {
                     if (!audio.source) {
                         this.delete(audio._id!);
                         return;
