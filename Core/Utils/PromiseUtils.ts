@@ -1,6 +1,6 @@
 import { access, constants } from "fs";
 
-export async function retry<T>(fun: () => Promise<T>, time: number = 5, interval: number = 5000) {
+export async function retry<T>(fun: () => Promise<T>, time: number = 5, interval: number = 5000, increase: boolean = true) {
     let tryTime = 0;
     let run: Promise<T>;
 
@@ -9,7 +9,7 @@ export async function retry<T>(fun: () => Promise<T>, time: number = 5, interval
             run = fun();
             return await run;
         } catch (error) {
-            if (++tryTime > 0) interval = interval * 2;
+            if (++tryTime > 0 && increase) interval = interval * 2;
         }
         await sleep(interval);
     } while (tryTime < time);

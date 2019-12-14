@@ -138,7 +138,7 @@ export class AudioManager {
     public get(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return retry(() => this.database!!.findOne({ _id: id }));
+        return retry(() => this.database!!.findOne({ _id: id }), 17280, 5000, false);
     }
 
     public search(metadata?: FilterQuery<IAudioData>) {
