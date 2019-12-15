@@ -5,11 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto_1 = require("crypto");
 const fs_1 = require("fs");
-const fs_2 = require("fs");
 const os_1 = require("os");
 const path_1 = require("path");
 const promise_queue_1 = __importDefault(require("promise-queue"));
-const util_1 = require("util");
 const MongoDB_1 = require("./MongoDB");
 const URLParser_1 = require("./URLParser");
 const Encoder_1 = require("./Utils/Encoder");
@@ -108,14 +106,14 @@ class AudioManager {
             return;
         await this.listManager.delAudioAll(id);
         const file = this.getCachePath(audio);
-        if (fs_1.existsSync(file))
-            fs_2.promises.unlink(file);
+        if (await PromiseUtils_1.exists(file))
+            fs_1.promises.unlink(file);
         return this.database.deleteOne({ _id: id });
     }
     get(id) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.findOne({ _id: id });
+        return PromiseUtils_1.retry(() => this.database.findOne({ _id: id }), 17280, 5000, false);
     }
     search(metadata) {
         if (!this.database)
@@ -124,7 +122,7 @@ class AudioManager {
     }
     async getFile(audio) {
         const path = this.getCachePath(audio);
-        return await util_1.promisify(fs_1.exists)(path) ? path : false;
+        return await PromiseUtils_1.exists(path) ? path : false;
     }
     async checkCache(deep = false) {
         if (deep)
@@ -132,7 +130,7 @@ class AudioManager {
         return new Promise((done, reject) => {
             this.search().forEach(async (audio) => {
                 const file = this.getCachePath(audio);
-                if (!await util_1.promisify(fs_1.exists)(file)) {
+                if (!await PromiseUtils_1.exists(file)) {
                     if (!audio.source) {
                         this.delete(audio._id);
                         return;

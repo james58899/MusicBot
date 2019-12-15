@@ -8,9 +8,9 @@ class Youtube {
         parser.registerMetadataProvider(match, this.getMetadata);
     }
     async getFile(link) {
-        const info = await ytdl_core_1.getInfo(link);
-        let selected = info.formats.filter(i => i.bitrate == null && i.audioBitrate);
-        const opusFilter = info.formats.filter(i => i.audioEncoding === "opus");
+        const info = await ytdl_core_1.getInfo(link, { filter: "audio" });
+        let selected = info.formats;
+        const opusFilter = info.formats.filter(i => i.codecs === "opus");
         if (opusFilter.length !== 0)
             selected = opusFilter;
         if (selected.length === 0) {

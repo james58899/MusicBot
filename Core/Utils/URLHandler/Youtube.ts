@@ -9,10 +9,10 @@ export class Youtube {
     }
 
     public async getFile(link: string) {
-        const info = await getInfo(link);
+        const info = await getInfo(link, {filter: "audio"});
 
-        let selected: videoFormat[] | videoFormat = info.formats.filter(i => i.bitrate == null && i.audioBitrate);
-        const opusFilter = info.formats.filter(i => i.audioEncoding === "opus");
+        let selected: videoFormat[] | videoFormat = info.formats;
+        const opusFilter = info.formats.filter(i => i.codecs === "opus");
 
         if (opusFilter.length !== 0) selected = opusFilter;
 

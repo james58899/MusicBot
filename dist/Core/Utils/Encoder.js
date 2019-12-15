@@ -54,7 +54,10 @@ class Encoder {
                 .duration(this.config.length)
                 .format("ogg")
                 .save(savePath + ".tmp")
-                .on("error", err => reject(err))
+                .on("error", (err, stdout, stderr) => {
+                console.error(stderr);
+                return reject(err);
+            })
                 .on("end", async () => {
                 await fs_1.promises.rename(savePath + ".tmp", savePath);
                 if (Math.abs((await MediaInfo_1.getMediaInfo(savePath)).duration - duration) > 1) {
@@ -78,7 +81,10 @@ class Encoder {
                 .duration(this.config.length)
                 .format("null")
                 .save("-")
-                .on("error", err => reject(err))
+                .on("error", (err, stdout, stderr) => {
+                console.error(stderr);
+                return reject(err);
+            })
                 .on("end", (stdout, stderr) => resolve(JSON.parse(stderr)));
         });
     }
