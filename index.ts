@@ -10,10 +10,10 @@ import { UserManager } from "./Core/UserManager";
 
 export class Core extends EventEmitter {
     public readonly config = require(resolve("config.json"));
-    public readonly database = new MongoDB(this.config);
     public readonly audioManager = new AudioManager(this);
     public readonly userManager = new UserManager(this);
     public readonly listManager = new ListManager(this);
+    public readonly database = new MongoDB(this.config);
 
     constructor() {
         super();
