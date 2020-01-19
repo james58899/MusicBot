@@ -20,15 +20,15 @@
     "ytdl-core": "^1.0.3"
   },
   "devDependencies": {
-    "@types/fluent-ffmpeg": "^2.1.12",
-    "@types/mongodb": "^3.3.1",
-    "@types/node": "^12.12.17",
-    "@types/node-telegram-bot-api": "^0.40.0",
+    "@types/fluent-ffmpeg": "^2.1.13",
+    "@types/mongodb": "^3.3.14",
+    "@types/node": "^13.1.8",
+    "@types/node-telegram-bot-api": "^0.40.1",
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^0.0.28",
-    "husky": "^3.0.5",
+    "husky": "^4.0.10",
     "tslint": "^5.20.0",
-    "typescript": "^3.6.3"
+    "typescript": "^3.7.5"
   },
   "optionalDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.19",
