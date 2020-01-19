@@ -22,15 +22,12 @@ export class UserManager {
     private bindToken = new Map<string, ObjectID>();
 
     constructor(core: Core) {
-        if (core.database.client) {
+        core.on("ready", () => {
+            if (!core.database.client) throw Error("Database client not init");
+
             this.database = core.database.client.collection("user");
             this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
-        } else {
-            core.database.on("connect", database => {
-                this.database = database.collection("user");
-                this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
-            });
-        }
+        });
     }
 
     public get(id: ObjectID) {

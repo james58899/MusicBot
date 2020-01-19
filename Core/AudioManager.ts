@@ -45,17 +45,11 @@ export class AudioManager {
 
         core.on("ready", () => {
             if (!this.listManager) throw Error("ListManager hot init");
-        });
+            if (!core.database.client) throw Error("Database client not init");
 
-        if (core.database.client) {
-            this.database = core.database.client.collection("user");
+            this.database = core.database.client.collection("sound");
             this.database.createIndex({ hash: 1 }, { unique: true });
-        } else {
-            core.database.on("connect", database => {
-                this.database = database.collection("sound");
-                this.database.createIndex({ hash: 1 }, { unique: true });
-            });
-        }
+        });
     }
 
     public async add(sender: ObjectID, source: string, metadata: { title?: string, artist?: string, duration?: number, size?: number } = {}) {
