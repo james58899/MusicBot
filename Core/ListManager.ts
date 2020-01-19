@@ -26,7 +26,13 @@ export class ListManager {
             if (!core.database.client) throw Error("Database client not init");
 
             this.database = core.database.client.collection("list");
+
+            // Add field admin to old lists
+            this.database.findOneAndUpdate({ admin: { $type: 10 } }, { $set: { admin: [] } });
+
+            // Create indexes
             this.database.createIndex({ owner: 1 });
+            this.database.createIndex({ admin: 1 });
         });
     }
 
