@@ -20,6 +20,7 @@ export class Youtube {
             throw new Error("This video does not have any audio only format.");
         }
 
+        // @ts-ignore
         selected = selected.sort((a, b) => b.audioBitrate - a.audioBitrate)[0];
 
         return selected.url;

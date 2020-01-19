@@ -28,7 +28,7 @@ class UserManager {
             throw MongoDB_1.ERR_DB_NOT_INIT;
         if (await this.get(bind.type, bind.id))
             throw exports.ERR_USER_EXIST;
-        return this.bind((await this.database.insertOne({ name })).ops[0]._id, bind);
+        return this.bind((await this.database.insertOne({ name, bind: [] })).ops[0]._id, bind);
     }
     async createFromToken(token, bind) {
         const id = this.bindToken.get(token);

@@ -23,7 +23,7 @@ class AudioManager {
         this.config = core.config.audio;
         const encoder = new Encoder_1.Encoder(core.config);
         this.encode = encoder.encode.bind(encoder);
-        core.on("init", core => {
+        core.on("init", () => {
             this.listManager = core.listManager;
         });
         core.on("ready", () => {
