@@ -9,10 +9,10 @@ export class Youtube {
     }
 
     public async getFile(link: string) {
-        const info = await getInfo(link);
+        const info = await getInfo(link, {filter: "audio"});
 
-        let selected: videoFormat[] | videoFormat = info.formats.filter(i => i.bitrate == null && i.audioBitrate);
-        const opusFilter = info.formats.filter(i => i.audioEncoding === "opus");
+        let selected: videoFormat[] | videoFormat = info.formats;
+        const opusFilter = info.formats.filter(i => i.codecs === "opus");
 
         if (opusFilter.length !== 0) selected = opusFilter;
 
@@ -20,6 +20,7 @@ export class Youtube {
             throw new Error("This video does not have any audio only format.");
         }
 
+        // @ts-ignore
         selected = selected.sort((a, b) => b.audioBitrate - a.audioBitrate)[0];
 
         return selected.url;

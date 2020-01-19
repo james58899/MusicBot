@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const MongoDB_1 = require("./MongoDB");
+const PromiseUtils_1 = require("./Utils/PromiseUtils");
 class ListManager {
     constructor(core) {
         core.on("init", _ => {
@@ -34,7 +35,7 @@ class ListManager {
     get(id) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.findOne({ _id: id });
+        return PromiseUtils_1.retry(() => this.database.findOne({ _id: id }), 17280, 5000, false);
     }
     getAll() {
         if (!this.database)

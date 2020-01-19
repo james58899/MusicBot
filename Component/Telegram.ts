@@ -833,7 +833,7 @@ export class Telegram {
 
     private getFile(fileId: string) {
         fileId = fileId.replace("tg://", "");
-        return this.bot.getFileLink(fileId);
+        return retry(() => this.bot.getFileLink(fileId));
     }
 
     private async getMetadata(fileId: string) {

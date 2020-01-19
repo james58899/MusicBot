@@ -2,6 +2,7 @@ import { Collection, ObjectID } from "mongodb";
 import { Core } from "..";
 import { AudioManager } from "./AudioManager";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
+import { retry } from "./Utils/PromiseUtils";
 
 export interface IAudioList {
     admin: ObjectID[];
@@ -49,7 +50,7 @@ export class ListManager {
     public get(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.findOne({ _id: id });
+        return retry(() => this.database!!.findOne({ _id: id }), 17280, 5000, false);
     }
 
     public getAll() {
