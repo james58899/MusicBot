@@ -5,10 +5,10 @@ import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { retry } from "./Utils/PromiseUtils";
 
 export interface IAudioList {
-    admin: ObjectID[];
     _id: ObjectID;
     name: string;
     owner: ObjectID;
+    admin: ObjectID[];
     audio: ObjectID[];
 }
 

@@ -193,7 +193,7 @@ export class Telegram {
     private async commandInfo(msg: Message) {
         if (!msg.from) return;
 
-        const user = await this.user.get(msg.from.id, BIND_TYPE);
+        const user = await this.user.getFromBind(BIND_TYPE, msg.from.id);
         if (!user) {
             this.queueSendMessage(msg.chat.id, ERR_NOT_REGISTER);
         } else {
@@ -652,7 +652,7 @@ export class Telegram {
 
                 if (audio) this.processDone(replyMessage, audio);
             } catch (e) {
-                this.sendError(replyMessage, "An error occured when adding song：" + e.message);
+                this.sendError(replyMessage, "An error occured when adding song: " + e.message);
             }
         } else {
             let audio = await this.audio.search({ source }).next();
@@ -828,7 +828,7 @@ export class Telegram {
 
     // Misc
     private getUser(id: number) {
-        return this.user.get(id, BIND_TYPE);
+        return this.user.getFromBind(BIND_TYPE, id);
     }
 
     private getFile(fileId: string) {

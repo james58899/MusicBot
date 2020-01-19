@@ -164,7 +164,7 @@ class Discord {
         msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
     }
     async commandBind(msg) {
-        const user = await this.user.get(msg.author.id, exports.BIND_TYPE);
+        const user = await this.user.getFromBind(exports.BIND_TYPE, msg.author.id);
         if (!user) {
             this.bot.createMessage(msg.channel.id, "You are not register!");
             return;
@@ -172,7 +172,7 @@ class Discord {
         this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`);
     }
     async procseeFile(msg) {
-        const user = await this.user.get(msg.author.id, exports.BIND_TYPE);
+        const user = await this.user.getFromBind(exports.BIND_TYPE, msg.author.id);
         if (!user)
             return;
         msg.attachments.forEach(async (file) => {
