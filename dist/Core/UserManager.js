@@ -7,16 +7,12 @@ exports.ERR_BIND_TOKEN_NOT_FOUND = Error("Bind token not found");
 class UserManager {
     constructor(core) {
         this.bindToken = new Map();
-        if (core.database.client) {
+        core.on("ready", () => {
+            if (!core.database.client)
+                throw Error("Database client not init");
             this.database = core.database.client.collection("user");
             this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
-        }
-        else {
-            core.database.on("connect", database => {
-                this.database = database.collection("user");
-                this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
-            });
-        }
+        });
     }
     get(id) {
         if (!this.database)

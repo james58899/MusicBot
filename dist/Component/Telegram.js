@@ -15,6 +15,7 @@ const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
 const ERR_NOT_VALID_TITLE = Error("Not valid title");
 const ERR_LIST_NOT_FOUND = Error("Playlist not found");
 const ERR_NOT_REGISTER = "Please use /register to register or bind account!";
+const ERR_PERMISSION_LOST = "Add sound session ended because you no longer have the permission.";
 class Telegram {
     constructor(core) {
         this.messageQueue = new promise_queue_1.default(1);
@@ -53,10 +54,17 @@ class Telegram {
                     break;
             }
         });
-        this.bot.on("audio", msg => this.processAudio(msg));
-        this.bot.on("document", msg => this.processFile(msg));
+        this.bot.on("audio", async (msg) => {
+            this.checkSessionPermission(msg);
+            this.processAudio(msg);
+        });
+        this.bot.on("document", async (msg) => {
+            this.checkSessionPermission(msg);
+            this.processFile(msg);
+        });
         this.bot.on("text", async (msg) => {
             if (msg.entities && msg.entities.some(entity => entity.type.match(/url|text_link/ig) != null)) {
+                this.checkSessionPermission(msg);
                 this.sendProcessing(msg);
                 for (const entity of msg.entities) {
                     if (entity.type === "url" && msg.text) {
@@ -69,6 +77,7 @@ class Telegram {
             }
         });
         this.bot.onText(/^([0-9a-f]{24})$/i, async (msg, match) => {
+            await this.checkSessionPermission(msg);
             const session = this.audioAddSession.get(msg.chat.id);
             if (!session || !match)
                 return;
@@ -762,6 +771,19 @@ class Telegram {
     async getMetadata(fileId) {
         const file = await this.getFile(fileId);
         return this.audio.urlParser.getMetadata(file);
+    }
+    async checkSessionPermission(msg) {
+        if (msg.chat.type === "private") {
+            const session = this.audioAddSession.get(msg.chat.id);
+            if (session && msg.from) {
+                const list = await this.list.get(session);
+                const user = await this.getUser(msg.from.id);
+                if (!user || !list || !(list.owner.equals(user._id) || list.admin.find(id => id.equals(user._id)))) {
+                    this.audioAddSession.delete(msg.chat.id);
+                    this.sendError(msg, ERR_PERMISSION_LOST);
+                }
+            }
+        }
     }
     queueSendMessage(chatId, text, options) {
         return this.messageQueue.add(async () => {

@@ -13,10 +13,10 @@ class Core extends events_1.EventEmitter {
     constructor() {
         super();
         this.config = require(path_1.resolve("config.json"));
-        this.database = new MongoDB_1.MongoDB(this.config);
         this.audioManager = new AudioManager_1.AudioManager(this);
         this.userManager = new UserManager_1.UserManager(this);
         this.listManager = new ListManager_1.ListManager(this);
+        this.database = new MongoDB_1.MongoDB(this.config);
         this.emit("init", this);
         if (!fs_1.existsSync(path_1.resolve(this.config.audio.save)))
             fs_1.mkdirSync(path_1.resolve(this.config.audio.save));
