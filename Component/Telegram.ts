@@ -14,7 +14,7 @@ const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
 const ERR_NOT_VALID_TITLE = Error("Not valid title");
 const ERR_LIST_NOT_FOUND = Error("Playlist not found");
 const ERR_NOT_REGISTER = "Please use /register to register or bind account!";
-const ERR_PERMISSION_LOST = "Add sound session ended because you no longer have the permission."
+const ERR_PERMISSION_LOST = "Add sound session ended because you no longer have the permission.";
 
 export class Telegram {
     private audio: AudioManager;
