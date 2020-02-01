@@ -28,7 +28,7 @@ export class ListManager {
             this.database = core.database.client.collection("list");
 
             // Add field admin to old lists
-            this.database.findOneAndUpdate({ admin: { $type: 10 } }, { $set: { admin: [] } });
+            this.database.findOneAndUpdate({ admin: { $exists: false } }, { $set: { admin: [] } });
 
             // Create indexes
             this.database.createIndex({ owner: 1 });
