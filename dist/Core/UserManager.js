@@ -7,18 +7,19 @@ exports.ERR_BIND_TOKEN_NOT_FOUND = Error("Bind token not found");
 class UserManager {
     constructor(core) {
         this.bindToken = new Map();
-        if (core.database.client) {
+        core.on("ready", () => {
+            if (!core.database.client)
+                throw Error("Database client not init");
             this.database = core.database.client.collection("user");
             this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
-        }
-        else {
-            core.database.on("connect", database => {
-                this.database = database.collection("user");
-                this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
-            });
-        }
+        });
     }
-    get(type, id) {
+    get(id) {
+        if (!this.database)
+            throw MongoDB_1.ERR_DB_NOT_INIT;
+        return this.database.findOne({ _id: id });
+    }
+    getFromBind(type, id) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
         return this.database.findOne({ bind: { $elemMatch: { type, id } } });
@@ -26,7 +27,7 @@ class UserManager {
     async create(name, bind) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        if (await this.get(bind.type, bind.id))
+        if (await this.getFromBind(bind.type, bind.id))
             throw exports.ERR_USER_EXIST;
         return this.bind((await this.database.insertOne({ name, bind: [] })).ops[0]._id, bind);
     }
@@ -34,7 +35,7 @@ class UserManager {
         const id = this.bindToken.get(token);
         if (!id)
             throw exports.ERR_BIND_TOKEN_NOT_FOUND;
-        if (await this.get(bind.type, bind.id))
+        if (await this.getFromBind(bind.type, bind.id))
             throw exports.ERR_USER_EXIST;
         return this.bind(id, bind);
     }

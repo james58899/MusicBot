@@ -8,6 +8,7 @@ export interface IAudioList {
     _id: ObjectID;
     name: string;
     owner: ObjectID;
+    admin: ObjectID[];
     audio: ObjectID[];
 }
 
@@ -25,7 +26,13 @@ export class ListManager {
             if (!core.database.client) throw Error("Database client not init");
 
             this.database = core.database.client.collection("list");
+
+            // Add field admin to old lists
+            this.database.findOneAndUpdate({ admin: { $type: 10 } }, { $set: { admin: [] } });
+
+            // Create indexes
             this.database.createIndex({ owner: 1 });
+            this.database.createIndex({ admin: 1 });
         });
     }
 
@@ -33,9 +40,10 @@ export class ListManager {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.insertOne({
+            admin: Array<ObjectID>(),
             audio: Array<ObjectID>(),
             name,
-            owner,
+            owner
         } as IAudioList)).ops[0] as IAudioList;
     }
 
@@ -51,10 +59,10 @@ export class ListManager {
         return this.database.find();
     }
 
-    public getFromOwner(owner: ObjectID) {
+    public getFromPermission(user: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.find({ owner });
+        return this.database.find({ $or: [{ owner: user }, { admin: user }] });
     }
 
     public async rename(id: ObjectID, name: string) {
@@ -71,6 +79,26 @@ export class ListManager {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         this.database.deleteOne({ _id: id });
+    }
+
+    public async addAdmin(id: ObjectID, admin: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $addToSet: { admin } },
+            { returnOriginal: false }
+        )).value;
+    }
+
+    public async removeAdmin(id: ObjectID, admin: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $pull: { admin } },
+            { returnOriginal: false }
+        )).value;
     }
 
     public async addAudio(id: ObjectID, audio: ObjectID) {

@@ -15,6 +15,7 @@ const ERR_MISSING_TOKEN = Error("Telegram bot api token not found!");
 const ERR_NOT_VALID_TITLE = Error("Not valid title");
 const ERR_LIST_NOT_FOUND = Error("Playlist not found");
 const ERR_NOT_REGISTER = "Please use /register to register or bind account!";
+const ERR_PERMISSION_LOST = "Add sound session ended because you no longer have the permission.";
 class Telegram {
     constructor(core) {
         this.messageQueue = new promise_queue_1.default(1);
@@ -53,10 +54,17 @@ class Telegram {
                     break;
             }
         });
-        this.bot.on("audio", msg => this.processAudio(msg));
-        this.bot.on("document", msg => this.processFile(msg));
+        this.bot.on("audio", async (msg) => {
+            this.checkSessionPermission(msg);
+            this.processAudio(msg);
+        });
+        this.bot.on("document", async (msg) => {
+            this.checkSessionPermission(msg);
+            this.processFile(msg);
+        });
         this.bot.on("text", async (msg) => {
             if (msg.entities && msg.entities.some(entity => entity.type.match(/url|text_link/ig) != null)) {
+                this.checkSessionPermission(msg);
                 this.sendProcessing(msg);
                 for (const entity of msg.entities) {
                     if (entity.type === "url" && msg.text) {
@@ -69,6 +77,7 @@ class Telegram {
             }
         });
         this.bot.onText(/^([0-9a-f]{24})$/i, async (msg, match) => {
+            await this.checkSessionPermission(msg);
             const session = this.audioAddSession.get(msg.chat.id);
             if (!session || !match)
                 return;
@@ -105,6 +114,12 @@ class Telegram {
                     break;
                 case "ListAudio":
                     await this.listAudioCallback(query, data);
+                    break;
+                case "AddAdmin":
+                    await this.AddAdminCallback(query, data);
+                    break;
+                case "RemoveAdmin":
+                    await this.RemoveAdminCallback(query, data);
                     break;
                 case "ListRename":
                     await this.listRenameCallback(query, data);
@@ -149,7 +164,7 @@ class Telegram {
     async commandInfo(msg) {
         if (!msg.from)
             return;
-        const user = await this.user.get(exports.BIND_TYPE, msg.from.id);
+        const user = await this.user.getFromBind(exports.BIND_TYPE, msg.from.id);
         if (!user) {
             this.queueSendMessage(msg.chat.id, ERR_NOT_REGISTER);
         }
@@ -247,7 +262,7 @@ class Telegram {
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
-        if (!user || !list || !list.owner.equals(user._id))
+        if (!user || !list || !(list.owner.equals(user._id) || list.admin.find(id => id.equals(user._id))))
             return;
         if (data[2] === "done") {
             this.audioAddSession.delete(query.message.chat.id);
@@ -300,6 +315,96 @@ class Telegram {
             });
         }
     }
+    async AddAdminCallback(query, data) {
+        if (!query.message || !data[1])
+            return;
+        const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
+        const user = await this.getUser(query.from.id);
+        if (!user || !list || !list.owner.equals(user._id))
+            return;
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's ID to add admin", {
+            reply_markup: {
+                force_reply: true,
+                selective: true,
+            }
+        });
+        if (message instanceof Error)
+            throw message;
+        this.bot.onReplyToMessage(message.chat.id, message.message_id, async (reply) => {
+            if (!reply.from || reply.from.id !== query.from.id)
+                return;
+            if (reply.text) {
+                if (!mongodb_1.ObjectID.isValid(reply.text)) {
+                    this.queueSendMessage(reply.chat.id, "ID Invalid!");
+                }
+                else if (reply.text === user._id.toHexString()) {
+                    this.queueSendMessage(reply.chat.id, "You are adding your self!");
+                }
+                else {
+                    const userToAdd = await this.user.get(new mongodb_1.ObjectID(reply.text));
+                    if (!userToAdd) {
+                        this.queueSendMessage(reply.chat.id, "User not found!");
+                    }
+                    else {
+                        this.list.addAdmin(list._id, userToAdd._id);
+                        this.queueSendMessage(reply.chat.id, "Success!", {
+                            reply_to_message_id: reply.message_id
+                        });
+                    }
+                }
+            }
+            else {
+                this.queueSendMessage(reply.chat.id, "Invalid name!");
+            }
+            this.bot.answerCallbackQuery(query.id);
+            this.bot.removeReplyListener(message.message_id);
+        });
+    }
+    async RemoveAdminCallback(query, data) {
+        if (!query.message || !data[1])
+            return;
+        const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
+        const user = await this.getUser(query.from.id);
+        if (!user || !list || !list.owner.equals(user._id))
+            return;
+        const message = await this.queueSendMessage(query.message.chat.id, "Enter user's ID to remove admin", {
+            reply_markup: {
+                force_reply: true,
+                selective: true,
+            }
+        });
+        if (message instanceof Error)
+            throw message;
+        this.bot.onReplyToMessage(message.chat.id, message.message_id, async (reply) => {
+            if (!reply.from || reply.from.id !== query.from.id)
+                return;
+            if (reply.text) {
+                if (!mongodb_1.ObjectID.isValid(reply.text)) {
+                    this.queueSendMessage(reply.chat.id, "ID Invalid!");
+                }
+                else if (reply.text === user._id.toHexString()) {
+                    this.queueSendMessage(reply.chat.id, "You are removing your self!");
+                }
+                else {
+                    const userToRemove = await this.user.get(new mongodb_1.ObjectID(reply.text));
+                    if (!userToRemove) {
+                        this.queueSendMessage(reply.chat.id, "User not found!");
+                    }
+                    else {
+                        this.list.removeAdmin(list._id, userToRemove._id);
+                        this.queueSendMessage(reply.chat.id, "Success!", {
+                            reply_to_message_id: reply.message_id
+                        });
+                    }
+                }
+            }
+            else {
+                this.queueSendMessage(reply.chat.id, "Invalid name!");
+            }
+            this.bot.answerCallbackQuery(query.id);
+            this.bot.removeReplyListener(message.message_id);
+        });
+    }
     async listRenameCallback(query, data) {
         if (!query.message || !data[1])
             return;
@@ -350,7 +455,7 @@ class Telegram {
         }
     }
     async genPlaylistView(start = 0, user) {
-        const list = (user) ? this.list.getFromOwner(user) : this.list.getAll();
+        const list = (user) ? this.list.getFromPermission(user) : this.list.getAll();
         const array = await list.skip(start).limit(10).toArray();
         const button = new Array();
         array.map((item, index) => {
@@ -400,21 +505,25 @@ class Telegram {
     }
     async genListInfoView(listID, user) {
         const list = await this.list.get(listID);
-        const button = new Array(new Array(), new Array());
+        const button = new Array(new Array(), new Array(), new Array());
         if (!list)
             throw ERR_LIST_NOT_FOUND;
-        if (list.owner.equals(user))
+        if (list.owner.equals(user) || list.admin.find(id => id.equals(user)))
             button[0].push({ text: "Add sounds", callback_data: `ListAudioAdd ${listID.toHexString()}` });
         button[0].push({ text: "Show sounds", callback_data: `ListAudio show ${listID.toHexString()}` });
-        if (list.owner.equals(user))
+        if (list.owner.equals(user) || list.admin.find(id => id.equals(user)))
             button[0].push({ text: "Delete sounds", callback_data: `ListAudio delete ${listID.toHexString()}` });
         if (list.owner.equals(user))
-            button[1].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
+            button[1].push({ text: "Add Admin", callback_data: `AddAdmin ${listID.toHexString()}` });
         if (list.owner.equals(user))
-            button[1].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
+            button[1].push({ text: "Remove Admin", callback_data: `RemoveAdmin ${listID.toHexString()}` });
+        if (list.owner.equals(user))
+            button[2].push({ text: "Rename", callback_data: `ListRename ${listID.toHexString()}` });
+        if (list.owner.equals(user))
+            button[2].push({ text: "Delete", callback_data: `ListDelete ${listID.toHexString()}` });
         return {
             button,
-            text: `ID: ${list._id.toHexString()}\nName: ${list.name}\nOwner: ${list.owner}\nSounds: ${list.audio.length}`
+            text: `ID: ${list._id.toHexString()}\nName: ${list.name}\nOwner: ${list.owner}\nSounds: ${list.audio.length}\nAdmins: ${list.admin}`
         };
     }
     async genAudioListView(listID, start = 0, deleteMode = false) {
@@ -487,7 +596,7 @@ class Telegram {
                     this.processDone(replyMessage, audio);
             }
             catch (e) {
-                this.sendError(replyMessage, "An error occured when adding song：" + e.message);
+                this.sendError(replyMessage, "An error occured when adding song: " + e.message);
             }
         }
         else {
@@ -653,7 +762,7 @@ class Telegram {
         }
     }
     getUser(id) {
-        return this.user.get(exports.BIND_TYPE, id);
+        return this.user.getFromBind(exports.BIND_TYPE, id);
     }
     getFile(fileId) {
         fileId = fileId.replace("tg://", "");
@@ -662,6 +771,19 @@ class Telegram {
     async getMetadata(fileId) {
         const file = await this.getFile(fileId);
         return this.audio.urlParser.getMetadata(file);
+    }
+    async checkSessionPermission(msg) {
+        if (msg.chat.type === "private") {
+            const session = this.audioAddSession.get(msg.chat.id);
+            if (session && msg.from) {
+                const list = await this.list.get(session);
+                const user = await this.getUser(msg.from.id);
+                if (!user || !list || !(list.owner.equals(user._id) || list.admin.find(id => id.equals(user._id)))) {
+                    this.audioAddSession.delete(msg.chat.id);
+                    this.sendError(msg, ERR_PERMISSION_LOST);
+                }
+            }
+        }
     }
     queueSendMessage(chatId, text, options) {
         return this.messageQueue.add(async () => {

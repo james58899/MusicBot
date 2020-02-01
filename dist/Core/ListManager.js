@@ -10,25 +10,22 @@ class ListManager {
         core.on("ready", () => {
             if (!this.audioManager)
                 throw Error("AudioManager not init");
-        });
-        if (core.database.client) {
+            if (!core.database.client)
+                throw Error("Database client not init");
             this.database = core.database.client.collection("list");
+            this.database.findOneAndUpdate({ admin: { $type: 10 } }, { $set: { admin: [] } });
             this.database.createIndex({ owner: 1 });
-        }
-        else {
-            core.database.on("connect", client => {
-                this.database = client.collection("list");
-                this.database.createIndex({ owner: 1 });
-            });
-        }
+            this.database.createIndex({ admin: 1 });
+        });
     }
     async create(name, owner) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
         return (await this.database.insertOne({
+            admin: Array(),
             audio: Array(),
             name,
-            owner,
+            owner
         })).ops[0];
     }
     get(id) {
@@ -41,10 +38,10 @@ class ListManager {
             throw MongoDB_1.ERR_DB_NOT_INIT;
         return this.database.find();
     }
-    getFromOwner(owner) {
+    getFromPermission(user) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.find({ owner });
+        return this.database.find({ $or: [{ owner: user }, { admin: user }] });
     }
     async rename(id, name) {
         if (!this.database)
@@ -55,6 +52,16 @@ class ListManager {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
         this.database.deleteOne({ _id: id });
+    }
+    async addAdmin(id, admin) {
+        if (!this.database)
+            throw MongoDB_1.ERR_DB_NOT_INIT;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $addToSet: { admin } }, { returnOriginal: false })).value;
+    }
+    async removeAdmin(id, admin) {
+        if (!this.database)
+            throw MongoDB_1.ERR_DB_NOT_INIT;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $pull: { admin } }, { returnOriginal: false })).value;
     }
     async addAudio(id, audio) {
         if (!this.database)

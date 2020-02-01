@@ -30,7 +30,13 @@ export class UserManager {
         });
     }
 
-    public get(type: string, id: string | number) {
+    public get(id: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return this.database.findOne({_id: id});
+    }
+
+    public getFromBind(type: string, id: string | number) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({ bind: { $elemMatch: { type, id } } });
@@ -39,7 +45,7 @@ export class UserManager {
     public async create(name: string, bind: IBindData) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        if (await this.get(bind.type, bind.id)) throw ERR_USER_EXIST;
+        if (await this.getFromBind(bind.type, bind.id)) throw ERR_USER_EXIST;
 
         return this.bind((await this.database.insertOne({ name, bind: [] })).ops[0]._id, bind);
     }
@@ -48,7 +54,7 @@ export class UserManager {
         const id = this.bindToken.get(token);
 
         if (!id) throw ERR_BIND_TOKEN_NOT_FOUND;
-        if (await this.get(bind.type, bind.id)) throw ERR_USER_EXIST;
+        if (await this.getFromBind(bind.type, bind.id)) throw ERR_USER_EXIST;
 
         return this.bind(id, bind);
     }

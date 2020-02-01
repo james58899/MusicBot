@@ -29,17 +29,11 @@ class AudioManager {
         core.on("ready", () => {
             if (!this.listManager)
                 throw Error("ListManager hot init");
-        });
-        if (core.database.client) {
-            this.database = core.database.client.collection("user");
+            if (!core.database.client)
+                throw Error("Database client not init");
+            this.database = core.database.client.collection("sound");
             this.database.createIndex({ hash: 1 }, { unique: true });
-        }
-        else {
-            core.database.on("connect", database => {
-                this.database = database.collection("sound");
-                this.database.createIndex({ hash: 1 }, { unique: true });
-            });
-        }
+        });
     }
     async add(sender, source, metadata = {}) {
         if (!this.database)
