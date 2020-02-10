@@ -20,7 +20,7 @@
     "ytdl-core": "^1.0.7"
   },
   "devDependencies": {
-    "@types/fluent-ffmpeg": "^2.1.13",
+    "@types/fluent-ffmpeg": "^2.1.14",
     "@types/mongodb": "^3.3.15",
     "@types/node": "^13.7.0",
     "@types/node-telegram-bot-api": "^0.40.2",
