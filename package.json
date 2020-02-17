@@ -21,12 +21,12 @@
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.14",
-    "@types/mongodb": "^3.3.15",
-    "@types/node": "^13.7.0",
+    "@types/mongodb": "^3.3.16",
+    "@types/node": "^13.7.1",
     "@types/node-telegram-bot-api": "^0.40.2",
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^0.0.28",
-    "husky": "^4.2.1",
+    "husky": "^4.2.3",
     "tslint": "^6.0.0",
     "typescript": "^3.7.5"
   },
