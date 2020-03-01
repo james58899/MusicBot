@@ -28,7 +28,7 @@
     "@types/shuffle-array": "^0.0.28",
     "husky": "^4.2.3",
     "tslint": "^6.0.0",
-    "typescript": "^3.8.2"
+    "typescript": "^3.8.3"
   },
   "optionalDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.19",
