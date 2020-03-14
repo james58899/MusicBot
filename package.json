@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.14",
-    "@types/mongodb": "^3.3.16",
+    "@types/mongodb": "^3.5.2",
     "@types/node": "^13.9.1",
     "@types/node-telegram-bot-api": "^0.40.2",
     "@types/promise-queue": "^2.2.0",
