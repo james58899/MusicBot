@@ -27,7 +27,7 @@
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^0.0.28",
     "husky": "^4.2.5",
-    "tslint": "^6.1.1",
+    "tslint": "^6.1.2",
     "typescript": "^3.8.3"
   },
   "optionalDependencies": {
