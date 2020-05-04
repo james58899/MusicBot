@@ -138,10 +138,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/mongodb@^3.5.8":
-  version "3.5.8"
-  resolved "https://registry.yarnpkg.com/@types/mongodb/-/mongodb-3.5.8.tgz#519eb342a92c1b21a6f53a7ef26cad8320c1b6fd"
-  integrity sha512-2yOociZaXyiJ9CvGp/svjtlMCIPdl82XIRVmx35ehuWA046bipLwwcXfwVyvTYIU98yWYK5p44knCVQ+ZS4Bdw==
+"@types/mongodb@^3.5.15":
+  version "3.5.15"
+  resolved "https://registry.yarnpkg.com/@types/mongodb/-/mongodb-3.5.15.tgz#afe6ec0ee1dda4e732be7af0d487a82ff10a4d16"
+  integrity sha512-Ar1vMe46lA+gmVQShIQzcWmx2W1SrU2PM9FV5XJwNM6+i52y9mP4H5hnuZI748NEJx7EzyZ5v/CWjOYGbjfl+w==
   dependencies:
     "@types/bson" "*"
     "@types/node" "*"
