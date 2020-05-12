@@ -490,10 +490,10 @@ end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
-eris@0.11.2:
-  version "0.11.2"
-  resolved "https://registry.yarnpkg.com/eris/-/eris-0.11.2.tgz#a4adad72d795d64d71a74833ccf5adc4db0ad8c0"
-  integrity sha512-OhccRcxrPiNUylTamrjIbZM6itKMLjNrwLIXGvNwQZj4CRVOOz9eUVIqOJULB713x1ezw7HoC8AEsnsMNUneDA==
+eris@0.13.0:
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/eris/-/eris-0.13.0.tgz#9226d12897a87e484942ac74060625f41c010b2b"
+  integrity sha512-dSnKfQrLSoil/2YQ0+UX0SNm8YjICJjnO5HQgtiHNgM0HW2q5hZxb/1N9I56U6YDy9xXZ55kL9C+8bLlefZ2CA==
   dependencies:
     ws "^7.2.1"
   optionalDependencies:
