@@ -22,7 +22,7 @@
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.14",
     "@types/mongodb": "^3.5.16",
-    "@types/node": "^14.0.1",
+    "@types/node": "^14.0.3",
     "@types/node-telegram-bot-api": "^0.40.3",
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^0.0.28",
