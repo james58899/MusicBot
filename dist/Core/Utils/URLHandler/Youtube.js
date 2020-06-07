@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Youtube = void 0;
 const ytdl_core_1 = require("ytdl-core");
 class Youtube {
     constructor(parser) {

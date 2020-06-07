@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Discord = exports.BIND_TYPE = void 0;
 const eris_1 = require("eris");
 const mongodb_1 = require("mongodb");
 const shuffle_array_1 = __importDefault(require("shuffle-array"));
@@ -114,15 +115,15 @@ class Discord {
                 if (status.index >= status.list.audio.length) {
                     const newList = await this.list.get(status.list._id);
                     if (newList) {
+                        if (status.mode === PlayMode.random)
+                            shuffle_array_1.default(status.list.audio);
                         status.list = newList;
+                        status.index = 0;
                     }
                     else {
                         this.playing.delete(voice.id);
                         return;
                     }
-                    if (status.mode === PlayMode.random)
-                        shuffle_array_1.default(status.list.audio);
-                    status.index = 0;
                 }
                 this.play(voice, status);
             });

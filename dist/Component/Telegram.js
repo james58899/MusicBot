@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Telegram = exports.BIND_TYPE = void 0;
 const mongodb_1 = require("mongodb");
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const path_1 = require("path");

@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AudioManager = exports.ERR_MAX_LENGTH = exports.ERR_NOT_AUDIO = exports.ERR_MISSING_TITLE = void 0;
 const crypto_1 = require("crypto");
 const fs_1 = require("fs");
 const os_1 = require("os");

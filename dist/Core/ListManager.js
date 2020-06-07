@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ListManager = void 0;
 const MongoDB_1 = require("./MongoDB");
 const PromiseUtils_1 = require("./Utils/PromiseUtils");
 class ListManager {
@@ -13,7 +14,7 @@ class ListManager {
             if (!core.database.client)
                 throw Error("Database client not init");
             this.database = core.database.client.collection("list");
-            this.database.findOneAndUpdate({ admin: { $type: 10 } }, { $set: { admin: [] } });
+            this.database.updateMany({ admin: { $exists: false } }, { $set: { admin: [] } });
             this.database.createIndex({ owner: 1 });
             this.database.createIndex({ admin: 1 });
         });

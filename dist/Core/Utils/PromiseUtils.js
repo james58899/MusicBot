@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.exists = exports.sleep = exports.retry = void 0;
 const fs_1 = require("fs");
 async function retry(fun, time = 5, interval = 5000, increase = true) {
     let tryTime = 0;

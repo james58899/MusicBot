@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UrlParser = void 0;
 const MediaInfo_1 = require("./Utils/MediaInfo");
 const Youtube_1 = require("./Utils/URLHandler/Youtube");
 class UrlParser {

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MongoDB = exports.ERR_DB_NOT_INIT = void 0;
 const events_1 = require("events");
 const mongodb_1 = require("mongodb");
 exports.ERR_DB_NOT_INIT = Error("Database is not initialized");
