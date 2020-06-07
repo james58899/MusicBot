@@ -149,14 +149,13 @@ export class Discord {
                     // refresh list
                     const newList = await this.list.get(status.list._id);
                     if (newList) {
+                        if (status.mode === PlayMode.random) shuffle(status.list.audio);
                         status.list = newList;
+                        status.index = 0;
                     } else {
                         this.playing.delete(voice.id);
                         return;
                     }
-
-                    if (status.mode === PlayMode.random) shuffle(status.list.audio);
-                    status.index = 0;
                 }
 
                 this.play(voice, status);
