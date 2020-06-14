@@ -135,6 +135,7 @@ export class Discord {
         // Start play
         if (!isPlaying) {
             this.play(voice, this.playing.get(voice.id)!);
+            voice.removeAllListeners("end");
             voice.on("end", async () => {
                 // check status
                 const status = this.playing.get(voice.id);

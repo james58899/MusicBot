@@ -105,6 +105,7 @@ class Discord {
         });
         if (!isPlaying) {
             this.play(voice, this.playing.get(voice.id));
+            voice.removeAllListeners("end");
             voice.on("end", async () => {
                 const status = this.playing.get(voice.id);
                 if (!status) {
