@@ -135,12 +135,12 @@ export class Discord {
         // Start play
         if (!isPlaying) {
             this.play(voice, this.playing.get(voice.id)!);
-            voice.removeAllListeners("end");
-            voice.on("end", async () => {
+
+            const onEnd = async () => {
                 // check status
                 const status = this.playing.get(voice.id);
                 if (!status) {
-                    this.bot.leaveVoiceChannel(voice.channelID);
+                    this.bot.closeVoiceConnection(voice.id)
                     return;
                 }
 
@@ -160,7 +160,15 @@ export class Discord {
                 }
 
                 this.play(voice, status);
-            });
+            }
+            voice.on("end", onEnd);
+            voice.once("disconnect", err => {
+                console.error(err)
+                this.bot.closeVoiceConnection(voice.id)
+                this.playing.delete(voice.id);
+                voice.removeListener("end", onEnd)
+                voice.stopPlaying()
+            })
         }
     }
 
@@ -178,7 +186,7 @@ export class Discord {
         const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
 
         if (voice) {
-            this.bot.leaveVoiceChannel(voice.channelID);
+            this.bot.closeVoiceConnection(voice.id)
             this.playing.delete(voice.id);
         } else {
             msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
