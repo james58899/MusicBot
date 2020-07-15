@@ -134,4 +134,14 @@ export class ListManager {
             });
         });
     }
+
+    public async audioInList(audio: ObjectID) {
+        return this.searchListFromAudio(audio).hasNext();
+    }
+
+    private searchListFromAudio(audio: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return this.database.find({ audio });
+    }
 }

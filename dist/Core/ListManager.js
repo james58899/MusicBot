@@ -87,5 +87,13 @@ class ListManager {
             });
         });
     }
+    async audioInList(audio) {
+        return this.searchListFromAudio(audio).hasNext();
+    }
+    searchListFromAudio(audio) {
+        if (!this.database)
+            throw MongoDB_1.ERR_DB_NOT_INIT;
+        return this.database.find({ audio });
+    }
 }
 exports.ListManager = ListManager;

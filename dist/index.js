@@ -23,6 +23,23 @@ class Core extends events_1.EventEmitter {
             fs_1.mkdirSync(path_1.resolve(this.config.audio.save));
         this.database.on("connect", () => this.emit("ready"));
         this.on("ready", async () => {
+            if (process.argv.indexOf("--deep-check") !== -1) {
+                await this.audioManager.checkCache(true);
+                this.listManager.checkAudioExist();
+            }
+            else {
+                this.audioManager.checkCache();
+            }
+            if (process.argv.indexOf("--cleanup-audio") !== -1) {
+                console.log("[Cleanup] Starting clean up audio not in any list");
+                await this.audioManager.search().forEach(async (audio) => {
+                    if (!await this.listManager.audioInList(audio._id)) {
+                        console.log(`[Cleanup] Delete ${audio.title} not in any list`);
+                        this.audioManager.delete(audio._id);
+                    }
+                });
+            }
+            console.log("[Main] Init components...");
             try {
                 new Telegram_1.Telegram(this);
             }
@@ -34,13 +51,6 @@ class Core extends events_1.EventEmitter {
             }
             catch (error) {
                 console.error(error);
-            }
-            if (process.argv.indexOf("--deep-check") !== -1) {
-                await this.audioManager.checkCache(true);
-                this.listManager.checkAudioExist();
-            }
-            else {
-                this.audioManager.checkCache();
             }
         });
     }

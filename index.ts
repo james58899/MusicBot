@@ -26,6 +26,27 @@ export class Core extends EventEmitter {
         this.database.on("connect", () => this.emit("ready"));
 
         this.on("ready", async () => {
+            // Check audio files and redownload missing files
+            if (process.argv.indexOf("--deep-check") !== -1) {
+                await this.audioManager.checkCache(true);
+                this.listManager.checkAudioExist();
+            } else {
+                this.audioManager.checkCache();
+            }
+
+            // Clean up audio not in any list
+            if (process.argv.indexOf("--cleanup-audio") !== -1) {
+                console.log("[Cleanup] Starting clean up audio not in any list")
+                await this.audioManager.search().forEach(async audio => {
+                    if (!await this.listManager.audioInList(audio._id)) {
+                        console.log(`[Cleanup] Delete ${audio.title} not in any list`)
+                        this.audioManager.delete(audio._id);
+                    }
+                });
+            }
+
+            console.log("[Main] Init components...");
+
             try {
                 // tslint:disable-next-line:no-unused-expression
                 new Telegram(this);
@@ -38,13 +59,6 @@ export class Core extends EventEmitter {
                 new Discord(this);
             } catch (error) {
                 console.error(error);
-            }
-
-            if (process.argv.indexOf("--deep-check") !== -1) {
-                await this.audioManager.checkCache(true);
-                this.listManager.checkAudioExist();
-            } else {
-                this.audioManager.checkCache();
             }
         });
     }
