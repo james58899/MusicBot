@@ -229,6 +229,7 @@ class Telegram {
         this.bot.editMessageText(view.text, options);
     }
     async listCreateCallback(query, data) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1])
             return;
         const user = await this.getUser(query.from.id);
@@ -256,9 +257,9 @@ class Telegram {
             }
             this.bot.removeReplyListener(message.message_id);
         });
-        this.bot.answerCallbackQuery(query.id);
     }
     async listAudioAddCallback(query, data) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1])
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
@@ -274,10 +275,10 @@ class Telegram {
             this.queueSendMessage(query.message.chat.id, "Send me audio file or sound ID you want add to list " + list.name, {
                 reply_markup: { inline_keyboard: [[{ text: "Done", callback_data: `ListAudioAdd ${list._id.toHexString()} done` }]] }
             });
-            this.bot.answerCallbackQuery(query.id);
         }
     }
     async listAudioDeleteCallback(query, data) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || data.length < 3)
             return;
         if (data[3]) {
@@ -293,7 +294,6 @@ class Telegram {
             this.bot.sendMessage(query.message.chat.id, `Are you sure delete ${audio.title} from list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` }]] }
             });
-            this.bot.answerCallbackQuery(query.id);
         }
     }
     async listAudioCallback(query, data) {
@@ -317,6 +317,7 @@ class Telegram {
         }
     }
     async AddAdminCallback(query, data) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1])
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
@@ -357,11 +358,11 @@ class Telegram {
             else {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
-            this.bot.answerCallbackQuery(query.id);
             this.bot.removeReplyListener(message.message_id);
         });
     }
     async RemoveAdminCallback(query, data) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1])
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
@@ -402,11 +403,11 @@ class Telegram {
             else {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
-            this.bot.answerCallbackQuery(query.id);
             this.bot.removeReplyListener(message.message_id);
         });
     }
     async listRenameCallback(query, data) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1])
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
@@ -433,11 +434,11 @@ class Telegram {
             else {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
-            this.bot.answerCallbackQuery(query.id);
             this.bot.removeReplyListener(message.message_id);
         });
     }
     async listDeleteCallback(query, data) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1])
             return;
         const list = await this.list.get(new mongodb_1.ObjectID(data[1]));
@@ -452,7 +453,6 @@ class Telegram {
             this.bot.sendMessage(query.message.chat.id, `Are you sure delete list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListDelete ${data[1]} y` }]] }
             });
-            this.bot.answerCallbackQuery(query.id);
         }
     }
     async genPlaylistView(start = 0, user) {

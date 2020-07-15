@@ -276,6 +276,7 @@ export class Telegram {
     }
 
     private async listCreateCallback(query: CallbackQuery, data: string[]) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1]) return;
         const user = await this.getUser(query.from.id);
         if (!user || !user._id!.equals(new ObjectID(data[1]))) return;
@@ -303,11 +304,10 @@ export class Telegram {
 
             this.bot.removeReplyListener(message.message_id);
         });
-
-        this.bot.answerCallbackQuery(query.id);
     }
 
     private async listAudioAddCallback(query: CallbackQuery, data: string[]) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
@@ -324,12 +324,11 @@ export class Telegram {
             this.queueSendMessage(query.message.chat.id, "Send me audio file or sound ID you want add to list " + list.name, {
                 reply_markup: { inline_keyboard: [[{ text: "Done", callback_data: `ListAudioAdd ${list._id.toHexString()} done` }]] }
             });
-
-            this.bot.answerCallbackQuery(query.id);
         }
     }
 
     private async listAudioDeleteCallback(query: CallbackQuery, data: string[]) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || data.length < 3) return;
 
         if (data[3]) {
@@ -347,8 +346,6 @@ export class Telegram {
             this.bot.sendMessage(query.message.chat.id, `Are you sure delete ${audio.title} from list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` }]] }
             });
-
-            this.bot.answerCallbackQuery(query.id);
         }
     }
 
@@ -374,6 +371,7 @@ export class Telegram {
     }
 
     private async AddAdminCallback(query: CallbackQuery, data: string[]) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
@@ -411,12 +409,12 @@ export class Telegram {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
-            this.bot.answerCallbackQuery(query.id);
             this.bot.removeReplyListener(message.message_id);
         });
     }
 
     private async RemoveAdminCallback(query: CallbackQuery, data: string[]) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
@@ -454,12 +452,12 @@ export class Telegram {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
-            this.bot.answerCallbackQuery(query.id);
             this.bot.removeReplyListener(message.message_id);
         });
     }
 
     private async listRenameCallback(query: CallbackQuery, data: string[]) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
@@ -486,12 +484,12 @@ export class Telegram {
                 this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
-            this.bot.answerCallbackQuery(query.id);
             this.bot.removeReplyListener(message.message_id);
         });
     }
 
     private async listDeleteCallback(query: CallbackQuery, data: string[]) {
+        this.bot.answerCallbackQuery(query.id);
         if (!query.message || !data[1]) return;
         const list = await this.list.get(new ObjectID(data[1]));
         const user = await this.getUser(query.from.id);
@@ -508,7 +506,6 @@ export class Telegram {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListDelete ${data[1]} y` }]] }
             });
 
-            this.bot.answerCallbackQuery(query.id);
         }
     }
 
