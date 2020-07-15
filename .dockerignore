@@ -5,3 +5,4 @@ README.md
 LICENSE
 tslint.json
 Dockerfile
+node_modules
