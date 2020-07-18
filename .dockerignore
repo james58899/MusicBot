@@ -8,3 +8,4 @@ LICENSE
 tslint.json
 Dockerfile
 config.json
+node_modules

@@ -64,5 +64,9 @@ export class Core extends EventEmitter {
     }
 }
 
+process.on('SIGINT', () => {
+    process.exit();
+});
+
 // tslint:disable-next-line:no-unused-expression
 new Core();
