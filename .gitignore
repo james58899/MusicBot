@@ -86,3 +86,6 @@ Data
 
 # Typescript mapper file
 dist/**/*.map
+
+# Project config
+config.json

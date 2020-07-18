@@ -1,8 +1,11 @@
 .git
 .vscode
+.github
+dist
 Data
 README.md
 LICENSE
 tslint.json
 Dockerfile
+config.json
 node_modules

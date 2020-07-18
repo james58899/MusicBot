@@ -10,7 +10,7 @@ ENV NODE_ENV=production
 
 RUN apk add --no-cache ffmpeg
 
-COPY --from=0 /app/dist /app/config.json /app/
+COPY --from=0 /app/dist /app/config.json.example /app/
 COPY --from=0 /app/node_modules /app/node_modules
 
 VOLUME [ "/app/Data" ]
