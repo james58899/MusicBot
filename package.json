@@ -33,7 +33,7 @@
   "optionalDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "@ffprobe-installer/ffprobe": "^1.0.12",
-    "bson-ext": "^2.0.3",
+    "bson-ext": "^2.0.4",
     "bufferutil": "^4.0.1",
     "erlpack": "abalabahaha/erlpack",
     "eventemitter3": "^4.0.4",
