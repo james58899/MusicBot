@@ -116,7 +116,7 @@ class Discord {
                     const newList = await this.list.get(status.list._id);
                     if (newList) {
                         if (status.mode === PlayMode.random)
-                            shuffle_array_1.default(status.list.audio);
+                            shuffle_array_1.default(newList.audio);
                         status.list = newList;
                         status.index = 0;
                     }
