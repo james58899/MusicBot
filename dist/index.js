@@ -6,6 +6,7 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const Discord_1 = require("./Component/Discord");
 const Telegram_1 = require("./Component/Telegram");
+const Web_1 = require("./Component/Web");
 const AudioManager_1 = require("./Core/AudioManager");
 const ListManager_1 = require("./Core/ListManager");
 const MongoDB_1 = require("./Core/MongoDB");
@@ -48,6 +49,12 @@ class Core extends events_1.EventEmitter {
             }
             try {
                 new Discord_1.Discord(this);
+            }
+            catch (error) {
+                console.error(error);
+            }
+            try {
+                new Web_1.Web(this);
             }
             catch (error) {
                 console.error(error);

@@ -7,6 +7,7 @@ try {
     execFileSync("ffprobe", ["-version"], { stdio: "ignore" });
     ffprobe = "ffprobe";
 } catch (err) {
+    // tslint:disable-next-line:no-var-requires
     ffprobe = require("@ffprobe-installer/ffprobe").path;
 }
 
