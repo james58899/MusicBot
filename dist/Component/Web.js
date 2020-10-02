@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Web = exports.BIND_TYPE = void 0;
 const crypto_1 = __importDefault(require("crypto"));
 const express_1 = __importDefault(require("express"));
 const fs_1 = require("fs");
@@ -286,7 +287,7 @@ class Web {
         if (hmac.digest("hex") !== hash) {
             return null;
         }
-        return this.user.get(exports.BIND_TYPE, tg.id);
+        return this.user.getFromBind(exports.BIND_TYPE, tg.id);
     }
     async checkUser(req) {
         const user = await this.getUser(req);

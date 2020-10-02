@@ -11,10 +11,10 @@ import { UserManager } from "./Core/UserManager";
 
 export class Core extends EventEmitter {
     public readonly config = require(resolve("config.json"));
-    public readonly database = new MongoDB(this.config);
     public readonly audioManager = new AudioManager(this);
     public readonly userManager = new UserManager(this);
     public readonly listManager = new ListManager(this);
+    public readonly database = new MongoDB(this.config);
 
     constructor() {
         super();
@@ -27,6 +27,27 @@ export class Core extends EventEmitter {
         this.database.on("connect", () => this.emit("ready"));
 
         this.on("ready", async () => {
+            // Check audio files and redownload missing files
+            if (process.argv.indexOf("--deep-check") !== -1) {
+                await this.audioManager.checkCache(true);
+                this.listManager.checkAudioExist();
+            } else {
+                this.audioManager.checkCache();
+            }
+
+            // Clean up audio not in any list
+            if (process.argv.indexOf("--cleanup-audio") !== -1) {
+                console.log("[Cleanup] Starting clean up audio not in any list")
+                await this.audioManager.search().forEach(async audio => {
+                    if (!await this.listManager.audioInList(audio._id)) {
+                        console.log(`[Cleanup] Delete ${audio.title} not in any list`)
+                        this.audioManager.delete(audio._id);
+                    }
+                });
+            }
+
+            console.log("[Main] Init components...");
+
             try {
                 // tslint:disable-next-line:no-unused-expression
                 new Telegram(this);
@@ -47,16 +68,13 @@ export class Core extends EventEmitter {
             } catch (error) {
                 console.error(error);
             }
-
-            if (process.argv.indexOf("--deep-check") !== -1) {
-                await this.audioManager.checkCache(true);
-                this.listManager.checkAudioExist();
-            } else {
-                this.audioManager.checkCache();
-            }
         });
     }
 }
+
+process.on('SIGINT', () => {
+    process.exit();
+});
 
 // tslint:disable-next-line:no-unused-expression
 new Core();

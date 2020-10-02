@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Core = void 0;
 const events_1 = require("events");
 const fs_1 = require("fs");
 const path_1 = require("path");
@@ -14,15 +15,32 @@ class Core extends events_1.EventEmitter {
     constructor() {
         super();
         this.config = require(path_1.resolve("config.json"));
-        this.database = new MongoDB_1.MongoDB(this.config);
         this.audioManager = new AudioManager_1.AudioManager(this);
         this.userManager = new UserManager_1.UserManager(this);
         this.listManager = new ListManager_1.ListManager(this);
+        this.database = new MongoDB_1.MongoDB(this.config);
         this.emit("init", this);
         if (!fs_1.existsSync(path_1.resolve(this.config.audio.save)))
             fs_1.mkdirSync(path_1.resolve(this.config.audio.save));
         this.database.on("connect", () => this.emit("ready"));
         this.on("ready", async () => {
+            if (process.argv.indexOf("--deep-check") !== -1) {
+                await this.audioManager.checkCache(true);
+                this.listManager.checkAudioExist();
+            }
+            else {
+                this.audioManager.checkCache();
+            }
+            if (process.argv.indexOf("--cleanup-audio") !== -1) {
+                console.log("[Cleanup] Starting clean up audio not in any list");
+                await this.audioManager.search().forEach(async (audio) => {
+                    if (!await this.listManager.audioInList(audio._id)) {
+                        console.log(`[Cleanup] Delete ${audio.title} not in any list`);
+                        this.audioManager.delete(audio._id);
+                    }
+                });
+            }
+            console.log("[Main] Init components...");
             try {
                 new Telegram_1.Telegram(this);
             }
@@ -41,15 +59,11 @@ class Core extends events_1.EventEmitter {
             catch (error) {
                 console.error(error);
             }
-            if (process.argv.indexOf("--deep-check") !== -1) {
-                await this.audioManager.checkCache(true);
-                this.listManager.checkAudioExist();
-            }
-            else {
-                this.audioManager.checkCache();
-            }
         });
     }
 }
 exports.Core = Core;
+process.on('SIGINT', () => {
+    process.exit();
+});
 new Core();

@@ -9,7 +9,8 @@
         "arrow-parens": [true, "ban-single-arg-parens"],
         "max-line-length": [true, 210],
         "trailing-comma": false,
-        "no-console": false
+        "no-console": false,
+        "no-var-requires": false
     },
     "rulesDirectory": []
 }

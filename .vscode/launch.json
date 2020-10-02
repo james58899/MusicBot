@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch",
-            "program": "${workspaceFolder}\\dist\\index.js",
+            "program": "${workspaceFolder}/dist/index.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ],
@@ -19,7 +19,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch (Deep cache check)",
-            "program": "${workspaceFolder}\\dist\\index.js",
+            "program": "${workspaceFolder}/dist/index.js",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ],

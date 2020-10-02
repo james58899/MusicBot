@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Discord = exports.BIND_TYPE = void 0;
 const eris_1 = require("eris");
 const mongodb_1 = require("mongodb");
 const shuffle_array_1 = __importDefault(require("shuffle-array"));
@@ -104,27 +105,35 @@ class Discord {
         });
         if (!isPlaying) {
             this.play(voice, this.playing.get(voice.id));
-            voice.on("end", async () => {
+            const onEnd = async () => {
                 const status = this.playing.get(voice.id);
                 if (!status) {
-                    this.bot.leaveVoiceChannel(voice.channelID);
+                    this.bot.closeVoiceConnection(voice.id);
                     return;
                 }
                 status.index++;
                 if (status.index >= status.list.audio.length) {
                     const newList = await this.list.get(status.list._id);
                     if (newList) {
+                        if (status.mode === PlayMode.random)
+                            shuffle_array_1.default(newList.audio);
                         status.list = newList;
+                        status.index = 0;
                     }
                     else {
                         this.playing.delete(voice.id);
                         return;
                     }
-                    if (status.mode === PlayMode.random)
-                        shuffle_array_1.default(status.list.audio);
-                    status.index = 0;
                 }
                 this.play(voice, status);
+            };
+            voice.on("end", onEnd);
+            voice.once("disconnect", err => {
+                console.error(err);
+                this.bot.closeVoiceConnection(voice.id);
+                this.playing.delete(voice.id);
+                voice.removeListener("end", onEnd);
+                voice.stopPlaying();
             });
         }
     }
@@ -140,7 +149,7 @@ class Discord {
     commandBye(msg) {
         const voice = this.bot.voiceConnections.get(msg.channel.guild.id);
         if (voice) {
-            this.bot.leaveVoiceChannel(voice.channelID);
+            this.bot.closeVoiceConnection(voice.id);
             this.playing.delete(voice.id);
         }
         else {
@@ -164,7 +173,7 @@ class Discord {
         msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
     }
     async commandBind(msg) {
-        const user = await this.user.get(exports.BIND_TYPE, msg.author.id);
+        const user = await this.user.getFromBind(exports.BIND_TYPE, msg.author.id);
         if (!user) {
             this.bot.createMessage(msg.channel.id, "You are not register!");
             return;
@@ -172,7 +181,7 @@ class Discord {
         this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`);
     }
     async procseeFile(msg) {
-        const user = await this.user.get(exports.BIND_TYPE, msg.author.id);
+        const user = await this.user.getFromBind(exports.BIND_TYPE, msg.author.id);
         if (!user)
             return;
         msg.attachments.forEach(async (file) => {

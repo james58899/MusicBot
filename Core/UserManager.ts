@@ -7,9 +7,9 @@ export const ERR_USER_EXIST = Error("User exist");
 export const ERR_BIND_TOKEN_NOT_FOUND = Error("Bind token not found");
 
 export interface IUserData {
-    _id?: ObjectID;
+    _id: ObjectID;
     name: string;
-    bind?: IBindData[];
+    bind: IBindData[];
 }
 
 export interface IBindData {
@@ -22,18 +22,21 @@ export class UserManager {
     private bindToken = new Map<string, ObjectID>();
 
     constructor(core: Core) {
-        if (core.database.client) {
+        core.on("ready", () => {
+            if (!core.database.client) throw Error("Database client not init");
+
             this.database = core.database.client.collection("user");
             this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
-        } else {
-            core.database.on("connect", database => {
-                this.database = database.collection("user");
-                this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
-            });
-        }
+        });
     }
 
-    public get(type: string, id: string | number) {
+    public get(id: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return this.database.findOne({_id: id});
+    }
+
+    public getFromBind(type: string, id: string | number) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({ bind: { $elemMatch: { type, id } } });
@@ -42,16 +45,16 @@ export class UserManager {
     public async create(name: string, bind: IBindData) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        if (await this.get(bind.type, bind.id)) throw ERR_USER_EXIST;
+        if (await this.getFromBind(bind.type, bind.id)) throw ERR_USER_EXIST;
 
-        return this.bind((await this.database.insertOne({ name })).ops[0]._id, bind);
+        return this.bind((await this.database.insertOne({ name, bind: [] })).ops[0]._id, bind);
     }
 
     public async createFromToken(token: string, bind: IBindData) {
         const id = this.bindToken.get(token);
 
         if (!id) throw ERR_BIND_TOKEN_NOT_FOUND;
-        if (await this.get(bind.type, bind.id)) throw ERR_USER_EXIST;
+        if (await this.getFromBind(bind.type, bind.id)) throw ERR_USER_EXIST;
 
         return this.bind(id, bind);
     }

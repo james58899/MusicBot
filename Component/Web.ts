@@ -313,7 +313,7 @@ export class Web {
         if (hmac.digest("hex") !== hash) {
             return null;
         }
-        return this.user.get(BIND_TYPE, tg.id);
+        return this.user.getFromBind(BIND_TYPE, tg.id);
     }
 
     private async checkUser(req: Request) {

@@ -2,11 +2,13 @@ import { Collection, ObjectID } from "mongodb";
 import { Core } from "..";
 import { AudioManager } from "./AudioManager";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
+import { retry } from "./Utils/PromiseUtils";
 
 export interface IAudioList {
     _id: ObjectID;
     name: string;
     owner: ObjectID;
+    admin: ObjectID[];
     audio: ObjectID[];
 }
 
@@ -21,33 +23,34 @@ export class ListManager {
 
         core.on("ready", () => {
             if (!this.audioManager) throw Error("AudioManager not init");
-        });
+            if (!core.database.client) throw Error("Database client not init");
 
-        if (core.database.client) {
             this.database = core.database.client.collection("list");
+
+            // Add field admin to old lists
+            this.database.updateMany({ admin: { $exists: false } }, { $set: { admin: [] } });
+
+            // Create indexes
             this.database.createIndex({ owner: 1 });
-        } else {
-            core.database.on("connect", client => {
-                this.database = client.collection("list");
-                this.database.createIndex({ owner: 1 });
-            });
-        }
+            this.database.createIndex({ admin: 1 });
+        });
     }
 
     public async create(name: string, owner: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.insertOne({
+            admin: Array<ObjectID>(),
             audio: Array<ObjectID>(),
             name,
-            owner,
+            owner
         } as IAudioList)).ops[0] as IAudioList;
     }
 
     public get(id: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.findOne({ _id: id });
+        return retry(() => this.database!!.findOne({ _id: id }), 17280, 5000, false);
     }
 
     public getAll() {
@@ -56,10 +59,10 @@ export class ListManager {
         return this.database.find();
     }
 
-    public getFromOwner(owner: ObjectID) {
+    public getFromPermission(user: ObjectID) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return this.database.find({ owner });
+        return this.database.find({ $or: [{ owner: user }, { admin: user }] });
     }
 
     public async rename(id: ObjectID, name: string) {
@@ -76,6 +79,26 @@ export class ListManager {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         this.database.deleteOne({ _id: id });
+    }
+
+    public async addAdmin(id: ObjectID, admin: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $addToSet: { admin } },
+            { returnOriginal: false }
+        )).value;
+    }
+
+    public async removeAdmin(id: ObjectID, admin: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return (await this.database.findOneAndUpdate(
+            { _id: id },
+            { $pull: { admin } },
+            { returnOriginal: false }
+        )).value;
     }
 
     public async addAudio(id: ObjectID, audio: ObjectID) {
@@ -110,5 +133,15 @@ export class ListManager {
                 if (!await this.audioManager.get(audio)) this.delAudioAll(audio);
             });
         });
+    }
+
+    public async audioInList(audio: ObjectID) {
+        return this.searchListFromAudio(audio).hasNext();
+    }
+
+    private searchListFromAudio(audio: ObjectID) {
+        if (!this.database) throw ERR_DB_NOT_INIT;
+
+        return this.database.find({ audio });
     }
 }

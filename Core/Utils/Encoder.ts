@@ -1,13 +1,15 @@
 import { execFileSync } from "child_process";
 import FFmpeg from "fluent-ffmpeg";
-import { promises as fsp } from "fs";
-import path from "path";
+import { createWriteStream, promises as fsp } from "fs";
+import { tmpdir } from "os";
+import path, { join } from "path";
+import { get } from "request";
 import { getMediaInfo } from "./MediaInfo";
-import { sleep } from "./PromiseUtils";
 
 export class Encoder {
     private config: any;
     private ffmpegPath?: string;
+    private cacheDir: string | undefined;
 
     constructor(config: any) {
         this.config = config.audio;
@@ -21,18 +23,25 @@ export class Encoder {
     }
 
     public async encode(input: string, filename: string, duration: number): Promise<string> {
-        const normalize = await this.getNormalize(input);
+        if (!this.cacheDir) {
+            this.cacheDir = await fsp.mkdtemp(join(tmpdir(), "musicbot-"));
+        }
+
+        const cacheFile = join(this.cacheDir, filename);
+        await this.download(input, cacheFile);
+
+        const normalize = await this.getNormalize(cacheFile);
         const savePath = path.resolve(this.config.save, filename + ".ogg");
 
         return new Promise<string>((resolve, reject) => {
             const ffmpeg = FFmpeg({ timeout: 300 });
             if (this.ffmpegPath) ffmpeg.setFfmpegPath(this.ffmpegPath);
 
-            ffmpeg.input(input)
+            ffmpeg.input(cacheFile)
                 .withNoVideo()
                 .audioFilters(
                     "loudnorm=" +
-                    "I=-23:LRA=20:TP=-1:" +
+                    "I=-20:LRA=18:TP=-1:" +
                     `measured_I=${normalize.input_i}:` +
                     `measured_LRA=${normalize.input_lra}:` +
                     `measured_tp=${normalize.input_tp}:` +
@@ -41,18 +50,22 @@ export class Encoder {
                 )
                 .audioBitrate(this.config.bitrate)
                 .audioCodec("libopus")
+                .outputOptions("-map_metadata", "-1")
                 .duration(this.config.length)
                 .format("ogg")
                 .save(savePath + ".tmp")
-                .on("error", reject)
+                .on("error", (err, stdout, stderr) => {
+                    console.error(stderr);
+                    return reject(err);
+                })
                 .on("end", async () => {
-                    await sleep(1000);
                     await fsp.rename(savePath + ".tmp", savePath);
                     if (Math.abs((await getMediaInfo(savePath)).duration - duration) > 1) {
                         reject(Error("Duration mismatch"));
                     } else {
                         resolve(savePath);
                     }
+                    fsp.unlink(cacheFile);
                 });
         });
     }
@@ -64,12 +77,29 @@ export class Encoder {
 
             ffmpeg.input(input)
                 .withNoVideo()
-                .audioFilters("loudnorm=print_format=json:I=-23:LRA=20:TP=-1")
+                .audioFilters("loudnorm=print_format=json:I=-20:LRA=18:TP=-1")
                 .duration(this.config.length)
                 .format("null")
                 .save("-")
-                .on("error", reject)
+                .on("error", (err, stdout, stderr) => {
+                    console.error(stderr);
+                    return reject(err);
+                })
                 .on("end", (stdout: string, stderr: string) => resolve(JSON.parse(stderr)));
+        });
+    }
+
+    private async download(input: string, output: string) {
+        const stream = createWriteStream(output);
+
+        return new Promise((resolve, reject) => {
+            get(input)
+            .on("error", err => reject(err))
+            .on("complete", () => {
+                stream.close();
+                resolve();
+            })
+            .pipe(stream);
         });
     }
 }

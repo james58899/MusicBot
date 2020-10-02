@@ -135,11 +135,12 @@ export class Discord {
         // Start play
         if (!isPlaying) {
             this.play(voice, this.playing.get(voice.id)!);
-            voice.on("end", async () => {
+
+            const onEnd = async () => {
                 // check status
                 const status = this.playing.get(voice.id);
                 if (!status) {
-                    this.bot.leaveVoiceChannel(voice.channelID);
+                    this.bot.closeVoiceConnection(voice.id)
                     return;
                 }
 
@@ -149,18 +150,25 @@ export class Discord {
                     // refresh list
                     const newList = await this.list.get(status.list._id);
                     if (newList) {
+                        if (status.mode === PlayMode.random) shuffle(newList.audio);
                         status.list = newList;
+                        status.index = 0;
                     } else {
                         this.playing.delete(voice.id);
                         return;
                     }
-
-                    if (status.mode === PlayMode.random) shuffle(status.list.audio);
-                    status.index = 0;
                 }
 
                 this.play(voice, status);
-            });
+            }
+            voice.on("end", onEnd);
+            voice.once("disconnect", err => {
+                console.error(err)
+                this.bot.closeVoiceConnection(voice.id)
+                this.playing.delete(voice.id);
+                voice.removeListener("end", onEnd)
+                voice.stopPlaying()
+            })
         }
     }
 
@@ -178,7 +186,7 @@ export class Discord {
         const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
 
         if (voice) {
-            this.bot.leaveVoiceChannel(voice.channelID);
+            this.bot.closeVoiceConnection(voice.id)
             this.playing.delete(voice.id);
         } else {
             msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
@@ -202,7 +210,7 @@ export class Discord {
     }
 
     private async commandBind(msg: Message) {
-        const user = await this.user.get(BIND_TYPE, msg.author.id);
+        const user = await this.user.getFromBind(BIND_TYPE, msg.author.id);
 
         if (!user) {
             this.bot.createMessage(msg.channel.id, "You are not register!");
@@ -212,9 +220,9 @@ export class Discord {
         this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id!)}\nExpires after one hour`);
     }
 
-    // @ts-ignore
+    // @ts-ignore: TODO
     private async procseeFile(msg: Message) {
-        const user = await this.user.get(BIND_TYPE, msg.author.id);
+        const user = await this.user.getFromBind(BIND_TYPE, msg.author.id);
 
         if (!user) return;
 
