@@ -1028,12 +1028,12 @@ lodash@^4.17.19:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
   integrity sha512-PlhdFcillOINfeV7Ni6oF1TAEayyZBoZ8bcshTHqOYJYlrqzRK5hagpagky5o4HfCzzd1TRkXPMFq6cKk9rGmA==
 
-m3u8stream@^0.7.1:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/m3u8stream/-/m3u8stream-0.7.1.tgz#74b01a67ca248ac7bbdc263a65d9d8d2c479a65c"
-  integrity sha512-z6ldnAdhbuWOL6LmMkwptSZGzj+qbRytMKLTbNicwF/bJMjf9U9lqD57RNQUFecvWadEkzy6PDjcNJFFgi19uQ==
+m3u8stream@^0.8.1:
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/m3u8stream/-/m3u8stream-0.8.1.tgz#a1528f2d8901375171c41c33b6727c6df277bdda"
+  integrity sha512-fzjOzn+eYHbHLaTg0R4BCvyKOl24a7fNnhFc/B2zKX3BilD7sHMTipcMDXjbKKqAgJZWbAe2sktDRaTD5KVb3g==
   dependencies:
-    miniget "^1.6.1"
+    miniget "^3.0.0"
     sax "^1.2.4"
 
 memory-pager@^1.0.2:
@@ -1063,15 +1063,10 @@ mimic-response@^1.0.0:
   resolved "https://registry.yarnpkg.com/mimic-response/-/mimic-response-1.0.1.tgz#4923538878eef42063cb8a3e3b0798781487ab1b"
   integrity sha512-j5EctnkH7amfV/q5Hgmoal1g2QHFJRraOtmx0JpIqkxhBhI/lJSl1nMpQ45hVarwNETOoWEimndZ4QK0RHxuxQ==
 
-miniget@^1.6.1:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/miniget/-/miniget-1.7.2.tgz#f95eff50b78d798dddee2460c4aa3c72db1aa23a"
-  integrity sha512-USPNNK2bnHLOplX8BZVMehUkyQizS/DFpBdoH0TS+fM+hQoLNg9tWg4MeY9wE8gfY0pbzmx5UBEODujt3Lz8AA==
-
-miniget@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/miniget/-/miniget-2.0.1.tgz#e2188573317ad8239bab33f056aae64804fc8e47"
-  integrity sha512-MX+QfVIPAutz6c+T7WKuFKtjcw0nOyRRh1ubhTDD+z/e/pKcSAsfAV63aQKUgb1MFRT1GyfJeW53N5fHkX0wIA==
+miniget@^3.0.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/miniget/-/miniget-3.1.0.tgz#ce9b1059062d63dfe23620774654f4feb608fcb4"
+  integrity sha512-cf18w/CV7RIgGbsi8jg5gmrrrgziLPk3KzC3bWAZW58Rrunlii75eSKPZVAoG7XGA86AYitzY+8Z0j4pafydmw==
 
 minimatch@^3.0.4:
   version "3.0.4"
@@ -1798,12 +1793,12 @@ yaml@^1.10.0:
   resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.10.0.tgz#3b593add944876077d4d683fee01081bd9fff31e"
   integrity sha512-yr2icI4glYaNG+KWONODapy2/jDdMSDnrONSjblABjD9B4Z5LgiircSt8m8sRZFNi08kG9Sm0uSHtEmP3zaEGg==
 
-ytdl-core@^3.2.2:
-  version "3.2.2"
-  resolved "https://registry.yarnpkg.com/ytdl-core/-/ytdl-core-3.2.2.tgz#056eae00209410734f11046f8d7947d7e39514bf"
-  integrity sha512-DVE7uhk4WYB2Op742QQVGE/b9G7cr9kSB3ZDpDXmyRPhO55h9u8gwORlDIHWKucWVmCsdsdKzNP89QylpJEgiw==
+ytdl-core@^4.0.5:
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/ytdl-core/-/ytdl-core-4.0.5.tgz#de7c00537c4f7c4f80792540bfc5c68edce48b21"
+  integrity sha512-pMs7S5tCs7SKxVWV9NJ5Fe+arzxV3aFtznecoVHjQtwcyjbQ8wZivQ0Y7FpZWsYW1WApDs2VxteEqT9VWw0yDQ==
   dependencies:
     html-entities "^1.3.1"
-    m3u8stream "^0.7.1"
-    miniget "^2.0.1"
+    m3u8stream "^0.8.1"
+    miniget "^3.0.0"
     sax "^1.1.3"
