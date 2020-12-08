@@ -1,4 +1,4 @@
-import { getInfo, videoFormat } from "ytdl-core";
+import { filterFormats, getBasicInfo, getInfo, videoFormat } from "ytdl-core";
 import { IAudioMetadata, UrlParser } from "../../URLParser";
 
 export class Youtube {
@@ -9,9 +9,9 @@ export class Youtube {
     }
 
     public async getFile(link: string) {
-        const info = await getInfo(link, {filter: "audio"});
+        const info = await getInfo(link);
 
-        let selected: videoFormat[] | videoFormat = info.formats;
+        let selected: videoFormat[] | videoFormat = filterFormats(info.formats, "audio");
         const opusFilter = info.formats.filter(i => i.codecs === "opus");
 
         if (opusFilter.length !== 0) selected = opusFilter;
@@ -20,21 +20,20 @@ export class Youtube {
             throw new Error("This video does not have any audio only format.");
         }
 
-        // @ts-ignore
-        selected = selected.sort((a, b) => b.audioBitrate - a.audioBitrate)[0];
+        selected = selected.sort((a, b) => b.audioBitrate! - a.audioBitrate!)[0];
 
         return selected.url;
     }
 
     public async getMetadata(link: string) {
-        const info = await getInfo(link) as any;
+        const info = await getBasicInfo(link);
 
-        if (info.live_playback) throw new Error("Bad format: is a live stream");
+        if (info.videoDetails.isLiveContent) throw new Error("Bad format: is a live stream");
 
         return {
-            artist: info.author.name,
-            duration: parseInt(info.length_seconds, 10),
-            title: info.title
+            artist: info.videoDetails.author.name,
+            duration: parseInt(info.videoDetails.lengthSeconds, 10),
+            title: info.videoDetails.title
         } as IAudioMetadata;
     }
 }

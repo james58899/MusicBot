@@ -89,7 +89,7 @@ export class Encoder {
         });
     }
 
-    private async download(input: string, output: string) {
+    private async download(input: string, output: string): Promise<void> {
         const stream = createWriteStream(output);
 
         return new Promise((resolve, reject) => {

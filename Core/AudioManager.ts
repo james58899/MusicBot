@@ -146,7 +146,7 @@ export class AudioManager {
         return await exists(path) ? path : false;
     }
 
-    public async checkCache(deep: boolean = false) {
+    public async checkCache(deep: boolean = false): Promise<void> {
         if (deep) console.log("[Audio] Starting deep cache check...");
 
         return new Promise((done, reject) => {
