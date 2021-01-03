@@ -14,7 +14,7 @@
     "eris": "0.14.0",
     "fluent-ffmpeg": "^2.1.2",
     "mongodb": "^3.6.3",
-    "node-telegram-bot-api": "^0.50.0",
+    "node-telegram-bot-api": "^0.51.0",
     "promise-queue": "^2.2.5",
     "shuffle-array": "^1.0.1",
     "ytdl-core": "^4.3.0"
