@@ -1779,10 +1779,10 @@ yaml@^1.10.0:
   resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.10.0.tgz#3b593add944876077d4d683fee01081bd9fff31e"
   integrity sha512-yr2icI4glYaNG+KWONODapy2/jDdMSDnrONSjblABjD9B4Z5LgiircSt8m8sRZFNi08kG9Sm0uSHtEmP3zaEGg==
 
-ytdl-core@^4.3.0:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/ytdl-core/-/ytdl-core-4.3.0.tgz#64d2150d7549ae974dd61a7fa8e8856384d814b0"
-  integrity sha512-YemZZDQ1t8myFtwobCceVBvLDWhvxELZrPMUTflIhN+3qv6lilMK50GkG4DKQEAPverwdiD5UrTOB+urEs2d3Q==
+ytdl-core@^4.4.1:
+  version "4.4.1"
+  resolved "https://registry.yarnpkg.com/ytdl-core/-/ytdl-core-4.4.1.tgz#7b7cc4ce6efb7ed6a1dfa2df0aab9136ed7b356c"
+  integrity sha512-VRqJ1pPEfIt7Lja2bKaTRqO47GfVbqhFfKqtmxU5Pp2BM0HUb0gVyf3wL9HlA+Vb4OblXs2MzSqWI8Fi1sSk4Q==
   dependencies:
     m3u8stream "^0.8.3"
     miniget "^4.0.0"
