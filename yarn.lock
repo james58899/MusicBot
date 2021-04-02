@@ -576,10 +576,10 @@ end-of-stream@^1.0.0, end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
-eris@0.14.0:
-  version "0.14.0"
-  resolved "https://registry.yarnpkg.com/eris/-/eris-0.14.0.tgz#0d13391c0fc1a7b678b2f8d1fc3ec6aef05700d3"
-  integrity sha512-/W6X0SFR2swtA9oc4ga5Wh1TQcZtPgbUaDDdwYc67fvFUAtwC+V1xzWUZq2yDeJnTfB8Uot9SJWA8Lthe2sDtQ==
+eris@0.14.1:
+  version "0.14.1"
+  resolved "https://registry.yarnpkg.com/eris/-/eris-0.14.1.tgz#ddf4d4ad3e55f882994c144eadcd2e50690e45ad"
+  integrity sha512-81ThxLyt1Lzf7QvrcgKEVNME3tOrKerxYUDfNSyNmyOUfXa5mUkRYRtBNgDDAWrQcYC/SlnWopsfrkUgVWhDag==
   dependencies:
     ws "^7.2.1"
   optionalDependencies:
