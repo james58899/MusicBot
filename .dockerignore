@@ -1,6 +1,7 @@
 .git
 .vscode
 .github
+.husky
 dist
 Data
 README.md
