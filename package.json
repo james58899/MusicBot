@@ -9,13 +9,16 @@
     "lint": "tslint --project .",
     "build": "tsc --pretty",
     "build:prod": "tsc --pretty --sourceMap false",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "eris": "0.14.1",
     "fluent-ffmpeg": "^2.1.2",
     "mongodb": "^3.6.5",
     "node-telegram-bot-api": "^0.52.0",
+    "patch-package": "^6.4.7",
+    "postinstall-postinstall": "^2.1.0",
     "promise-queue": "^2.2.5",
     "shuffle-array": "^1.0.1",
     "ytdl-core": "^4.5.0"

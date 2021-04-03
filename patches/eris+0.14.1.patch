@@ -1,0 +1,13 @@
+diff --git a/node_modules/eris/lib/voice/VoiceConnection.js b/node_modules/eris/lib/voice/VoiceConnection.js
+index 92e5f2e..0fcaf54 100644
+--- a/node_modules/eris/lib/voice/VoiceConnection.js
++++ b/node_modules/eris/lib/voice/VoiceConnection.js
+@@ -340,7 +340,7 @@ class VoiceConnection extends EventEmitter {
+                 if(code === 4006) {
+                     reconnecting = false;
+                 } else if(code === 4014) {
+-                    reconnecting = false;
++                    // reconnecting = false;
+                 } else if(code === 1000) {
+                     reconnecting = false;
+                 }
