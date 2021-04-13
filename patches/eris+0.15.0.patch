@@ -1,5 +1,5 @@
 diff --git a/node_modules/eris/lib/voice/VoiceConnection.js b/node_modules/eris/lib/voice/VoiceConnection.js
-index 6c0c24b..c4f7902 100644
+index 6c0c24b..3041d73 100644
 --- a/node_modules/eris/lib/voice/VoiceConnection.js
 +++ b/node_modules/eris/lib/voice/VoiceConnection.js
 @@ -114,6 +114,7 @@ class VoiceConnection extends EventEmitter {
@@ -10,7 +10,7 @@ index 6c0c24b..c4f7902 100644
          this.ssrcUserMap = {};
  
          this.nonce = Buffer.alloc(24);
-@@ -147,26 +148,33 @@ class VoiceConnection extends EventEmitter {
+@@ -147,27 +148,26 @@ class VoiceConnection extends EventEmitter {
      }
  
      connect(data) {
@@ -23,7 +23,6 @@ index 6c0c24b..c4f7902 100644
              return setTimeout(() => this.connect(data), 500);
          }
 -        if(!data.endpoint || !data.token || !data.session_id || !data.user_id) {
-+
 +        clearTimeout(this.connectionTimeout);
 +        this.connectionTimeout = setTimeout(() => {
 +            if(this.connecting) {
@@ -40,17 +39,15 @@ index 6c0c24b..c4f7902 100644
          this.endpoint = data.endpoint.split(":")[0];
          this.ws = new WebSocket("wss://" + this.endpoint);
 -        let connectionTimeout = setTimeout(() => {
-+        clearTimeout(this.connectionTimeout);
-+        this.connectionTimeout = setTimeout(() => {
-             if(this.connecting) {
-                 this.disconnect(new Error("Voice connection timeout"));
-             }
+-            if(this.connecting) {
+-                this.disconnect(new Error("Voice connection timeout"));
+-            }
 -            connectionTimeout = null;
-+            this.connectionTimeout = null;
-         }, this.shard.client ? this.shard.client.options.connectionTimeout : 30000);
+-        }, this.shard.client ? this.shard.client.options.connectionTimeout : 30000);
          /**
          * Fired when stuff happens and gives more info
-@@ -180,9 +188,9 @@ class VoiceConnection extends EventEmitter {
+         * @event VoiceConnection#debug
+@@ -180,9 +180,9 @@ class VoiceConnection extends EventEmitter {
              * @event VoiceConnection#connect
              */
              this.emit("connect");
@@ -63,7 +60,7 @@ index 6c0c24b..c4f7902 100644
              }
              this.sendWS(VoiceOPCodes.IDENTIFY, {
                  server_id: this.id === "call" ? data.channel_id : this.id,
-@@ -356,11 +364,8 @@ class VoiceConnection extends EventEmitter {
+@@ -356,11 +356,7 @@ class VoiceConnection extends EventEmitter {
          this.timestamp = 0;
          this.sequence = 0;
  
@@ -73,11 +70,10 @@ index 6c0c24b..c4f7902 100644
 -            this.stopPlaying();
 -        }
 +        this.pause();
-+
          if(this.heartbeatInterval) {
              clearInterval(this.heartbeatInterval);
              this.heartbeatInterval = null;
-@@ -383,22 +388,32 @@ class VoiceConnection extends EventEmitter {
+@@ -383,19 +379,25 @@ class VoiceConnection extends EventEmitter {
              }
              this.ws = null;
          }
@@ -94,32 +90,25 @@ index 6c0c24b..c4f7902 100644
 -            * @prop {Error?} error The error, if any
 -            */
 -            this.emit("disconnect", error);
-+
 +        if(error) {
 +            this.emit("error", error);
 +        }
-+
 +        // Workaround discord send VOICE_SERVER_UPDATE after disconnect websocket.
 +        // delay clean up
-+        if (!reconnecting) {
++        if(!reconnecting) {
 +            this.connectionTimeout = setTimeout(() => {
-+                if (!this.ws && !this.connecting) this.teardown(error);
++                if(!this.ws && !this.connecting) {
++                    this.stopPlaying();
++                    this.channelID = null;
++                    this.updateVoiceState();
++                    /**
++                    * Fired when the voice connection disconnects
++                    * @event VoiceConnection#disconnect
++                    * @prop {Error?} error The error, if any
++                    */
++                    this.emit("disconnect", error);
++                };
 +            }, 5000);
          }
      }
  
-+    teardown(error) {
-+        this.stopPlaying();
-+        this.channelID = null;
-+        this.updateVoiceState();
-+        /**
-+        * Fired when the voice connection disconnects
-+        * @event VoiceConnection#disconnect
-+        * @prop {Error?} error The error, if any
-+        */
-+        this.emit("disconnect", error);
-+    }
-+
-     heartbeat() {
-         this.sendWS(VoiceOPCodes.HEARTBEAT, Date.now());
-     }
