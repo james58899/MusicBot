@@ -16,7 +16,7 @@
     "eris": "0.15.0",
     "fluent-ffmpeg": "^2.1.2",
     "mongodb": "^3.6.6",
-    "node-telegram-bot-api": "^0.52.0",
+    "node-telegram-bot-api": "^0.53.0",
     "patch-package": "^6.4.7",
     "postinstall-postinstall": "^2.1.0",
     "promise-queue": "^2.2.5",
