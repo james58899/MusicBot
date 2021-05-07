@@ -7,13 +7,13 @@
   "license": "MIT",
   "scripts": {
     "lint": "tslint --project .",
-    "build": "tsc --pretty",
-    "build:prod": "tsc --pretty --sourceMap false",
+    "build": "tsc --pretty --sourceMap false",
+    "build:dev": "tsc --pretty --sourceMap true",
     "prepare": "husky install",
     "postinstall": "patch-package"
   },
   "dependencies": {
-    "eris": "0.15.0",
+    "eris": "0.15.1",
     "fluent-ffmpeg": "^2.1.2",
     "mongodb": "^3.6.6",
     "node-telegram-bot-api": "^0.53.0",
@@ -21,15 +21,16 @@
     "postinstall-postinstall": "^2.1.0",
     "promise-queue": "^2.2.5",
     "shuffle-array": "^1.0.1",
-    "ytdl-core": "^4.5.0"
+    "ytdl-core": "^4.7.0"
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.17",
     "@types/mongodb": "^3.6.12",
-    "@types/node": "^15.0.1",
+    "@types/node": "^15.0.2",
     "@types/node-telegram-bot-api": "^0.51.1",
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^1.0.0",
+    "@types/ws": "^7.4.2",
     "husky": "^6.0.0",
     "tslint": "^6.1.3",
     "typescript": "^4.2.4"
