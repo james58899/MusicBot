@@ -5,10 +5,10 @@ const ytdl_core_1 = require("ytdl-core");
 class Youtube {
     constructor(parser) {
         const match = /youtu\.?be/ig;
-        parser.registerURLHandler(match, this.getFile);
-        parser.registerMetadataProvider(match, this.getMetadata);
+        parser.registerURLHandler(match, Youtube.getFile);
+        parser.registerMetadataProvider(match, Youtube.getMetadata);
     }
-    async getFile(link) {
+    static async getFile(link) {
         const info = await ytdl_core_1.getInfo(link);
         let selected = ytdl_core_1.filterFormats(info.formats, "audio");
         const opusFilter = info.formats.filter(i => i.codecs === "opus");
@@ -20,7 +20,7 @@ class Youtube {
         selected = selected.sort((a, b) => b.audioBitrate - a.audioBitrate)[0];
         return selected.url;
     }
-    async getMetadata(link) {
+    static async getMetadata(link) {
         const info = await ytdl_core_1.getBasicInfo(link);
         if (info.videoDetails.isLiveContent)
             throw new Error("Bad format: is a live stream");

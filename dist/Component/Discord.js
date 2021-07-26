@@ -39,10 +39,13 @@ class Discord {
                 type: 2
             });
         });
+        this.bot.on("error", (err, id) => {
+            console.error(`[Discord] Error ${id}: ${err}`);
+        });
         this.registerCommand();
-        this.bot.connect();
+        void this.bot.connect();
     }
-    async registerCommand() {
+    registerCommand() {
         this.bot.registerCommand("hi", this.commandHi.bind(this), {
             description: "Say Hi! make bot join voice channel",
             guildOnly: true,
@@ -69,27 +72,27 @@ class Discord {
             description: "Generate bind token"
         });
     }
-    async commandHi(msg) {
+    commandHi(msg) {
         if (!msg.member)
             return;
         if (msg.member.voiceState.channelID) {
-            this.bot.joinVoiceChannel(msg.member.voiceState.channelID);
-            msg.channel.createMessage(MESSAGE_HI);
+            void this.bot.joinVoiceChannel(msg.member.voiceState.channelID);
+            void msg.channel.createMessage(MESSAGE_HI);
         }
         else {
-            msg.channel.createMessage(MESSAGE_HI_NOT_IN_VOICE);
+            void msg.channel.createMessage(MESSAGE_HI_NOT_IN_VOICE);
         }
     }
     async commandPlay(msg, args) {
-        const list = await this.list.get(new mongodb_1.ObjectID(args[0]));
+        const list = await this.list.get(new mongodb_1.ObjectId(args[0]));
         const voice = this.bot.voiceConnections.get(msg.channel.guild.id);
         const mode = (args[1]) ? ((args[1].toLocaleLowerCase() === "random") ? PlayMode.random : PlayMode.normal) : PlayMode.normal;
         if (!list) {
-            msg.channel.createMessage(MESSAGE_LIST_NOT_FOUND);
+            void msg.channel.createMessage(MESSAGE_LIST_NOT_FOUND);
             return;
         }
         if (!voice) {
-            msg.channel.createMessage(MESSAGE_NOT_IN_VOICE);
+            void msg.channel.createMessage(MESSAGE_NOT_IN_VOICE);
             return;
         }
         let isPlaying = false;
@@ -104,7 +107,6 @@ class Discord {
             statusMessage: await this.bot.createMessage(msg.channel.id, await this.genPlayingMessage(list, 0))
         });
         if (!isPlaying) {
-            this.play(voice, this.playing.get(voice.id));
             const onEnd = async () => {
                 const status = this.playing.get(voice.id);
                 if (!status) {
@@ -125,7 +127,7 @@ class Discord {
                         return;
                     }
                 }
-                this.play(voice, status);
+                void this.play(voice, status);
             };
             voice.on("end", onEnd);
             voice.once("disconnect", err => {
@@ -135,6 +137,7 @@ class Discord {
                 voice.removeListener("end", onEnd);
                 voice.stopPlaying();
             });
+            void this.play(voice, this.playing.get(voice.id));
         }
     }
     commandNext(msg) {
@@ -143,7 +146,7 @@ class Discord {
             voice.stopPlaying();
         }
         else {
-            msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
+            void msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
         }
     }
     commandBye(msg) {
@@ -153,7 +156,7 @@ class Discord {
             this.playing.delete(voice.id);
         }
         else {
-            msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
+            void msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
         }
     }
     async commandRegister(msg, args) {
@@ -163,22 +166,22 @@ class Discord {
                 user = await this.user.createFromToken(args[0], { type: exports.BIND_TYPE, id: msg.author.id });
             }
             catch (error) {
-                msg.channel.createMessage(error.message);
+                void msg.channel.createMessage(error.message);
                 return;
             }
         }
         else {
             user = await this.user.create(msg.author.username, { type: exports.BIND_TYPE, id: msg.author.id });
         }
-        msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
+        void msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
     }
     async commandBind(msg) {
         const user = await this.user.getFromBind(exports.BIND_TYPE, msg.author.id);
         if (!user) {
-            this.bot.createMessage(msg.channel.id, "You are not register!");
+            void this.bot.createMessage(msg.channel.id, "You are not register!");
             return;
         }
-        this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`);
+        void this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`);
     }
     async procseeFile(msg) {
         const user = await this.user.getFromBind(exports.BIND_TYPE, msg.author.id);
@@ -197,7 +200,7 @@ class Discord {
                 else
                     throw error;
             }
-            msg.channel.createMessage(`ID: ${audio._id}\nTitle: ${audio.title}`);
+            void msg.channel.createMessage(`ID: ${audio._id}\nTitle: ${audio.title}`);
         });
     }
     async play(voice, status) {
@@ -210,7 +213,7 @@ class Discord {
         if (!file)
             throw ERR_MISSING_AUDIO_FILE;
         voice.play(file, { format: "ogg" });
-        status.statusMessage.edit(await this.genPlayingMessage(status.list, status.index));
+        void status.statusMessage.edit(await this.genPlayingMessage(status.list, status.index));
     }
     async genPlayingMessage(list, index) {
         const now = await this.audio.get(list.audio[index]);

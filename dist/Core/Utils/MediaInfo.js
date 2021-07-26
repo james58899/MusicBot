@@ -22,15 +22,15 @@ async function getMediaInfo(file) {
         windowsHide: true
     };
     return new Promise((resolve, reject) => {
-        child_process_1.execFile(ffprobe, ffprobeOption, execOption, (err, stdout, stderr) => {
+        child_process_1.execFile(ffprobe, ffprobeOption, execOption, (err, stdout) => {
             if (err) {
                 reject(err);
                 return;
             }
-            const durationMatch = stdout.match(/duration=(.*)/i);
-            const sizeMatch = stdout.match(/size=(.*)/i);
-            const titleMatch = stdout.match(/TAG:title=(.*)/i);
-            const artistMatch = stdout.match(/TAG:artist=(.*)/i);
+            const durationMatch = /duration=(.*)/i.exec(stdout);
+            const sizeMatch = /size=(.*)/i.exec(stdout);
+            const titleMatch = /TAG:title=(.*)/i.exec(stdout);
+            const artistMatch = /TAG:artist=(.*)/i.exec(stdout);
             const title = (titleMatch) ? titleMatch[1] : undefined;
             const artist = (artistMatch) ? artistMatch[1] : undefined;
             const duration = (durationMatch && durationMatch[1] !== "N/A") ? Math.round(Number(durationMatch[1])) : undefined;

@@ -1,0 +1,48 @@
+{
+    "env": {
+        "es2021": true,
+        "node": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "project": "./tsconfig.json",
+        "ecmaVersion": 12
+    },
+    "plugins": [
+        "@typescript-eslint",
+        "prefer-arrow",
+        "jsdoc"
+    ],
+    "rules": {
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/restrict-template-expressions": "off",
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-misused-promises": [
+            "error",
+            {
+                "checksVoidReturn": false
+            }
+        ],
+        "@typescript-eslint/unbound-method": [
+            "error",
+            {
+                "ignoreStatic": true
+            }
+        ],
+        "@typescript-eslint/no-floating-promises": [
+            "warn",
+            {
+                "ignoreVoid": true
+            }
+        ]
+    }
+}

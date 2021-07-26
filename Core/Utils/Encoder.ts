@@ -18,6 +18,7 @@ export class Encoder {
         try {
             execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
         } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
             this.ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
         }
     }
@@ -65,7 +66,7 @@ export class Encoder {
                     } else {
                         resolve(savePath);
                     }
-                    fsp.unlink(cacheFile);
+                    await fsp.unlink(cacheFile);
                 });
         });
     }

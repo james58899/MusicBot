@@ -12,7 +12,7 @@ class UserManager {
             if (!core.database.client)
                 throw Error("Database client not init");
             this.database = core.database.client.collection("user");
-            this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
+            void this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
         });
     }
     get(id) {
@@ -30,7 +30,7 @@ class UserManager {
             throw MongoDB_1.ERR_DB_NOT_INIT;
         if (await this.getFromBind(bind.type, bind.id))
             throw exports.ERR_USER_EXIST;
-        return this.bind((await this.database.insertOne({ name, bind: [] })).ops[0]._id, bind);
+        return this.bind((await this.database.insertOne({ name, bind: [] })).insertedId, bind);
     }
     async createFromToken(token, bind) {
         const id = this.bindToken.get(token);
@@ -54,7 +54,7 @@ class UserManager {
     async bind(id, bind) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return (await this.database.findOneAndUpdate({ _id: id }, { $addToSet: { bind } }, { returnOriginal: false })).value;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $addToSet: { bind } }, { returnDocument: "after" })).value;
     }
 }
 exports.UserManager = UserManager;

@@ -29,20 +29,20 @@ export class Core extends EventEmitter {
             // Check audio files and redownload missing files
             if (process.argv.indexOf("--deep-check") !== -1) {
                 await this.audioManager.checkCache(true);
-                this.listManager.checkAudioExist();
+                await this.listManager.checkAudioExist();
             } else {
-                this.audioManager.checkCache();
+                await this.audioManager.checkCache();
             }
 
             // Clean up audio not in any list
             if (process.argv.indexOf("--cleanup-audio") !== -1) {
                 console.log("[Cleanup] Starting clean up audio not in any list")
-                await this.audioManager.search().forEach(async audio => {
-                    if (!await this.listManager.audioInList(audio._id)) {
+                for await (const audio of this.audioManager.search()) {
+                    if (audio && !await this.listManager.audioInList(audio._id)) {
                         console.log(`[Cleanup] Delete ${audio.title} not in any list`)
-                        this.audioManager.delete(audio._id);
+                        await this.audioManager.delete(audio._id);
                     }
-                });
+                }
             }
 
             console.log("[Main] Init components...");

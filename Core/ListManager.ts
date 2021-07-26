@@ -1,15 +1,15 @@
-import { Collection, ObjectID } from "mongodb";
+import { Collection, ObjectId } from "mongodb";
 import { Core } from "..";
 import { AudioManager } from "./AudioManager";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { retry } from "./Utils/PromiseUtils";
 
 export interface IAudioList {
-    _id: ObjectID;
+    _id: ObjectId;
     name: string;
-    owner: ObjectID;
-    admin: ObjectID[];
-    audio: ObjectID[];
+    owner: ObjectId;
+    admin: ObjectId[];
+    audio: ObjectId[];
 }
 
 export class ListManager {
@@ -17,7 +17,7 @@ export class ListManager {
     private audioManager!: AudioManager;
 
     constructor(core: Core) {
-        core.on("init", _ => {
+        core.on("init", () => {
             this.audioManager = core.audioManager;
         });
 
@@ -28,29 +28,29 @@ export class ListManager {
             this.database = core.database.client.collection("list");
 
             // Add field admin to old lists
-            this.database.updateMany({ admin: { $exists: false } }, { $set: { admin: [] } });
+            void this.database.updateMany({ admin: { $exists: false } }, { $set: { admin: [] } });
 
             // Create indexes
-            this.database.createIndex({ owner: 1 });
-            this.database.createIndex({ admin: 1 });
+            void this.database.createIndex({ owner: 1 });
+            void this.database.createIndex({ admin: 1 });
         });
     }
 
-    public async create(name: string, owner: ObjectID) {
+    public async create(name: string, owner: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return (await this.database.insertOne({
-            admin: Array<ObjectID>(),
-            audio: Array<ObjectID>(),
+        await this.database.insertOne({
+            admin: Array<ObjectId>(),
+            audio: Array<ObjectId>(),
             name,
             owner
-        } as IAudioList)).ops[0] as IAudioList;
+        });
     }
 
-    public get(id: ObjectID) {
+    public get(id: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        return retry(() => this.database!!.findOne({ _id: id }), 17280, 5000, false);
+        return retry(() => this.database!.findOne({ _id: id }), 17280, 5000, false);
     }
 
     public getAll() {
@@ -59,87 +59,87 @@ export class ListManager {
         return this.database.find();
     }
 
-    public getFromPermission(user: ObjectID) {
+    public getFromPermission(user: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.find({ $or: [{ owner: user }, { admin: user }] });
     }
 
-    public async rename(id: ObjectID, name: string) {
+    public async rename(id: ObjectId, name: string) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.findOneAndUpdate(
             { _id: id },
             { $set: { name } },
-            { returnOriginal: false }
+            { returnDocument: "after" }
         )).value;
     }
 
-    public async delete(id: ObjectID) {
+    public async delete(id: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
-        this.database.deleteOne({ _id: id });
+        await this.database.deleteOne({ _id: id });
     }
 
-    public async addAdmin(id: ObjectID, admin: ObjectID) {
+    public async addAdmin(id: ObjectId, admin: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.findOneAndUpdate(
             { _id: id },
             { $addToSet: { admin } },
-            { returnOriginal: false }
+            { returnDocument: "after" }
         )).value;
     }
 
-    public async removeAdmin(id: ObjectID, admin: ObjectID) {
+    public async removeAdmin(id: ObjectId, admin: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.findOneAndUpdate(
             { _id: id },
             { $pull: { admin } },
-            { returnOriginal: false }
+            { returnDocument: "after" }
         )).value;
     }
 
-    public async addAudio(id: ObjectID, audio: ObjectID) {
+    public async addAudio(id: ObjectId, audio: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.findOneAndUpdate(
             { _id: id },
             { $addToSet: { audio } },
-            { returnOriginal: false }
+            { returnDocument: "after" }
         )).value;
     }
 
-    public async delAudio(id: ObjectID, audio: ObjectID) {
+    public async delAudio(id: ObjectId, audio: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.findOneAndUpdate(
             { _id: id },
             { $pull: { audio } },
-            { returnOriginal: false }
+            { returnDocument: "after" }
         )).value;
     }
 
-    public async delAudioAll(audio: ObjectID) {
+    public async delAudioAll(audio: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.updateMany({}, { $pull: { audio } });
     }
 
     public async checkAudioExist() {
-        this.getAll().forEach(list => {
+        await this.getAll().forEach(list => {
             list.audio.forEach(async audio => {
-                if (!await this.audioManager.get(audio)) this.delAudioAll(audio);
+                if (!await this.audioManager.get(audio)) void this.delAudioAll(audio);
             });
         });
     }
 
-    public async audioInList(audio: ObjectID) {
+    public async audioInList(audio: ObjectId) {
         return this.searchListFromAudio(audio).hasNext();
     }
 
-    private searchListFromAudio(audio: ObjectID) {
+    private searchListFromAudio(audio: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.find({ audio });

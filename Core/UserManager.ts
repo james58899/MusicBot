@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { Collection, ObjectID } from "mongodb";
+import { Collection, ObjectId } from "mongodb";
 import { Core } from "..";
 import { ERR_DB_NOT_INIT } from "./MongoDB";
 
@@ -7,7 +7,7 @@ export const ERR_USER_EXIST = Error("User exist");
 export const ERR_BIND_TOKEN_NOT_FOUND = Error("Bind token not found");
 
 export interface IUserData {
-    _id: ObjectID;
+    _id: ObjectId;
     name: string;
     bind: IBindData[];
 }
@@ -19,18 +19,18 @@ export interface IBindData {
 
 export class UserManager {
     private database?: Collection<IUserData>;
-    private bindToken = new Map<string, ObjectID>();
+    private bindToken = new Map<string, ObjectId>();
 
     constructor(core: Core) {
         core.on("ready", () => {
             if (!core.database.client) throw Error("Database client not init");
 
             this.database = core.database.client.collection("user");
-            this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
+            void this.database.createIndex({ "bind.type": 1, "bind.id": 1 }, { unique: true });
         });
     }
 
-    public get(id: ObjectID) {
+    public get(id: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.findOne({_id: id});
@@ -47,7 +47,7 @@ export class UserManager {
 
         if (await this.getFromBind(bind.type, bind.id)) throw ERR_USER_EXIST;
 
-        return this.bind((await this.database.insertOne({ name, bind: [] })).ops[0]._id, bind);
+        return this.bind((await this.database.insertOne({ name, bind: [] })).insertedId, bind);
     }
 
     public async createFromToken(token: string, bind: IBindData) {
@@ -59,13 +59,13 @@ export class UserManager {
         return this.bind(id, bind);
     }
 
-    public delete(id: ObjectID) {
+    public delete(id: ObjectId) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return this.database.deleteOne({ _id: id });
     }
 
-    public createBindToken(id: ObjectID) {
+    public createBindToken(id: ObjectId) {
         const token = randomBytes(20).toString("hex");
         this.bindToken.set(token, id);
 
@@ -75,13 +75,13 @@ export class UserManager {
         return token;
     }
 
-    private async bind(id: ObjectID, bind: IBindData) {
+    private async bind(id: ObjectId, bind: IBindData) {
         if (!this.database) throw ERR_DB_NOT_INIT;
 
         return (await this.database.findOneAndUpdate(
             { _id: id },
             { $addToSet: { bind } },
-            { returnOriginal: false }
+            { returnDocument: "after" }
         )).value!;
     }
 }

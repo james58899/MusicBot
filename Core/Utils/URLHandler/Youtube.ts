@@ -4,11 +4,11 @@ import { IAudioMetadata, UrlParser } from "../../URLParser";
 export class Youtube {
     constructor(parser: UrlParser) {
         const match = /youtu\.?be/ig;
-        parser.registerURLHandler(match, this.getFile);
-        parser.registerMetadataProvider(match, this.getMetadata);
+        parser.registerURLHandler(match, Youtube.getFile);
+        parser.registerMetadataProvider(match, Youtube.getMetadata);
     }
 
-    public async getFile(link: string) {
+    public static async getFile(link: string) {
         const info = await getInfo(link);
 
         let selected: videoFormat[] | videoFormat = filterFormats(info.formats, "audio");
@@ -25,7 +25,7 @@ export class Youtube {
         return selected.url;
     }
 
-    public async getMetadata(link: string) {
+    public static async getMetadata(link: string) {
         const info = await getBasicInfo(link);
 
         if (info.videoDetails.isLiveContent) throw new Error("Bad format: is a live stream");

@@ -1,5 +1,5 @@
 import { CommandClient, Message, MessageContent, TextChannel, VoiceConnection } from "eris";
-import { ObjectID } from "mongodb";
+import { ObjectId } from "mongodb";
 import shuffle from "shuffle-array";
 import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, ERR_NOT_AUDIO, IAudioData } from "../Core/AudioManager";
@@ -57,6 +57,10 @@ export class Discord {
                 type: 2
             });
         });
+        
+        this.bot.on("error", (err, id) => {
+            console.error(`[Discord] Error ${id}: ${err}`)
+        })
 
         // this.bot.on("messageCreate", msg => {
         //     if (msg.attachments.length > 0) this.procseeFile(msg);
@@ -64,10 +68,10 @@ export class Discord {
 
         this.registerCommand();
 
-        this.bot.connect();
+        void this.bot.connect();
     }
 
-    private async registerCommand() {
+    private registerCommand() {
         this.bot.registerCommand("hi", this.commandHi.bind(this), {
             description: "Say Hi! make bot join voice channel",
             guildOnly: true,
@@ -95,29 +99,29 @@ export class Discord {
         });
     }
 
-    private async commandHi(msg: Message) {
+    private commandHi(msg: Message) {
         if (!msg.member) return;
 
         if (msg.member.voiceState.channelID) {
-            this.bot.joinVoiceChannel(msg.member.voiceState.channelID);
-            msg.channel.createMessage(MESSAGE_HI);
+            void this.bot.joinVoiceChannel(msg.member.voiceState.channelID);
+            void msg.channel.createMessage(MESSAGE_HI);
         } else {
-            msg.channel.createMessage(MESSAGE_HI_NOT_IN_VOICE);
+            void msg.channel.createMessage(MESSAGE_HI_NOT_IN_VOICE);
         }
     }
 
     private async commandPlay(msg: Message, args: string[]) {
-        const list = await this.list.get(new ObjectID(args[0]));
+        const list = await this.list.get(new ObjectId(args[0]));
         const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
         const mode = (args[1]) ? ((args[1].toLocaleLowerCase() === "random") ? PlayMode.random : PlayMode.normal) : PlayMode.normal;
 
         if (!list) {
-            msg.channel.createMessage(MESSAGE_LIST_NOT_FOUND);
+            void msg.channel.createMessage(MESSAGE_LIST_NOT_FOUND);
             return;
         }
 
         if (!voice) {
-            msg.channel.createMessage(MESSAGE_NOT_IN_VOICE);
+            void msg.channel.createMessage(MESSAGE_NOT_IN_VOICE);
             return;
         }
 
@@ -134,8 +138,6 @@ export class Discord {
 
         // Start play
         if (!isPlaying) {
-            this.play(voice, this.playing.get(voice.id)!);
-
             const onEnd = async () => {
                 // check status
                 const status = this.playing.get(voice.id);
@@ -159,7 +161,7 @@ export class Discord {
                     }
                 }
 
-                this.play(voice, status);
+                void this.play(voice, status);
             }
             voice.on("end", onEnd);
             voice.once("disconnect", err => {
@@ -169,6 +171,8 @@ export class Discord {
                 voice.removeListener("end", onEnd)
                 voice.stopPlaying()
             })
+
+            void this.play(voice, this.playing.get(voice.id)!);
         }
     }
 
@@ -178,7 +182,7 @@ export class Discord {
         if (voice) {
             voice.stopPlaying();
         } else {
-            msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
+            void msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
         }
     }
 
@@ -189,7 +193,7 @@ export class Discord {
             this.bot.closeVoiceConnection(voice.id)
             this.playing.delete(voice.id);
         } else {
-            msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
+            void msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
         }
     }
 
@@ -199,25 +203,25 @@ export class Discord {
             try {
                 user = await this.user.createFromToken(args[0], { type: BIND_TYPE, id: msg.author.id });
             } catch (error) {
-                msg.channel.createMessage(error.message);
+                void msg.channel.createMessage(error.message);
                 return;
             }
         } else {
             user = await this.user.create(msg.author.username, { type: BIND_TYPE, id: msg.author.id });
         }
 
-        msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind!.map(i => `${i.type}(${i.id})`).join(", ")}`);
+        void msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
     }
 
     private async commandBind(msg: Message) {
         const user = await this.user.getFromBind(BIND_TYPE, msg.author.id);
 
         if (!user) {
-            this.bot.createMessage(msg.channel.id, "You are not register!");
+            void this.bot.createMessage(msg.channel.id, "You are not register!");
             return;
         }
 
-        this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id!)}\nExpires after one hour`);
+        void this.bot.createMessage(msg.channel.id, `Register token: ${this.user.createBindToken(user._id)}\nExpires after one hour`);
     }
 
     // @ts-ignore: TODO
@@ -229,13 +233,13 @@ export class Discord {
         msg.attachments.forEach(async file => {
             let audio: IAudioData;
             try {
-                audio = await this.audio.add(user._id!, file.url);
+                audio = await this.audio.add(user._id, file.url);
             } catch (error) {
                 if (error === ERR_NOT_AUDIO) return;
-                if (error === ERR_MISSING_TITLE) audio = await this.audio.add(user._id!, file.url, { title: file.filename }); else throw error;
+                if (error === ERR_MISSING_TITLE) audio = await this.audio.add(user._id, file.url, { title: file.filename }); else throw error;
             }
 
-            msg.channel.createMessage(`ID: ${audio._id}\nTitle: ${audio.title}`);
+            void msg.channel.createMessage(`ID: ${audio._id}\nTitle: ${audio.title}`);
         });
     }
 
@@ -244,11 +248,11 @@ export class Discord {
 
         const audio = await this.audio.get(status.list.audio[status.index]);
         if (!audio) throw ERR_CAN_NOT_GET_AUDIO;
-        const file = await this.audio.getFile(audio!);
+        const file = await this.audio.getFile(audio);
         if (!file) throw ERR_MISSING_AUDIO_FILE;
 
         voice.play(file, { format: "ogg" });
-        status.statusMessage.edit(await this.genPlayingMessage(status.list, status.index));
+        void status.statusMessage.edit(await this.genPlayingMessage(status.list, status.index));
     }
 
     private async genPlayingMessage(list: IAudioList, index: number) {

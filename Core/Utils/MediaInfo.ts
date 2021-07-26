@@ -7,6 +7,7 @@ try {
     execFileSync("ffprobe", ["-version"], { stdio: "ignore" });
     ffprobe = "ffprobe";
 } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     ffprobe = require("@ffprobe-installer/ffprobe").path;
 }
 
@@ -24,17 +25,17 @@ export async function getMediaInfo(file: string) {
     };
 
     return new Promise<IAudioMetadata>((resolve, reject) => {
-        execFile(ffprobe, ffprobeOption, execOption, (err, stdout, stderr) => {
+        execFile(ffprobe, ffprobeOption, execOption, (err, stdout) => {
             if (err) {
                 reject(err);
                 return;
             }
 
             // Match output
-            const durationMatch = stdout.match(/duration=(.*)/i);
-            const sizeMatch = stdout.match(/size=(.*)/i);
-            const titleMatch = stdout.match(/TAG:title=(.*)/i);
-            const artistMatch = stdout.match(/TAG:artist=(.*)/i);
+            const durationMatch = /duration=(.*)/i.exec(stdout);
+            const sizeMatch = /size=(.*)/i.exec(stdout);
+            const titleMatch = /TAG:title=(.*)/i.exec(stdout);
+            const artistMatch = /TAG:artist=(.*)/i.exec(stdout);
 
             // Test has match
             const title = (titleMatch) ? titleMatch[1] : undefined;

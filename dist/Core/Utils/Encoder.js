@@ -79,7 +79,7 @@ class Encoder {
                 else {
                     resolve(savePath);
                 }
-                fs_1.promises.unlink(cacheFile);
+                await fs_1.promises.unlink(cacheFile);
             });
         });
     }

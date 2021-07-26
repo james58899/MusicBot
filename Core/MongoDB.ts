@@ -16,7 +16,7 @@ export class MongoDB extends EventEmitter {
 
         config = config.database;
 
-        MongoClient.connect(config.host, { useNewUrlParser: true, useUnifiedTopology: true }).then(client => {
+        void MongoClient.connect(config.host).then(client => {
             console.log("[MongoDB] Connected successfully to server");
 
             this.client = client.db(config.name);

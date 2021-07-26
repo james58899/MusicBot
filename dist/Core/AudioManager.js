@@ -33,7 +33,7 @@ class AudioManager {
             if (!core.database.client)
                 throw Error("Database client not init");
             this.database = core.database.client.collection("sound");
-            this.database.createIndex({ hash: 1 }, { unique: true });
+            void this.database.createIndex({ hash: 1 }, { unique: true });
         });
     }
     async add(sender, source, metadata = {}) {
@@ -64,20 +64,22 @@ class AudioManager {
         exist = await this.search({ hash }).next();
         if (exist)
             return exist;
-        const audio = (await this.database.insertOne({
-            artist,
-            duration,
-            hash,
-            sender,
-            source,
-            title,
-        })).ops[0];
+        const audio = (await this.database.findOne({
+            _id: (await this.database.insertOne({
+                artist,
+                duration,
+                hash,
+                sender,
+                source,
+                title,
+            })).insertedId
+        }));
         try {
             await PromiseUtils_1.retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), audio.hash, audio.duration)));
             return audio;
         }
         catch (error) {
-            this.delete(audio._id);
+            await this.delete(audio._id);
             throw error;
         }
     }
@@ -91,7 +93,7 @@ class AudioManager {
                 hash: data.hash,
                 title: data.title,
             },
-        }, { returnOriginal: false });
+        }, { returnDocument: "after" });
     }
     async delete(id) {
         if (!this.database)
@@ -102,7 +104,7 @@ class AudioManager {
         await this.listManager.delAudioAll(id);
         const file = this.getCachePath(audio);
         if (await PromiseUtils_1.exists(file))
-            fs_1.promises.unlink(file);
+            await fs_1.promises.unlink(file);
         return this.database.deleteOne({ _id: id });
     }
     get(id) {
@@ -113,7 +115,7 @@ class AudioManager {
     search(metadata) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return this.database.find(metadata);
+        return metadata === undefined ? this.database.find() : this.database.find(metadata);
     }
     async getFile(audio) {
         const path = this.getCachePath(audio);
@@ -122,45 +124,44 @@ class AudioManager {
     async checkCache(deep = false) {
         if (deep)
             console.log("[Audio] Starting deep cache check...");
-        return new Promise((done, reject) => {
-            this.search().forEach(async (audio) => {
-                const file = this.getCachePath(audio);
-                if (!await PromiseUtils_1.exists(file)) {
+        for await (const audio of this.search()) {
+            if (audio == null)
+                return;
+            const file = this.getCachePath(audio);
+            if (!await PromiseUtils_1.exists(file)) {
+                if (!audio.source) {
+                    void this.delete(audio._id);
+                    return;
+                }
+                console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
+                try {
+                    const source = await this.urlParser.getFile(audio.source);
+                    await PromiseUtils_1.retry(() => this.encodeQueue.add(async () => this.encode(source, audio.hash, audio.duration)));
+                }
+                catch (e) {
+                    console.error(`Failed to download ${audio.title}`, e.message);
+                    void this.delete(audio._id);
+                }
+            }
+            else if (deep) {
+                const metadata = this.metadataQueue.add(() => this.urlParser.getMetadata(file));
+                if (Math.abs((await metadata).duration - audio.duration) > 1) {
                     if (!audio.source) {
-                        this.delete(audio._id);
+                        void this.delete(audio._id);
                         return;
                     }
-                    console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
+                    console.log(`[Audio] ${audio.title} cache damaged, redownload...`);
                     try {
                         const source = await this.urlParser.getFile(audio.source);
-                        await PromiseUtils_1.retry(() => this.encodeQueue.add(async () => this.encode(source, audio.hash, audio.duration)));
+                        await PromiseUtils_1.retry(() => this.encodeQueue.add(() => this.encode(source, audio.hash, audio.duration)));
                     }
                     catch (e) {
                         console.error(`Failed to download ${audio.title}`, e.message);
-                        this.delete(audio._id);
+                        void this.delete(audio._id);
                     }
                 }
-                else if (deep) {
-                    const metadata = this.metadataQueue.add(() => this.urlParser.getMetadata(file));
-                    if (Math.abs((await metadata).duration - audio.duration) > 1) {
-                        if (!audio.source) {
-                            this.delete(audio._id);
-                            return;
-                        }
-                        console.log(`[Audio] ${audio.title} cache damaged, redownload...`);
-                        try {
-                            const source = await this.urlParser.getFile(audio.source);
-                            await PromiseUtils_1.retry(() => this.encodeQueue.add(() => this.encode(source, audio.hash, audio.duration)));
-                        }
-                        catch (e) {
-                            console.error(`Failed to download ${audio.title}`, e.message);
-                            this.delete(audio._id);
-                        }
-                    }
-                }
-            }, reject);
-            done();
-        });
+            }
+        }
     }
     getCachePath(audio) {
         return path_1.resolve(this.config.save, audio.hash + ".ogg");

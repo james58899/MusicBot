@@ -18,7 +18,7 @@ class UrlParser {
     async getFile(url) {
         for (const [match, handler] of this.urlHandler) {
             const regexp = (match instanceof RegExp) ? match : new RegExp(match, "gi");
-            if (url.match(regexp)) {
+            if (regexp.exec(url)) {
                 return handler(url);
             }
         }
@@ -27,7 +27,7 @@ class UrlParser {
     async getMetadata(url) {
         for (const [match, provider] of this.metadataProvider) {
             const regexp = (match instanceof RegExp) ? match : new RegExp(match, "gi");
-            if (url.match(regexp)) {
+            if (regexp.exec(url)) {
                 return provider(url);
             }
         }
