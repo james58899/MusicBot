@@ -32,7 +32,7 @@ class ListManager {
     get(id) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return PromiseUtils_1.retry(() => this.database.findOne({ _id: id }), 17280, 5000, false);
+        return (0, PromiseUtils_1.retry)(() => this.database.findOne({ _id: id }), 17280, 5000, false);
     }
     getAll() {
         if (!this.database)

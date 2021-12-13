@@ -597,7 +597,7 @@ class Telegram {
             if (!audio) {
                 let title;
                 try {
-                    title = await PromiseUtils_1.retry(() => this.sendNeedTitle(msg), 3);
+                    title = await (0, PromiseUtils_1.retry)(() => this.sendNeedTitle(msg), 3);
                 }
                 catch (error) {
                     return;
@@ -631,7 +631,7 @@ class Telegram {
         catch (error) {
             if (error === AudioManager_1.ERR_MISSING_TITLE) {
                 try {
-                    const title = await PromiseUtils_1.retry(() => this.sendNeedTitle(msg, msg.document.file_name), 3);
+                    const title = await (0, PromiseUtils_1.retry)(() => this.sendNeedTitle(msg, msg.document.file_name), 3);
                     audio = await this.audio.add(sender._id, source, { title });
                 }
                 catch (error) {
@@ -661,7 +661,7 @@ class Telegram {
         catch (error) {
             if (error === AudioManager_1.ERR_MISSING_TITLE) {
                 try {
-                    const title = await PromiseUtils_1.retry(() => this.sendNeedTitle(msg, path_1.basename(url_1.parse(decodeURI(link)).pathname)), 3);
+                    const title = await (0, PromiseUtils_1.retry)(() => this.sendNeedTitle(msg, (0, path_1.basename)((0, url_1.parse)(decodeURI(link)).pathname)), 3);
                     audio = await this.audio.add(sender._id, link, { title });
                 }
                 catch (error) {
@@ -759,7 +759,7 @@ class Telegram {
     }
     getFile(fileId) {
         fileId = fileId.replace("tg://", "");
-        return PromiseUtils_1.retry(() => this.bot.getFileLink(fileId));
+        return (0, PromiseUtils_1.retry)(() => this.bot.getFileLink(fileId));
     }
     async getMetadata(fileId) {
         const file = await this.getFile(fileId);
@@ -781,7 +781,7 @@ class Telegram {
     queueSendMessage(chatId, text, options) {
         return this.messageQueue.add(async () => {
             const callback = this.bot.sendMessage(chatId, text, options);
-            await PromiseUtils_1.sleep(1000);
+            await (0, PromiseUtils_1.sleep)(1000);
             return callback;
         });
     }

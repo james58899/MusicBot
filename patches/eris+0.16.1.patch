@@ -1,8 +1,8 @@
 diff --git a/node_modules/eris/lib/voice/VoiceConnection.js b/node_modules/eris/lib/voice/VoiceConnection.js
-index 109fa96..18624ac 100644
+index 577f1d4..db58574 100644
 --- a/node_modules/eris/lib/voice/VoiceConnection.js
 +++ b/node_modules/eris/lib/voice/VoiceConnection.js
-@@ -350,7 +350,13 @@ class VoiceConnection extends EventEmitter {
+@@ -353,7 +353,13 @@ class VoiceConnection extends EventEmitter {
              if(this.connecting || this.ready) {
                  let reconnecting = true;
                  if(code === 4006) {

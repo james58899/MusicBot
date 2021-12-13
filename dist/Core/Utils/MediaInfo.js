@@ -4,7 +4,7 @@ exports.getMediaInfo = void 0;
 const child_process_1 = require("child_process");
 let ffprobe;
 try {
-    child_process_1.execFileSync("ffprobe", ["-version"], { stdio: "ignore" });
+    (0, child_process_1.execFileSync)("ffprobe", ["-version"], { stdio: "ignore" });
     ffprobe = "ffprobe";
 }
 catch (err) {
@@ -22,7 +22,7 @@ async function getMediaInfo(file) {
         windowsHide: true
     };
     return new Promise((resolve, reject) => {
-        child_process_1.execFile(ffprobe, ffprobeOption, execOption, (err, stdout) => {
+        (0, child_process_1.execFile)(ffprobe, ffprobeOption, execOption, (err, stdout) => {
             if (err) {
                 reject(err);
                 return;

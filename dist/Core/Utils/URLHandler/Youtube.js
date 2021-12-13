@@ -9,8 +9,8 @@ class Youtube {
         parser.registerMetadataProvider(match, Youtube.getMetadata);
     }
     static async getFile(link) {
-        const info = await ytdl_core_1.getInfo(link);
-        let selected = ytdl_core_1.filterFormats(info.formats, "audio");
+        const info = await (0, ytdl_core_1.getInfo)(link);
+        let selected = (0, ytdl_core_1.filterFormats)(info.formats, "audio");
         const opusFilter = info.formats.filter(i => i.codecs === "opus");
         if (opusFilter.length !== 0)
             selected = opusFilter;
@@ -21,7 +21,7 @@ class Youtube {
         return selected.url;
     }
     static async getMetadata(link) {
-        const info = await ytdl_core_1.getBasicInfo(link);
+        const info = await (0, ytdl_core_1.getBasicInfo)(link);
         if (info.videoDetails.isLiveContent)
             throw new Error("Bad format: is a live stream");
         return {

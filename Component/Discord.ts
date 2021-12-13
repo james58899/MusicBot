@@ -42,8 +42,11 @@ export class Discord {
         if (!this.config.token) throw ERR_MISSING_TOKEN;
 
         this.bot = new CommandClient(
-            this.config.token,
-            { opusOnly: true },
+            this.config.token as string,
+            {
+                intents: ['guilds', 'guildMessages'],
+                opusOnly: true
+            },
             { defaultCommandOptions: { caseInsensitive: true }, owner: this.config.owner }
         );
         this.audio = core.audioManager;
@@ -52,12 +55,12 @@ export class Discord {
 
         this.bot.on("ready", () => {
             console.log("[Discord] Ready!");
-            this.bot.editStatus(undefined, {
+            this.bot.editStatus('online', {
                 name: "Self",
                 type: 2
             });
         });
-        
+
         this.bot.on("error", (err, id) => {
             console.error(`[Discord] Error ${id}: ${err}`)
         })
@@ -203,7 +206,7 @@ export class Discord {
             try {
                 user = await this.user.createFromToken(args[0], { type: BIND_TYPE, id: msg.author.id });
             } catch (error) {
-                void msg.channel.createMessage(error.message);
+                void msg.channel.createMessage(error.message as string);
                 return;
             }
         } else {

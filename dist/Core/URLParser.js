@@ -31,7 +31,7 @@ class UrlParser {
                 return provider(url);
             }
         }
-        return MediaInfo_1.getMediaInfo(url);
+        return (0, MediaInfo_1.getMediaInfo)(url);
     }
 }
 exports.UrlParser = UrlParser;

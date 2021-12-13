@@ -20,7 +20,7 @@ export class Core extends EventEmitter {
 
         this.emit("init", this);
 
-        if (!existsSync(resolve(this.config.audio.save))) mkdirSync(resolve(this.config.audio.save));
+        if (!existsSync(resolve(this.config.audio.save as string))) mkdirSync(resolve(this.config.audio.save as string));
 
         // Wait DB connect
         this.database.on("connect", () => this.emit("ready"));

@@ -13,14 +13,14 @@ const UserManager_1 = require("./Core/UserManager");
 class Core extends events_1.EventEmitter {
     constructor() {
         super();
-        this.config = require(path_1.resolve("config.json"));
+        this.config = require((0, path_1.resolve)("config.json"));
         this.audioManager = new AudioManager_1.AudioManager(this);
         this.userManager = new UserManager_1.UserManager(this);
         this.listManager = new ListManager_1.ListManager(this);
         this.database = new MongoDB_1.MongoDB(this.config);
         this.emit("init", this);
-        if (!fs_1.existsSync(path_1.resolve(this.config.audio.save)))
-            fs_1.mkdirSync(path_1.resolve(this.config.audio.save));
+        if (!(0, fs_1.existsSync)((0, path_1.resolve)(this.config.audio.save)))
+            (0, fs_1.mkdirSync)((0, path_1.resolve)(this.config.audio.save));
         this.database.on("connect", () => this.emit("ready"));
         this.on("ready", async () => {
             if (process.argv.indexOf("--deep-check") !== -1) {

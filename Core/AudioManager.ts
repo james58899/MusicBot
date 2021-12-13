@@ -193,6 +193,6 @@ export class AudioManager {
     }
 
     private getCachePath(audio: IAudioData) {
-        return resolve(this.config.save, audio.hash + ".ogg");
+        return resolve(this.config.save as string, audio.hash + ".ogg");
     }
 }

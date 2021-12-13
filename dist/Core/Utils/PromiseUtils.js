@@ -24,6 +24,6 @@ function sleep(time) {
 }
 exports.sleep = sleep;
 function exists(file) {
-    return new Promise(resolve => { fs_1.access(file, fs_1.constants.F_OK, err => err ? resolve(false) : resolve(true)); });
+    return new Promise(resolve => { (0, fs_1.access)(file, fs_1.constants.F_OK, err => err ? resolve(false) : resolve(true)); });
 }
 exports.exists = exists;

@@ -33,7 +33,7 @@ export class Telegram {
         this.list = core.listManager;
 
         // Create bot
-        this.bot = new TelegramBot(core.config.telegram.token, {
+        this.bot = new TelegramBot(core.config.telegram.token as string, {
             polling: true,
         });
 
@@ -175,7 +175,7 @@ export class Telegram {
                 );
             }
         } catch (error) {
-            this.sendError(msg, error.message);
+            this.sendError(msg, error.message as string);
             return;
         }
 

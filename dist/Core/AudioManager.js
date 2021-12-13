@@ -19,8 +19,8 @@ exports.ERR_MAX_LENGTH = Error("Audio length exceeds limit");
 class AudioManager {
     constructor(core) {
         this.urlParser = new URLParser_1.UrlParser();
-        this.metadataQueue = new promise_queue_1.default(os_1.cpus().length);
-        this.encodeQueue = new promise_queue_1.default(os_1.cpus().length);
+        this.metadataQueue = new promise_queue_1.default((0, os_1.cpus)().length);
+        this.encodeQueue = new promise_queue_1.default((0, os_1.cpus)().length);
         this.config = core.config.audio;
         const encoder = new Encoder_1.Encoder(core.config);
         this.encode = encoder.encode.bind(encoder);
@@ -44,7 +44,7 @@ class AudioManager {
             return exist;
         let info;
         try {
-            info = await PromiseUtils_1.retry(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
+            info = await (0, PromiseUtils_1.retry)(() => this.metadataQueue.add(() => this.urlParser.getMetadata(source)));
         }
         catch (error) {
             console.error(error);
@@ -60,7 +60,7 @@ class AudioManager {
             throw exports.ERR_MISSING_TITLE;
         if (duration > this.config.length)
             throw exports.ERR_MAX_LENGTH;
-        const hash = crypto_1.createHash("md5").update(title + artist + duration + size).digest("hex");
+        const hash = (0, crypto_1.createHash)("md5").update(title + artist + duration + size).digest("hex");
         exist = await this.search({ hash }).next();
         if (exist)
             return exist;
@@ -75,7 +75,7 @@ class AudioManager {
             })).insertedId
         }));
         try {
-            await PromiseUtils_1.retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), audio.hash, audio.duration)));
+            await (0, PromiseUtils_1.retry)(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(source), audio.hash, audio.duration)));
             return audio;
         }
         catch (error) {
@@ -103,14 +103,14 @@ class AudioManager {
             return;
         await this.listManager.delAudioAll(id);
         const file = this.getCachePath(audio);
-        if (await PromiseUtils_1.exists(file))
+        if (await (0, PromiseUtils_1.exists)(file))
             await fs_1.promises.unlink(file);
         return this.database.deleteOne({ _id: id });
     }
     get(id) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return PromiseUtils_1.retry(() => this.database.findOne({ _id: id }), 17280, 5000, false);
+        return (0, PromiseUtils_1.retry)(() => this.database.findOne({ _id: id }), 17280, 5000, false);
     }
     search(metadata) {
         if (!this.database)
@@ -119,7 +119,7 @@ class AudioManager {
     }
     async getFile(audio) {
         const path = this.getCachePath(audio);
-        return await PromiseUtils_1.exists(path) ? path : false;
+        return await (0, PromiseUtils_1.exists)(path) ? path : false;
     }
     async checkCache(deep = false) {
         if (deep)
@@ -128,7 +128,7 @@ class AudioManager {
             if (audio == null)
                 return;
             const file = this.getCachePath(audio);
-            if (!await PromiseUtils_1.exists(file)) {
+            if (!await (0, PromiseUtils_1.exists)(file)) {
                 if (!audio.source) {
                     void this.delete(audio._id);
                     return;
@@ -136,7 +136,7 @@ class AudioManager {
                 console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
                 try {
                     const source = await this.urlParser.getFile(audio.source);
-                    await PromiseUtils_1.retry(() => this.encodeQueue.add(async () => this.encode(source, audio.hash, audio.duration)));
+                    await (0, PromiseUtils_1.retry)(() => this.encodeQueue.add(async () => this.encode(source, audio.hash, audio.duration)));
                 }
                 catch (e) {
                     console.error(`Failed to download ${audio.title}`, e.message);
@@ -153,7 +153,7 @@ class AudioManager {
                     console.log(`[Audio] ${audio.title} cache damaged, redownload...`);
                     try {
                         const source = await this.urlParser.getFile(audio.source);
-                        await PromiseUtils_1.retry(() => this.encodeQueue.add(() => this.encode(source, audio.hash, audio.duration)));
+                        await (0, PromiseUtils_1.retry)(() => this.encodeQueue.add(() => this.encode(source, audio.hash, audio.duration)));
                     }
                     catch (e) {
                         console.error(`Failed to download ${audio.title}`, e.message);
@@ -164,7 +164,7 @@ class AudioManager {
         }
     }
     getCachePath(audio) {
-        return path_1.resolve(this.config.save, audio.hash + ".ogg");
+        return (0, path_1.resolve)(this.config.save, audio.hash + ".ogg");
     }
 }
 exports.AudioManager = AudioManager;

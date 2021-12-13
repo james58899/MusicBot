@@ -34,7 +34,7 @@ class Encoder {
     constructor(config) {
         this.config = config.audio;
         try {
-            child_process_1.execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
+            (0, child_process_1.execFileSync)("ffmpeg", ["-version"], { stdio: "ignore" });
         }
         catch (err) {
             this.ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
@@ -42,14 +42,14 @@ class Encoder {
     }
     async encode(input, filename, duration) {
         if (!this.cacheDir) {
-            this.cacheDir = await fs_1.promises.mkdtemp(path_1.join(os_1.tmpdir(), "musicbot-"));
+            this.cacheDir = await fs_1.promises.mkdtemp((0, path_1.join)((0, os_1.tmpdir)(), "musicbot-"));
         }
-        const cacheFile = path_1.join(this.cacheDir, filename);
+        const cacheFile = (0, path_1.join)(this.cacheDir, filename);
         await this.download(input, cacheFile);
         const normalize = await this.getNormalize(cacheFile);
         const savePath = path_1.default.resolve(this.config.save, filename + ".ogg");
         return new Promise((resolve, reject) => {
-            const ffmpeg = fluent_ffmpeg_1.default({ timeout: 300 });
+            const ffmpeg = (0, fluent_ffmpeg_1.default)({ timeout: 300 });
             if (this.ffmpegPath)
                 ffmpeg.setFfmpegPath(this.ffmpegPath);
             ffmpeg.input(cacheFile)
@@ -73,7 +73,7 @@ class Encoder {
             })
                 .on("end", async () => {
                 await fs_1.promises.rename(savePath + ".tmp", savePath);
-                if (Math.abs((await MediaInfo_1.getMediaInfo(savePath)).duration - duration) > 1) {
+                if (Math.abs((await (0, MediaInfo_1.getMediaInfo)(savePath)).duration - duration) > 1) {
                     reject(Error("Duration mismatch"));
                 }
                 else {
@@ -85,7 +85,7 @@ class Encoder {
     }
     async getNormalize(input) {
         return new Promise((resolve, reject) => {
-            const ffmpeg = fluent_ffmpeg_1.default({ stdoutLines: 14, timeout: 300 });
+            const ffmpeg = (0, fluent_ffmpeg_1.default)({ stdoutLines: 14, timeout: 300 });
             if (this.ffmpegPath)
                 ffmpeg.setFfmpegPath(this.ffmpegPath);
             ffmpeg.input(input)
@@ -102,9 +102,9 @@ class Encoder {
         });
     }
     async download(input, output) {
-        const stream = fs_1.createWriteStream(output);
+        const stream = (0, fs_1.createWriteStream)(output);
         return new Promise((resolve, reject) => {
-            request_1.get(input)
+            (0, request_1.get)(input)
                 .on("error", err => reject(err))
                 .on("complete", () => {
                 stream.close();

@@ -32,7 +32,7 @@ export class Encoder {
         await this.download(input, cacheFile);
 
         const normalize = await this.getNormalize(cacheFile);
-        const savePath = path.resolve(this.config.save, filename + ".ogg");
+        const savePath = path.resolve(this.config.save as string, filename + ".ogg");
 
         return new Promise<string>((resolve, reject) => {
             const ffmpeg = FFmpeg({ timeout: 300 });
@@ -49,10 +49,10 @@ export class Encoder {
                     `measured_thresh=${normalize.input_thresh}:` +
                     `offset=${normalize.target_offset}`
                 )
-                .audioBitrate(this.config.bitrate)
+                .audioBitrate(this.config.bitrate as number)
                 .audioCodec("libopus")
                 .outputOptions("-map_metadata", "-1")
-                .duration(this.config.length)
+                .duration(this.config.length as number)
                 .format("ogg")
                 .save(savePath + ".tmp")
                 .on("error", (err, stdout, stderr) => {
@@ -79,7 +79,7 @@ export class Encoder {
             ffmpeg.input(input)
                 .withNoVideo()
                 .audioFilters("loudnorm=print_format=json:I=-20:LRA=18:TP=-1")
-                .duration(this.config.length)
+                .duration(this.config.length as number)
                 .format("null")
                 .save("-")
                 .on("error", (err, stdout, stderr) => {

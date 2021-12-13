@@ -28,13 +28,16 @@ class Discord {
         this.config = core.config.discord;
         if (!this.config.token)
             throw ERR_MISSING_TOKEN;
-        this.bot = new eris_1.CommandClient(this.config.token, { opusOnly: true }, { defaultCommandOptions: { caseInsensitive: true }, owner: this.config.owner });
+        this.bot = new eris_1.CommandClient(this.config.token, {
+            intents: ['guilds', 'guildMessages'],
+            opusOnly: true
+        }, { defaultCommandOptions: { caseInsensitive: true }, owner: this.config.owner });
         this.audio = core.audioManager;
         this.list = core.listManager;
         this.user = core.userManager;
         this.bot.on("ready", () => {
             console.log("[Discord] Ready!");
-            this.bot.editStatus(undefined, {
+            this.bot.editStatus('online', {
                 name: "Self",
                 type: 2
             });
@@ -97,7 +100,7 @@ class Discord {
         }
         let isPlaying = false;
         if (mode === PlayMode.random)
-            shuffle_array_1.default(list.audio);
+            (0, shuffle_array_1.default)(list.audio);
         if (this.playing.has(voice.id))
             isPlaying = true;
         this.playing.set(voice.id, {
@@ -118,7 +121,7 @@ class Discord {
                     const newList = await this.list.get(status.list._id);
                     if (newList) {
                         if (status.mode === PlayMode.random)
-                            shuffle_array_1.default(newList.audio);
+                            (0, shuffle_array_1.default)(newList.audio);
                         status.list = newList;
                         status.index = 0;
                     }
