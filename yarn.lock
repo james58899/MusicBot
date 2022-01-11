@@ -80,16 +80,22 @@
   resolved "https://registry.yarnpkg.com/@ffmpeg-installer/win32-x64/-/win32-x64-4.1.0.tgz#17e8699b5798d4c60e36e2d6326a8ebe5e95a2c5"
   integrity sha512-Drt5u2vzDnIONf4ZEkKtFlbvwj6rI3kxw1Ck9fpudmtgaZIHD4ucsWB2lCZBXRxJgXR+2IMSti+4rtM4C4rXgg==
 
+"@ffprobe-installer/darwin-arm64@5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@ffprobe-installer/darwin-arm64/-/darwin-arm64-5.0.0.tgz#153b803c8c9a00e5322a28732e6dfa7c12f52e5b"
+  integrity sha512-8ZW6Fq/yVcxTs16+YZQtTSXKwHj7Mv8rVSz86dBNqkD8G31QHafasiqpd3REzBOw5g5kIsZbvrgk2UtVqI8FOQ==
+
 "@ffprobe-installer/darwin-x64@5.0.0":
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/@ffprobe-installer/darwin-x64/-/darwin-x64-5.0.0.tgz#66116b642cb1759939f4f4b3b18b0aea5d7814b0"
   integrity sha512-Zl0UkZ+wW/eyMKBPLTUCcNQch2VDnZz/cBn1DXv3YtCBVbYd9aYzGj4MImdxgWcoE0+GpbfbO6mKGwMq5HCm6A==
 
-"@ffprobe-installer/ffprobe@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@ffprobe-installer/ffprobe/-/ffprobe-1.2.0.tgz#571679bb6a7fb0304b7af406af6fc5e4b3a191d4"
-  integrity sha512-hAcr1Nz3u79MZCExqyIzzimwq5NFWb9WfDo2ZSuHNrPRCqC2PKHeKW/gsrjBKN2lXGwvtFVRvK0AN20bNR3cBg==
+"@ffprobe-installer/ffprobe@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@ffprobe-installer/ffprobe/-/ffprobe-1.4.0.tgz#605f194877dbdb8b4e943f2e00d239190324936c"
+  integrity sha512-a6Qk94gamjLtmBzNWrvqSdKPWw17VS9Q3Vuj5Aw2Hrrd7zEkRr8oZ7DqmLQHTYI07hQmyJa2rEWpAR3Qr/HRPA==
   optionalDependencies:
+    "@ffprobe-installer/darwin-arm64" "5.0.0"
     "@ffprobe-installer/darwin-x64" "5.0.0"
     "@ffprobe-installer/linux-arm" "5.0.0"
     "@ffprobe-installer/linux-arm64" "5.0.0"
