@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import TelegramBot, { CallbackQuery, EditMessageTextOptions, InlineKeyboardButton, Message, User } from "node-telegram-bot-api";
 import { basename } from "path";
 import Queue from "promise-queue";
@@ -807,7 +807,7 @@ export class Telegram {
         });
     }
 
-    private async processDone(msg: Message, audio: IAudioData) {
+    private async processDone(msg: Message, audio: WithId<IAudioData>) {
         const session = this.audioAddSession.get(msg.chat.id);
         if (session) await this.list.addAudio(session, audio._id);
 

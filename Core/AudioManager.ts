@@ -16,7 +16,6 @@ export const ERR_NOT_AUDIO = Error("This doesn't look like audio");
 export const ERR_MAX_LENGTH = Error("Audio length exceeds limit");
 
 export interface IAudioData {
-    _id: ObjectId;
     title: string;
     artist?: string;
     duration: number;
@@ -82,7 +81,7 @@ export class AudioManager {
         exist = await this.search({ hash }).next();
         if (exist) return exist;
 
-        const audio: IAudioData = (await this.database.findOne({
+        const audio = (await this.database.findOne({
             _id: (await this.database.insertOne({
                 artist,
                 duration,

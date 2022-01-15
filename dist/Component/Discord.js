@@ -163,10 +163,9 @@ class Discord {
         }
     }
     async commandRegister(msg, args) {
-        let user;
         if (args[0]) {
             try {
-                user = await this.user.createFromToken(args[0], { type: exports.BIND_TYPE, id: msg.author.id });
+                await this.user.createFromToken(args[0], { type: exports.BIND_TYPE, id: msg.author.id });
             }
             catch (error) {
                 void msg.channel.createMessage(error.message);
@@ -174,8 +173,9 @@ class Discord {
             }
         }
         else {
-            user = await this.user.create(msg.author.username, { type: exports.BIND_TYPE, id: msg.author.id });
+            await this.user.create(msg.author.username, { type: exports.BIND_TYPE, id: msg.author.id });
         }
+        const user = (await this.user.getFromBind(exports.BIND_TYPE, msg.author.id));
         void msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
     }
     async commandBind(msg) {

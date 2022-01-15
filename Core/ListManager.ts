@@ -5,7 +5,6 @@ import { ERR_DB_NOT_INIT } from "./MongoDB";
 import { retry } from "./Utils/PromiseUtils";
 
 export interface IAudioList {
-    _id: ObjectId;
     name: string;
     owner: ObjectId;
     admin: ObjectId[];

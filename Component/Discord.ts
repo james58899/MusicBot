@@ -1,10 +1,10 @@
 import { CommandClient, Message, MessageContent, TextChannel, VoiceConnection } from "eris";
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import shuffle from "shuffle-array";
 import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, ERR_NOT_AUDIO, IAudioData } from "../Core/AudioManager";
 import { IAudioList, ListManager } from "../Core/ListManager";
-import { IUserData, UserManager } from "../Core/UserManager";
+import { UserManager } from "../Core/UserManager";
 
 export const BIND_TYPE = "discord";
 const ERR_MISSING_TOKEN = Error("Discord token missing");
@@ -23,7 +23,7 @@ enum PlayMode {
 
 interface IPlayingStatus {
     index: number;
-    list: IAudioList;
+    list: WithId<IAudioList>;
     mode: PlayMode;
     statusMessage: Message;
 }
@@ -201,18 +201,18 @@ export class Discord {
     }
 
     private async commandRegister(msg: Message, args: string[]) {
-        let user: IUserData;
         if (args[0]) {
             try {
-                user = await this.user.createFromToken(args[0], { type: BIND_TYPE, id: msg.author.id });
+                await this.user.createFromToken(args[0], { type: BIND_TYPE, id: msg.author.id });
             } catch (error) {
                 void msg.channel.createMessage(error.message as string);
                 return;
             }
         } else {
-            user = await this.user.create(msg.author.username, { type: BIND_TYPE, id: msg.author.id });
+            await this.user.create(msg.author.username, { type: BIND_TYPE, id: msg.author.id });
         }
 
+        const user = (await this.user.getFromBind(BIND_TYPE, msg.author.id))!;
         void msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
     }
 
@@ -234,7 +234,7 @@ export class Discord {
         if (!user) return;
 
         msg.attachments.forEach(async file => {
-            let audio: IAudioData;
+            let audio: WithId<IAudioData>;
             try {
                 audio = await this.audio.add(user._id, file.url);
             } catch (error) {
