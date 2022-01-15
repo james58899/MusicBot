@@ -44,7 +44,7 @@ export class Discord {
         this.bot = new CommandClient(
             this.config.token as string,
             {
-                intents: ['guilds', 'guildMessages'],
+                intents: ['guilds', 'guildMessages', 'guildVoiceStates'],
                 opusOnly: true
             },
             { defaultCommandOptions: { caseInsensitive: true }, owner: this.config.owner }

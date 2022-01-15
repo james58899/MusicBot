@@ -29,7 +29,7 @@ class Discord {
         if (!this.config.token)
             throw ERR_MISSING_TOKEN;
         this.bot = new eris_1.CommandClient(this.config.token, {
-            intents: ['guilds', 'guildMessages'],
+            intents: ['guilds', 'guildMessages', 'guildVoiceStates'],
             opusOnly: true
         }, { defaultCommandOptions: { caseInsensitive: true }, owner: this.config.owner });
         this.audio = core.audioManager;
