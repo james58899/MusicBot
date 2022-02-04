@@ -155,7 +155,10 @@ export class Discord {
                     // refresh list
                     const newList = await this.list.get(status.list._id);
                     if (newList) {
-                        if (status.mode === PlayMode.random) shuffle(newList.audio);
+                        if (status.mode === PlayMode.random) {
+                            newList.audio.sort();
+                            shuffle(newList.audio);
+                        }
                         status.list = newList;
                         status.index = 0;
                     } else {

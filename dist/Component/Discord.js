@@ -120,8 +120,10 @@ class Discord {
                 if (status.index >= status.list.audio.length) {
                     const newList = await this.list.get(status.list._id);
                     if (newList) {
-                        if (status.mode === PlayMode.random)
+                        if (status.mode === PlayMode.random) {
+                            newList.audio.sort();
                             (0, shuffle_array_1.default)(newList.audio);
+                        }
                         status.list = newList;
                         status.index = 0;
                     }
