@@ -64,6 +64,10 @@ export class Core extends EventEmitter {
     }
 }
 
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 process.on('SIGINT', () => {
     process.exit();
 });

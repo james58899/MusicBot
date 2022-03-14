@@ -8,6 +8,7 @@ const eris_1 = require("eris");
 const mongodb_1 = require("mongodb");
 const shuffle_array_1 = __importDefault(require("shuffle-array"));
 const AudioManager_1 = require("../Core/AudioManager");
+const PromiseUtils_1 = require("../Core/Utils/PromiseUtils");
 exports.BIND_TYPE = "discord";
 const ERR_MISSING_TOKEN = Error("Discord token missing");
 const ERR_CAN_NOT_GET_AUDIO = Error("Can not get audio from database");
@@ -218,7 +219,8 @@ class Discord {
         if (!file)
             throw ERR_MISSING_AUDIO_FILE;
         voice.play(file, { format: "ogg" });
-        void status.statusMessage.edit(await this.genPlayingMessage(status.list, status.index));
+        const message = await this.genPlayingMessage(status.list, status.index);
+        (0, PromiseUtils_1.retry)(() => status.statusMessage.edit(message)).catch(console.error);
     }
     async genPlayingMessage(list, index) {
         const now = await this.audio.get(list.audio[index]);

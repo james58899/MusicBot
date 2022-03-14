@@ -5,6 +5,7 @@ import { Core } from "..";
 import { AudioManager, ERR_MISSING_TITLE, ERR_NOT_AUDIO, IAudioData } from "../Core/AudioManager";
 import { IAudioList, ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
+import { retry } from "../Core/Utils/PromiseUtils";
 
 export const BIND_TYPE = "discord";
 const ERR_MISSING_TOKEN = Error("Discord token missing");
@@ -258,7 +259,8 @@ export class Discord {
         if (!file) throw ERR_MISSING_AUDIO_FILE;
 
         voice.play(file, { format: "ogg" });
-        void status.statusMessage.edit(await this.genPlayingMessage(status.list, status.index));
+        const message = await this.genPlayingMessage(status.list, status.index);
+        retry(() => status.statusMessage.edit(message)).catch(console.error);
     }
 
     private async genPlayingMessage(list: IAudioList, index: number) {
