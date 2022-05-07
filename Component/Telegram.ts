@@ -504,7 +504,7 @@ export class Telegram {
     // View generators
     private async genPlaylistView(start = 0, user?: ObjectId) {
         const list = (user) ? this.list.getFromPermission(user) : this.list.getAll();
-        const array = await list.skip(start).limit(10).toArray();
+        const array = await list.clone().skip(start).limit(10).toArray();
         const button: InlineKeyboardButton[][] = [];
 
         array.map((item, index) => {
@@ -525,7 +525,7 @@ export class Telegram {
             }
         });
 
-        if (0 < await list.count()) {
+        if (await list.clone().hasNext()) {
             button.push([]);
 
             if (start - 10 >= 0) {
@@ -534,7 +534,7 @@ export class Telegram {
                     text: "<"
                 });
             }
-            if (start + 10 < await list.count()) {
+            if (await list.clone().skip(start + 10).hasNext()) {
                 button[button.length - 1].push({
                     callback_data: `List ${(user) ? user.toHexString() : undefined} ${start + 10}`,
                     text: ">"
