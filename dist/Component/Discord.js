@@ -133,7 +133,12 @@ class Discord {
                         return;
                     }
                 }
-                void this.play(voice, status);
+                (0, PromiseUtils_1.retry)(() => this.play(voice, status)).catch(err => {
+                    console.error(err);
+                    this.playing.delete(voice.id);
+                    voice.removeListener("end", onEnd);
+                    voice.stopPlaying();
+                });
             };
             voice.on("end", onEnd);
             voice.once("disconnect", err => {

@@ -168,7 +168,14 @@ export class Discord {
                     }
                 }
 
-                void this.play(voice, status);
+                retry(() => this.play(voice, status)).catch(err => {
+                    console.error(err)
+
+                    // Deletet play state
+                    this.playing.delete(voice.id);
+                    voice.removeListener("end", onEnd)
+                    voice.stopPlaying()
+                });
             }
             voice.on("end", onEnd);
             voice.once("disconnect", err => {
