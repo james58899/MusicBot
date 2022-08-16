@@ -29,7 +29,7 @@
     "@types/promise-queue": "^2.2.0",
     "@types/shuffle-array": "^1.0.2",
     "@types/ws": "^8.5.3",
-    "@typescript-eslint/eslint-plugin": "^5.30.5",
+    "@typescript-eslint/eslint-plugin": "^5.33.1",
     "@typescript-eslint/parser": "^5.30.5",
     "eslint": "^8.19.0",
     "eslint-plugin-jsdoc": "^39.3.3",
