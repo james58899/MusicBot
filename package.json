@@ -44,6 +44,6 @@
     "bufferutil": "^4.0.6",
     "erlpack": "abalabahaha/erlpack",
     "eventemitter3": "^4.0.7",
-    "sodium-native": "^3.3.0"
+    "sodium-native": "^3.4.1"
   }
 }
