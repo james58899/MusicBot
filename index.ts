@@ -26,25 +26,6 @@ export class Core extends EventEmitter {
         this.database.on("connect", () => this.emit("ready"));
 
         this.on("ready", async () => {
-            // Check audio files and redownload missing files
-            if (process.argv.indexOf("--deep-check") !== -1) {
-                await this.audioManager.checkCache(true);
-                await this.listManager.checkAudioExist();
-            } else {
-                await this.audioManager.checkCache();
-            }
-
-            // Clean up audio not in any list
-            if (process.argv.indexOf("--cleanup-audio") !== -1) {
-                console.log("[Cleanup] Starting clean up audio not in any list")
-                for await (const audio of this.audioManager.search()) {
-                    if (audio && !await this.listManager.audioInList(audio._id)) {
-                        console.log(`[Cleanup] Delete ${audio.title} not in any list`)
-                        await this.audioManager.delete(audio._id);
-                    }
-                }
-            }
-
             console.log("[Main] Init components...");
 
             try {
@@ -59,6 +40,21 @@ export class Core extends EventEmitter {
                 new Discord(this);
             } catch (error) {
                 console.error(error);
+            }
+
+            // Check audio files and redownload missing files
+            await this.audioManager.checkCache(process.argv.indexOf("--deep-check") !== -1);
+            await this.listManager.checkAudioExist();
+
+            // Clean up audio not in any list
+            if (process.argv.indexOf("--cleanup-audio") !== -1) {
+                console.log("[Cleanup] Starting clean up audio not in any list")
+                for await (const audio of this.audioManager.search()) {
+                    if (audio && !await this.listManager.audioInList(audio._id)) {
+                        console.log(`[Cleanup] Delete ${audio.title} not in any list`)
+                        await this.audioManager.delete(audio._id);
+                    }
+                }
             }
         });
     }
