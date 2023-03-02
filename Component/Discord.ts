@@ -107,7 +107,10 @@ export class Discord {
         if (!msg.member) return;
 
         if (msg.member.voiceState.channelID) {
-            void this.bot.joinVoiceChannel(msg.member.voiceState.channelID);
+            void this.bot.joinVoiceChannel(msg.member.voiceState.channelID).then(voice => {
+                voice.on('warn', msg => console.error(`[Discord] warn: ${msg}`));
+                voice.on('error', err => console.error("[Discord] error: ", err));
+            });
             void msg.channel.createMessage(MESSAGE_HI);
         } else {
             void msg.channel.createMessage(MESSAGE_HI_NOT_IN_VOICE);
