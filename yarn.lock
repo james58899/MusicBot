@@ -196,10 +196,10 @@
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.11.tgz#d421b6c527a3037f7c84433fd2c4229e016863d3"
   integrity sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==
 
-"@types/node-telegram-bot-api@^0.61.2":
-  version "0.61.2"
-  resolved "https://registry.yarnpkg.com/@types/node-telegram-bot-api/-/node-telegram-bot-api-0.61.2.tgz#77ca107dfc801550fc3dfb6b74baf2b7eccbeef8"
-  integrity sha512-ZbImQoPN7ZQeBWcN9g/aN3Kqt3Ko2nZX5DPgwWchhhIG/Ul0kYXjj0/bPpVg44ZS9fJM2+yRgATeRpnVK6qnmQ==
+"@types/node-telegram-bot-api@^0.61.3":
+  version "0.61.3"
+  resolved "https://registry.yarnpkg.com/@types/node-telegram-bot-api/-/node-telegram-bot-api-0.61.3.tgz#f34a0def27fe07bf674e6db88beb8843e7c5c73a"
+  integrity sha512-Z6VFc/k4/z70RxlJ9pp/efBj4vsEnRo1UAkweN3sbGNDa4o4jJj5YNx1pshIikTyxCB2UWszKAV64xpgN5CxGg==
   dependencies:
     "@types/node" "*"
     "@types/request" "*"
