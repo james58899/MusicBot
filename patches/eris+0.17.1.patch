@@ -1,5 +1,5 @@
 diff --git a/node_modules/eris/lib/voice/VoiceConnection.js b/node_modules/eris/lib/voice/VoiceConnection.js
-index 74355aa..c27008c 100644
+index 74355aa..396e20e 100644
 --- a/node_modules/eris/lib/voice/VoiceConnection.js
 +++ b/node_modules/eris/lib/voice/VoiceConnection.js
 @@ -120,6 +120,7 @@ class VoiceConnection extends EventEmitter {
@@ -59,3 +59,11 @@ index 74355aa..c27008c 100644
                  } else if(code === 4014) {
                      if(this.channelID) {
                          data.endpoint = null;
+@@ -383,6 +409,7 @@ class VoiceConnection extends EventEmitter {
+     disconnect(error, reconnecting) {
+         this.connecting = false;
+         this.reconnecting = reconnecting;
++        this.resumeing = false;
+         this.ready = false;
+         this.speaking = false;
+         this.timestamp = 0;
