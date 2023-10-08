@@ -201,7 +201,7 @@ class Telegram {
         const audio = await this.audio.get(new mongodb_1.ObjectId(data[1]));
         if (!audio)
             return;
-        void this.bot.editMessageText(`ID: ${audio._id.toHexString()}\nTitle: ${audio.title}`, { chat_id: query.message.chat.id, message_id: query.message.message_id });
+        void this.queueSendMessage(query.message.chat.id, `ID: ${audio._id.toHexString()}\nTitle: ${audio.title}`);
     }
     async playlistCallback(query, data) {
         if (!query.message)
@@ -277,9 +277,14 @@ class Telegram {
     async listAudioDeleteCallback(query, data) {
         if (!query.message || data.length < 3)
             return;
-        if (data[3]) {
-            await this.list.delAudio(new mongodb_1.ObjectId(data[1]), new mongodb_1.ObjectId(data[2]));
-            void this.bot.editMessageReplyMarkup({ inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] }, { chat_id: query.message.chat.id, message_id: query.message.message_id });
+        const callback = data[3];
+        if (callback) {
+            let text = "Canceled";
+            if (callback == 'y') {
+                await this.list.delAudio(new mongodb_1.ObjectId(data[1]), new mongodb_1.ObjectId(data[2]));
+                text = "Deleted";
+            }
+            void this.bot.editMessageReplyMarkup({ inline_keyboard: [[{ text, callback_data: "dummy" }]] }, { chat_id: query.message.chat.id, message_id: query.message.message_id });
         }
         else {
             const audioID = new mongodb_1.ObjectId(data[2]);
@@ -287,8 +292,13 @@ class Telegram {
             const audio = await this.audio.get(audioID);
             if (!list || !audio || !list.audio.find(id => id.equals(audioID)))
                 return;
-            void this.bot.sendMessage(query.message.chat.id, `Are you sure delete ${audio.title} from list ${list.name}?`, {
-                reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` }]] }
+            void this.queueSendMessage(query.message.chat.id, `Are you sure delete ${audio.title}(${audio._id.toHexString()}) from list ${list.name}?`, {
+                reply_markup: {
+                    inline_keyboard: [[
+                            { text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` },
+                            { text: "No", callback_data: `ListAudioDel ${data[1]} ${data[2]} n` }
+                        ]]
+                }
             });
         }
     }

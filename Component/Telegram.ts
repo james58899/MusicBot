@@ -246,7 +246,7 @@ export class Telegram {
         const audio = await this.audio.get(new ObjectId(data[1]));
         if (!audio) return;
 
-        void this.bot.editMessageText(`ID: ${audio._id.toHexString()}\nTitle: ${audio.title}`, { chat_id: query.message.chat.id, message_id: query.message.message_id });
+        void this.queueSendMessage(query.message.chat.id, `ID: ${audio._id.toHexString()}\nTitle: ${audio.title}`);
     }
 
     private async playlistCallback(query: CallbackQuery, data: string[]) {
@@ -328,10 +328,15 @@ export class Telegram {
     private async listAudioDeleteCallback(query: CallbackQuery, data: string[]) {
         if (!query.message || data.length < 3) return;
 
-        if (data[3]) {
-            await this.list.delAudio(new ObjectId(data[1]), new ObjectId(data[2]));
+        const callback = data[3];
+        if (callback) {
+            let text = "Canceled";
+            if (callback == 'y') {
+                await this.list.delAudio(new ObjectId(data[1]), new ObjectId(data[2]));
+                text = "Deleted";
+            }
             void this.bot.editMessageReplyMarkup(
-                { inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] },
+                { inline_keyboard: [[{ text, callback_data: "dummy" }]] },
                 { chat_id: query.message.chat.id, message_id: query.message.message_id }
             );
         } else {
@@ -340,8 +345,13 @@ export class Telegram {
             const audio = await this.audio.get(audioID);
             if (!list || !audio || !list.audio.find(id => id.equals(audioID))) return;
 
-            void this.bot.sendMessage(query.message.chat.id, `Are you sure delete ${audio.title} from list ${list.name}?`, {
-                reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` }]] }
+            void this.queueSendMessage(query.message.chat.id, `Are you sure delete ${audio.title}(${audio._id.toHexString()}) from list ${list.name}?`, {
+                reply_markup: {
+                    inline_keyboard: [[
+                        { text: "Yes", callback_data: `ListAudioDel ${data[1]} ${data[2]} y` },
+                        { text: "No", callback_data: `ListAudioDel ${data[1]} ${data[2]} n` }
+                    ]]
+                }
             });
         }
     }
