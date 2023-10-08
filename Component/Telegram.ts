@@ -43,7 +43,7 @@ export class Telegram {
 
         // Register listener
         void this.bot.getMe().then(me => {
-            this.me = me ;
+            this.me = me;
             this.listener();
         });
     }
@@ -495,7 +495,7 @@ export class Telegram {
                 { chat_id: query.message.chat.id, message_id: query.message.message_id }
             );
         } else {
-            void this.bot.sendMessage(query.message.chat.id, `Are you sure delete list ${list.name}?`, {
+            void this.queueSendMessage(query.message.chat.id, `Are you sure delete list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListDelete ${data[1]} y` }]] }
             });
         }
@@ -771,7 +771,7 @@ export class Telegram {
                 selective: true,
             },
             reply_to_message_id: msg.message_id
-        }) ;
+        });
 
         return new Promise<string>((resolve, reject) => {
             const callbackListener = (query: CallbackQuery) => {
@@ -782,7 +782,7 @@ export class Telegram {
 
                 resolve(data[2]);
 
-                void this.bot.deleteMessage(needTitle.chat.id, String(needTitle.message_id));
+                void this.bot.deleteMessage(needTitle.chat.id, needTitle.message_id);
                 this.bot.removeReplyListener(needTitle.message_id);
                 this.bot.removeListener("callback_query", callbackListener);
             };
