@@ -47,7 +47,7 @@ class ListManager {
     async rename(id, name) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return (await this.database.findOneAndUpdate({ _id: id }, { $set: { name } }, { returnDocument: "after" })).value;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $set: { name } }, { returnDocument: "after" }));
     }
     async delete(id) {
         if (!this.database)
@@ -57,22 +57,22 @@ class ListManager {
     async addAdmin(id, admin) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return (await this.database.findOneAndUpdate({ _id: id }, { $addToSet: { admin } }, { returnDocument: "after" })).value;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $addToSet: { admin } }, { returnDocument: "after" }));
     }
     async removeAdmin(id, admin) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return (await this.database.findOneAndUpdate({ _id: id }, { $pull: { admin } }, { returnDocument: "after" })).value;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $pull: { admin } }, { returnDocument: "after" }));
     }
     async addAudio(id, audio) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return (await this.database.findOneAndUpdate({ _id: id }, { $addToSet: { audio } }, { returnDocument: "after" })).value;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $addToSet: { audio } }, { returnDocument: "after" }));
     }
     async delAudio(id, audio) {
         if (!this.database)
             throw MongoDB_1.ERR_DB_NOT_INIT;
-        return (await this.database.findOneAndUpdate({ _id: id }, { $pull: { audio } }, { returnDocument: "after" })).value;
+        return (await this.database.findOneAndUpdate({ _id: id }, { $pull: { audio } }, { returnDocument: "after" }));
     }
     async delAudioAll(audio) {
         if (!this.database)
@@ -80,12 +80,12 @@ class ListManager {
         return this.database.updateMany({}, { $pull: { audio } });
     }
     async checkAudioExist() {
-        await this.getAll().forEach(list => {
+        for await (const list of this.getAll()) {
             list.audio.forEach(async (audio) => {
                 if (!await this.audioManager.get(audio))
                     void this.delAudioAll(audio);
             });
-        });
+        }
     }
     async audioInList(audio) {
         return this.searchListFromAudio(audio).hasNext();

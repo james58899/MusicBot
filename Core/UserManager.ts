@@ -81,6 +81,6 @@ export class UserManager {
             { _id: id },
             { $addToSet: { bind } },
             { returnDocument: "after" }
-        )).value!;
+        ));
     }
 }

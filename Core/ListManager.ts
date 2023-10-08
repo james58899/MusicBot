@@ -71,7 +71,7 @@ export class ListManager {
             { _id: id },
             { $set: { name } },
             { returnDocument: "after" }
-        )).value;
+        ));
     }
 
     public async delete(id: ObjectId) {
@@ -87,7 +87,7 @@ export class ListManager {
             { _id: id },
             { $addToSet: { admin } },
             { returnDocument: "after" }
-        )).value;
+        ));
     }
 
     public async removeAdmin(id: ObjectId, admin: ObjectId) {
@@ -97,7 +97,7 @@ export class ListManager {
             { _id: id },
             { $pull: { admin } },
             { returnDocument: "after" }
-        )).value;
+        ));
     }
 
     public async addAudio(id: ObjectId, audio: ObjectId) {
@@ -107,7 +107,7 @@ export class ListManager {
             { _id: id },
             { $addToSet: { audio } },
             { returnDocument: "after" }
-        )).value;
+        ));
     }
 
     public async delAudio(id: ObjectId, audio: ObjectId) {
@@ -117,7 +117,7 @@ export class ListManager {
             { _id: id },
             { $pull: { audio } },
             { returnDocument: "after" }
-        )).value;
+        ));
     }
 
     public async delAudioAll(audio: ObjectId) {
@@ -127,12 +127,12 @@ export class ListManager {
     }
 
     public async checkAudioExist() {
-        await this.getAll().forEach(list => {
+        for await (const list of this.getAll()) {
             list.audio.forEach(async (audio) => {
                 if (!await this.audioManager.get(audio))
                     void this.delAudioAll(audio);
             });
-        });
+        }
     }
 
     public async audioInList(audio: ObjectId) {
