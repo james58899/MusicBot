@@ -28,6 +28,7 @@ class Telegram {
         this.list = core.listManager;
         this.bot = new node_telegram_bot_api_1.default(core.config.telegram.token, {
             polling: true,
+            baseApiUrl: core.config.telegram.endpoint
         });
         this.audio.urlParser.registerURLHandler("^tg://", this.getFile.bind(this));
         this.audio.urlParser.registerMetadataProvider("^tg://", this.getMetadata.bind(this));

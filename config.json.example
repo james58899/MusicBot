@@ -9,6 +9,7 @@
         "name": "musicbot"
     },
     "telegram": {
+        "endpoint": "",
         "token": ""
     },
     "discord": {

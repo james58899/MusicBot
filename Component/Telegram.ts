@@ -35,6 +35,7 @@ export class Telegram {
         // Create bot
         this.bot = new TelegramBot(core.config.telegram.token as string, {
             polling: true,
+            baseApiUrl: core.config.telegram.endpoint
         });
 
         // Register URLParser
