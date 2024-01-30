@@ -67,3 +67,17 @@ index 0c8ff0e..6c3f707 100644
          this.ready = false;
          this.speaking = false;
          this.timestamp = 0;
+diff --git a/node_modules/eris/lib/voice/streams/OggOpusTransformer.js b/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
+index 6c4baed..c970b63 100644
+--- a/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
++++ b/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
+@@ -95,8 +95,7 @@ class OggOpusTransformer extends BaseTransformer {
+                 if(ret instanceof Error) {
+                     this.emit("error", ret);
+                 }
+-                cb();
+-                return;
++                break;
+             }
+         }
+ 
