@@ -162,13 +162,12 @@ export class AudioManager {
                 }
 
                 console.log(`[Audio] ${audio.title} missing in cache, redownload..`);
-                try {
-                    const source = await this.urlParser.getFile(audio.source);
-                    await retry(() => this.encodeQueue.add(async () => this.encode(source, audio.hash, audio.duration)));
-                } catch (e) {
-                    console.error(`Failed to download ${audio.title}`, e.message);
-                    void this.delete(audio._id);
-                }
+                retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(audio.source), audio.hash, audio.duration)))
+                    .then(() => console.log(`[Audio] ${audio.title} downloaded`))
+                    .catch(e => {
+                        console.error(`Failed to download ${audio.title}`, e.message);
+                        void this.delete(audio._id);
+                    });
             } else if (deep) {
                 const metadata = this.metadataQueue.add(() => this.urlParser.getMetadata(file));
 
@@ -179,13 +178,12 @@ export class AudioManager {
                     }
 
                     console.log(`[Audio] ${audio.title} cache damaged, redownload...`);
-                    try {
-                        const source = await this.urlParser.getFile(audio.source);
-                        await retry(() => this.encodeQueue.add(() => this.encode(source, audio.hash, audio.duration)));
-                    } catch (e) {
-                        console.error(`Failed to download ${audio.title}`, e.message);
-                        void this.delete(audio._id);
-                    }
+                    retry(() => this.encodeQueue.add(async () => this.encode(await this.urlParser.getFile(audio.source), audio.hash, audio.duration)))
+                        .then(() => console.log(`[Audio] ${audio.title} downloaded`))
+                        .catch(e => {
+                            console.error(`Failed to download ${audio.title}`, e.message);
+                            void this.delete(audio._id);
+                        });
                 }
             }
         }
