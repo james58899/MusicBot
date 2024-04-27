@@ -68,10 +68,53 @@ index 0c8ff0e..6c3f707 100644
          this.speaking = false;
          this.timestamp = 0;
 diff --git a/node_modules/eris/lib/voice/streams/OggOpusTransformer.js b/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
-index 6c4baed..c970b63 100644
+index 6c4baed..42ccd29 100644
 --- a/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
 +++ b/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
-@@ -95,8 +95,7 @@ class OggOpusTransformer extends BaseTransformer {
+@@ -8,6 +8,7 @@ class OggOpusTransformer extends BaseTransformer {
+ 
+         this._remainder = null;
+         this._bitstream = null;
++        this._incompleteSegment = null;
+     }
+ 
+     process(buffer) {
+@@ -20,10 +21,6 @@ class OggOpusTransformer extends BaseTransformer {
+         }
+ 
+         const typeFlag = buffer.readUInt8(buffer._index + 5);
+-        if(typeFlag === 1) {
+-            return new Error("OGG continued page not supported");
+-        }
+-
+         const bitstream = buffer.readUInt32BE(buffer._index + 14);
+ 
+         buffer._index += 26;
+@@ -62,6 +59,10 @@ class OggOpusTransformer extends BaseTransformer {
+                 if(byte === "OpusTags") {
+                     this.emit("debug", segment.toString());
+                 } else if(bitstream === this._bitstream) {
++                    if (typeFlag === 1 && this._incompleteSegment) {
++                        segment = Buffer.concat([this._incompleteSegment, segment]);
++                        this._incompleteSegment = null;
++                    }
+                     this.push(segment);
+                 }
+             } else if(byte === "OpusHead") {
+@@ -71,6 +72,12 @@ class OggOpusTransformer extends BaseTransformer {
+                 this.emit("debug", "Invalid codec: " + byte);
+             }
+         }
++
++        // Save incomplete segment
++        if (size !== 0) {
++            buffer._index += size;
++            this._incompleteSegment = buffer.subarray(buffer._index - size, buffer._index);
++        }
+     }
+ 
+     _final() {
+@@ -95,8 +102,7 @@ class OggOpusTransformer extends BaseTransformer {
                  if(ret instanceof Error) {
                      this.emit("error", ret);
                  }
