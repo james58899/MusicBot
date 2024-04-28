@@ -67,8 +67,21 @@ index 0c8ff0e..6c3f707 100644
          this.ready = false;
          this.speaking = false;
          this.timestamp = 0;
+diff --git a/node_modules/eris/lib/voice/streams/BaseTransformer.js b/node_modules/eris/lib/voice/streams/BaseTransformer.js
+index 7160c6c..4d4917c 100644
+--- a/node_modules/eris/lib/voice/streams/BaseTransformer.js
++++ b/node_modules/eris/lib/voice/streams/BaseTransformer.js
+@@ -10,7 +10,7 @@ class BaseTransformer extends TransformStream {
+             options.allowHalfOpen = true;
+         }
+         if(options.highWaterMark === undefined) {
+-            options.highWaterMark = 0;
++            options.highWaterMark = 1;
+         }
+         super(options);
+         this.manualCB = false;
 diff --git a/node_modules/eris/lib/voice/streams/OggOpusTransformer.js b/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
-index 6c4baed..42ccd29 100644
+index 6c4baed..204a05e 100644
 --- a/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
 +++ b/node_modules/eris/lib/voice/streams/OggOpusTransformer.js
 @@ -8,6 +8,7 @@ class OggOpusTransformer extends BaseTransformer {
@@ -114,13 +127,3 @@ index 6c4baed..42ccd29 100644
      }
  
      _final() {
-@@ -95,8 +102,7 @@ class OggOpusTransformer extends BaseTransformer {
-                 if(ret instanceof Error) {
-                     this.emit("error", ret);
-                 }
--                cb();
--                return;
-+                break;
-             }
-         }
- 
