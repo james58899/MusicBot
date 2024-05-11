@@ -14,7 +14,7 @@
   "dependencies": {
     "eris": "^0.17.2",
     "fluent-ffmpeg": "^2.1.2",
-    "mongodb": "^6.5.0",
+    "mongodb": "^6.6.1",
     "node-telegram-bot-api": "^0.65.1",
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
@@ -25,15 +25,15 @@
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.24",
-    "@types/node": "^20.12.7",
+    "@types/node": "^20.12.11",
     "@types/node-telegram-bot-api": "^0.64.6",
     "@types/promise-queue": "^2.2.3",
     "@types/shuffle-array": "^1.0.5",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
-    "@typescript-eslint/parser": "^7.7.1",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/parser": "^7.8.0",
     "eslint": "^8.56.0",
-    "eslint-plugin-jsdoc": "^48.2.3",
+    "eslint-plugin-jsdoc": "^48.2.4",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "husky": "^9.0.11",
     "typescript": "^5.4.5"
