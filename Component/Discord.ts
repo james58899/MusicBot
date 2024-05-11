@@ -268,7 +268,7 @@ export class Discord {
         const file = await this.audio.getFile(audio);
         if (!file) throw ERR_MISSING_AUDIO_FILE;
 
-        voice.play(file, { format: "ogg" });
+        voice.play(file, { format: "ogg", voiceDataTimeout: 15000 });
         const message = await this.genPlayingMessage(status.list, status.index);
         retry(() => status.statusMessage.edit(message)).catch(console.error);
     }
