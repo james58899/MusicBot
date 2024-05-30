@@ -14,7 +14,7 @@
   "dependencies": {
     "eris": "^0.17.2",
     "fluent-ffmpeg": "^2.1.2",
-    "mongodb": "^6.6.1",
+    "mongodb": "^6.7.0",
     "node-telegram-bot-api": "^0.65.1",
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
