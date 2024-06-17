@@ -1994,10 +1994,10 @@ node-gyp-build@^4.3.0, node-gyp-build@^4.8.0:
   resolved "https://registry.npmjs.org/node-gyp-build/-/node-gyp-build-4.8.1.tgz#976d3ad905e71b76086f4f0b0d3637fe79b6cda5"
   integrity sha512-OSs33Z9yWr148JZcbZd5WiAXhh/n9z8TxQcdMhIOlpN9AhWpLfvVFO73+m77bBABQMaY9XSvIa+qk0jlI7Gcaw==
 
-node-telegram-bot-api@^0.65.1:
-  version "0.65.1"
-  resolved "https://registry.npmjs.org/node-telegram-bot-api/-/node-telegram-bot-api-0.65.1.tgz#eedcc2100be0e1dc1f418ba29b973a76f6086124"
-  integrity sha512-YhMSgUZCKWxI+MlCuh/2yuMvsqMnZGAA2QOjD10GWk8KszNN5LQOzO+kp1K1wMYuOJoZ7v0+epLpJsSrnmlyQQ==
+node-telegram-bot-api@^0.66.0:
+  version "0.66.0"
+  resolved "https://registry.yarnpkg.com/node-telegram-bot-api/-/node-telegram-bot-api-0.66.0.tgz#9ad27e357b30fd3a89a37365ed95a82a70ac9f94"
+  integrity sha512-s4Hrg5q+VPl4/tJVG++pImxF6eb8tNJNj4KnDqAOKL6zGU34lo9RXmyAN158njwGN+v8hdNf8s9fWIYW9hPb5A==
   dependencies:
     "@cypress/request" "^3.0.1"
     "@cypress/request-promise" "^5.0.0"
