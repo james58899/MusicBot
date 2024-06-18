@@ -30,7 +30,7 @@
     "@types/promise-queue": "^2.2.3",
     "@types/shuffle-array": "^1.0.5",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
     "@typescript-eslint/parser": "^7.8.0",
     "eslint": "^8.56.0",
     "eslint-plugin-jsdoc": "^48.2.12",
