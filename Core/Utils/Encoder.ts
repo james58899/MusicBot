@@ -86,7 +86,7 @@ export class Encoder {
                     console.error(stderr);
                     return reject(err);
                 })
-                .on("end", (stdout: string, stderr: string) => resolve(JSON.parse(stderr)));
+                .on("end", (stdout, stderr) => resolve(JSON.parse(stderr!)));
         });
     }
 

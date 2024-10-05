@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMediaInfo = void 0;
+exports.getMediaInfo = getMediaInfo;
 const child_process_1 = require("child_process");
 let ffprobe;
 try {
@@ -44,4 +44,3 @@ async function getMediaInfo(file) {
         });
     });
 }
-exports.getMediaInfo = getMediaInfo;
