@@ -1,6 +1,6 @@
 import { execFileSync } from "child_process";
 import FFmpeg from "fluent-ffmpeg";
-import { createWriteStream, promises as fsp } from "fs";
+import { createWriteStream, existsSync, promises as fsp } from "fs";
 import { tmpdir } from "os";
 import path, { join } from "path";
 import { get } from "request";
@@ -24,7 +24,7 @@ export class Encoder {
     }
 
     public async encode(input: string, filename: string, duration: number): Promise<string> {
-        if (!this.cacheDir) {
+        if (!this.cacheDir || !existsSync(this.cacheDir)) {
             this.cacheDir = await fsp.mkdtemp(join(tmpdir(), "musicbot-"));
         }
 

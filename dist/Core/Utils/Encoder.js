@@ -45,7 +45,7 @@ class Encoder {
         }
     }
     async encode(input, filename, duration) {
-        if (!this.cacheDir) {
+        if (!this.cacheDir || !(0, fs_1.existsSync)(this.cacheDir)) {
             this.cacheDir = await fs_1.promises.mkdtemp((0, path_1.join)((0, os_1.tmpdir)(), "musicbot-"));
         }
         const cacheFile = (0, path_1.join)(this.cacheDir, filename);
