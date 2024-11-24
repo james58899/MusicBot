@@ -39,6 +39,7 @@ export class Encoder {
             if (this.ffmpegPath) ffmpeg.setFfmpegPath(this.ffmpegPath);
 
             ffmpeg.input(cacheFile)
+                .addInputOption("-v error")
                 .withNoVideo()
                 .audioFilters(
                     "loudnorm=" +
@@ -73,10 +74,11 @@ export class Encoder {
 
     private async getNormalize(input: string) {
         return new Promise<any>((resolve, reject) => {
-            const ffmpeg = FFmpeg({ stdoutLines: 14, timeout: 300 });
+            const ffmpeg = FFmpeg({ stdoutLines: 20, timeout: 300 });
             if (this.ffmpegPath) ffmpeg.setFfmpegPath(this.ffmpegPath);
 
             ffmpeg.input(input)
+                .addInputOption("-hide_banner -nostats")
                 .withNoVideo()
                 .audioFilters("loudnorm=print_format=json:I=-20:LRA=18:TP=-1")
                 .duration(this.config.length as number)
@@ -86,7 +88,16 @@ export class Encoder {
                     console.error(stderr);
                     return reject(err);
                 })
-                .on("end", (stdout, stderr) => resolve(JSON.parse(stderr!)));
+                .on("end", (stdout, stderr) => {
+                    const output = stderr?.match(/\{.*\}/s);
+                    if (output != null) {
+                        resolve(JSON.parse(output[0]));
+                    }
+                    else {
+                        console.error(stderr);
+                        reject("ffmpeg loudnorm report parser failed.");
+                    }
+                });
         });
     }
 
