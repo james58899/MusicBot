@@ -57,7 +57,7 @@ class Encoder {
     }
     async encode(input, filename, duration) {
         if (!this.cacheDir || !(0, fs_1.existsSync)(this.cacheDir)) {
-            this.cacheDir = await fs_1.promises.mkdtemp((0, path_1.join)((0, os_1.tmpdir)(), "musicbot-"));
+            this.cacheDir = await (0, promises_1.mkdtemp)((0, path_1.join)((0, os_1.tmpdir)(), "musicbot-"));
         }
         const cacheFile = (0, path_1.join)(this.cacheDir, filename);
         await this.download(input, cacheFile);
@@ -88,14 +88,14 @@ class Encoder {
                 return reject(err);
             })
                 .on("end", async () => {
-                await fs_1.promises.rename(savePath + ".tmp", savePath);
+                await (0, promises_1.rename)(savePath + ".tmp", savePath);
                 if (Math.abs((await (0, MediaInfo_1.getMediaInfo)(savePath)).duration - duration) > 1) {
                     reject(Error("Duration mismatch"));
                 }
                 else {
                     resolve(savePath);
                 }
-                await fs_1.promises.unlink(cacheFile);
+                await (0, promises_1.unlink)(cacheFile);
             });
         });
     }

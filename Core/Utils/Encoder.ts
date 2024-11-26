@@ -1,10 +1,10 @@
 import { execFileSync } from "child_process";
 import FFmpeg from "fluent-ffmpeg";
-import { existsSync, promises as fsp } from "fs";
+import { existsSync } from "fs";
 import { tmpdir } from "os";
 import path, { join } from "path";
 import { getMediaInfo } from "./MediaInfo";
-import { writeFile } from "fs/promises";
+import { mkdtemp, rename, unlink, writeFile } from "fs/promises";
 import { Readable } from "stream";
 import { ReadableStream } from "stream/web";
 
@@ -27,7 +27,7 @@ export class Encoder {
 
     public async encode(input: string, filename: string, duration: number): Promise<string> {
         if (!this.cacheDir || !existsSync(this.cacheDir)) {
-            this.cacheDir = await fsp.mkdtemp(join(tmpdir(), "musicbot-"));
+            this.cacheDir = await mkdtemp(join(tmpdir(), "musicbot-"));
         }
 
         const cacheFile = join(this.cacheDir, filename);
@@ -63,13 +63,13 @@ export class Encoder {
                     return reject(err);
                 })
                 .on("end", async () => {
-                    await fsp.rename(savePath + ".tmp", savePath);
+                    await rename(savePath + ".tmp", savePath);
                     if (Math.abs((await getMediaInfo(savePath)).duration - duration) > 1) {
                         reject(Error("Duration mismatch"));
                     } else {
                         resolve(savePath);
                     }
-                    await fsp.unlink(cacheFile);
+                    await unlink(cacheFile);
                 });
         });
     }
