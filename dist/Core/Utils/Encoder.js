@@ -42,8 +42,9 @@ const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const fs_1 = require("fs");
 const os_1 = require("os");
 const path_1 = __importStar(require("path"));
-const request_1 = require("request");
 const MediaInfo_1 = require("./MediaInfo");
+const promises_1 = require("fs/promises");
+const stream_1 = require("stream");
 class Encoder {
     constructor(config) {
         this.config = config.audio;
@@ -127,16 +128,13 @@ class Encoder {
         });
     }
     async download(input, output) {
-        const stream = (0, fs_1.createWriteStream)(output);
-        return new Promise((resolve, reject) => {
-            (0, request_1.get)(input)
-                .on("error", err => reject(err))
-                .on("complete", () => {
-                stream.close();
-                resolve();
-            })
-                .pipe(stream);
-        });
+        const res = await fetch(input);
+        if (res.ok && res.body) {
+            await (0, promises_1.writeFile)(output, stream_1.Readable.fromWeb(res.body));
+        }
+        else {
+            throw new Error(`Failed to download file: ${res.status}`);
+        }
     }
 }
 exports.Encoder = Encoder;

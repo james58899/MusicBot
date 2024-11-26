@@ -1,10 +1,12 @@
 import { execFileSync } from "child_process";
 import FFmpeg from "fluent-ffmpeg";
-import { createWriteStream, existsSync, promises as fsp } from "fs";
+import { existsSync, promises as fsp } from "fs";
 import { tmpdir } from "os";
 import path, { join } from "path";
-import { get } from "request";
 import { getMediaInfo } from "./MediaInfo";
+import { writeFile } from "fs/promises";
+import { Readable } from "stream";
+import { ReadableStream } from "stream/web";
 
 export class Encoder {
     private config: any;
@@ -102,16 +104,11 @@ export class Encoder {
     }
 
     private async download(input: string, output: string): Promise<void> {
-        const stream = createWriteStream(output);
-
-        return new Promise((resolve, reject) => {
-            get(input)
-            .on("error", err => reject(err))
-            .on("complete", () => {
-                stream.close();
-                resolve();
-            })
-            .pipe(stream);
-        });
+        const res = await fetch(input);
+        if (res.ok && res.body) {
+            await writeFile(output, Readable.fromWeb(res.body as ReadableStream));
+        } else {
+            throw new Error(`Failed to download file: ${res.status}`);
+        }
     }
 }
