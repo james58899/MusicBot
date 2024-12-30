@@ -40,7 +40,7 @@
   "optionalDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@ffprobe-installer/ffprobe": "^2.1.2",
-    "bufferutil": "^4.0.8",
+    "bufferutil": "^4.0.9",
     "erlpack": "abalabahaha/erlpack",
     "eventemitter3": "^5.0.1",
     "pako": "^2.1.0",
