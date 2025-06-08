@@ -1,0 +1,67 @@
+diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/BaseTransformer.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/BaseTransformer.js
+index a1b342f..66ba272 100644
+--- a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/BaseTransformer.js
++++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/BaseTransformer.js
+@@ -9,7 +9,7 @@ class BaseTransformer extends TransformStream {
+     manualCB = false;
+     constructor(options = {}) {
+         options.allowHalfOpen ??= true;
+-        options.highWaterMark ??= 0;
++        options.highWaterMark ??= 1;
+         super(options);
+     }
+ 
+diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
+index b862645..cfc778c 100644
+--- a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
++++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
+@@ -5,6 +5,7 @@ const BaseTransformer = require("./BaseTransformer");
+ class OggOpusTransformer extends BaseTransformer {
+     #bitstream = null;
+     #remainder = null;
++    #incompleteSegment = null;
+ 
+     process(buffer) {
+         if(buffer.length - buffer._index <= 26) {
+@@ -16,9 +17,6 @@ class OggOpusTransformer extends BaseTransformer {
+         }
+ 
+         const typeFlag = buffer.readUInt8(buffer._index + 5);
+-        if(typeFlag === 1) {
+-            return new Error("OGG continued page not supported");
+-        }
+ 
+         const bitstream = buffer.readUInt32BE(buffer._index + 14);
+ 
+@@ -58,6 +56,10 @@ class OggOpusTransformer extends BaseTransformer {
+                 if(byte === "OpusTags") {
+                     this.emit("debug", segment.toString());
+                 } else if(bitstream === this.#bitstream) {
++                    if (typeFlag === 1 && this.#incompleteSegment) {
++                        segment = Buffer.concat([this.#incompleteSegment, segment]);
++                        this.#incompleteSegment = null;
++                    }
+                     this.push(segment);
+                 }
+             } else if(byte === "OpusHead") {
+@@ -67,12 +69,19 @@ class OggOpusTransformer extends BaseTransformer {
+                 this.emit("debug", "Invalid codec: " + byte);
+             }
+         }
++
++        // Save incomplete segment
++        if (size !== 0) {
++            buffer._index += size;
++            this.#incompleteSegment = buffer.subarray(buffer._index - size, buffer._index);
++        }
+     }
+ 
+-    _final() {
++    _final(cb) {
+         if(!this.#bitstream) {
+             this.emit("error", new Error("No Opus stream was found"));
+         }
++        cb();
+     }
+ 
+     _transform(chunk, enc, cb) {

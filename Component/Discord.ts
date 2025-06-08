@@ -1,4 +1,3 @@
-import { CommandClient, Message, MessageContent, TextChannel, VoiceConnection } from "eris";
 import { ObjectId, WithId } from "mongodb";
 import shuffle from "shuffle-array";
 import { Core } from "..";
@@ -6,6 +5,7 @@ import { AudioManager, ERR_MISSING_TITLE, ERR_NOT_AUDIO, IAudioData } from "../C
 import { IAudioList, ListManager } from "../Core/ListManager";
 import { UserManager } from "../Core/UserManager";
 import { retry } from "../Core/Utils/PromiseUtils";
+import { Client, Message, MessageContent, PossiblyUncachedTextableChannel, VoiceConnection } from "@projectdysnomia/dysnomia";
 
 export const BIND_TYPE = "discord";
 const ERR_MISSING_TOKEN = Error("Discord token missing");
@@ -31,7 +31,7 @@ interface IPlayingStatus {
 
 export class Discord {
     private config: any;
-    private bot: CommandClient;
+    private bot: Client;
     private audio: AudioManager;
     private list: ListManager;
     private user: UserManager;
@@ -42,13 +42,14 @@ export class Discord {
 
         if (!this.config.token) throw ERR_MISSING_TOKEN;
 
-        this.bot = new CommandClient(
+        this.bot = new Client(
             this.config.token as string,
             {
-                intents: ['guilds', 'guildMessages', 'guildVoiceStates'],
+                gateway: {
+                    intents: ['guilds', 'guildMessages', 'guildVoiceStates'],
+                },
                 opusOnly: true
-            },
-            { defaultCommandOptions: { caseInsensitive: true }, owner: this.config.owner }
+            }
         );
         this.audio = core.audioManager;
         this.list = core.listManager;
@@ -75,35 +76,33 @@ export class Discord {
         void this.bot.connect();
     }
 
+    // TODO switch to discord native command
     private registerCommand() {
-        this.bot.registerCommand("hi", this.commandHi.bind(this), {
-            description: "Say Hi! make bot join voice channel",
-            guildOnly: true,
-        });
-        this.bot.registerCommand("play", this.commandPlay.bind(this), {
-            argsRequired: true,
-            description: "Start play music playlist",
-            guildOnly: true,
-            usage: "<playlist> [random]"
-        });
-        this.bot.registerCommand("next", this.commandNext.bind(this), {
-            description: "Next sound!",
-            guildOnly: true,
-        });
-        this.bot.registerCommand("bye", this.commandBye.bind(this), {
-            description: "Stop play and leave voice channel",
-            guildOnly: true
-        });
-        this.bot.registerCommand("register", this.commandRegister.bind(this), {
-            description: "Register or bind account",
-            usage: "[token]"
-        });
-        this.bot.registerCommand("bind", this.commandBind.bind(this), {
-            description: "Generate bind token"
+        this.bot.on("messageCreate", msg => {
+            switch (msg.content.split(" ")[1]) {
+                case "hi":
+                    this.commandHi(msg);
+                    break;
+                case "play":
+                    void this.commandPlay(msg, msg.content.split(" ").slice(2));
+                    break;
+                case "next":
+                    this.commandNext(msg);
+                    break;
+                case "bye":
+                    this.commandBye(msg);
+                    break;
+                case "register":
+                    void this.commandRegister(msg, msg.content.split(" ").slice(2));
+                    break;
+                case "bind":
+                    void this.commandBind(msg);
+                    break;
+            }
         });
     }
 
-    private commandHi(msg: Message) {
+    private commandHi(msg: Message<PossiblyUncachedTextableChannel>) {
         if (!msg.member) return;
 
         if (msg.member.voiceState.channelID) {
@@ -111,24 +110,24 @@ export class Discord {
                 voice.on('warn', msg => console.error(`[Discord] warn: ${msg}`));
                 voice.on('error', err => console.error("[Discord] error: ", err));
             });
-            void msg.channel.createMessage(MESSAGE_HI);
+            void this.bot.createMessage(msg.channel.id, MESSAGE_HI);
         } else {
-            void msg.channel.createMessage(MESSAGE_HI_NOT_IN_VOICE);
+            void this.bot.createMessage(msg.channel.id, MESSAGE_HI_NOT_IN_VOICE);
         }
     }
 
-    private async commandPlay(msg: Message, args: string[]) {
+    private async commandPlay(msg: Message<PossiblyUncachedTextableChannel>, args: string[]) {
         const list = await this.list.get(new ObjectId(args[0]));
-        const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
+        const voice = this.bot.voiceConnections.get(msg.guildID!);
         const mode = (args[1]) ? ((args[1].toLocaleLowerCase() === "random") ? PlayMode.random : PlayMode.normal) : PlayMode.normal;
 
         if (!list) {
-            void msg.channel.createMessage(MESSAGE_LIST_NOT_FOUND);
+            void this.bot.createMessage(msg.channel.id, MESSAGE_LIST_NOT_FOUND);
             return;
         }
 
         if (!voice) {
-            void msg.channel.createMessage(MESSAGE_NOT_IN_VOICE);
+            void this.bot.createMessage(msg.channel.id, MESSAGE_NOT_IN_VOICE);
             return;
         }
 
@@ -140,7 +139,7 @@ export class Discord {
             index: 0,
             list,
             mode,
-            statusMessage: await this.bot.createMessage(msg.channel.id, await this.genPlayingMessage(list, 0))
+            statusMessage: await this.bot.createMessage(msg.channel.id, await this.genPlayingMessage(list, 0) as MessageContent<"hasNonce">)
         });
 
         // Start play
@@ -193,33 +192,33 @@ export class Discord {
         }
     }
 
-    private commandNext(msg: Message) {
-        const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
+    private commandNext(msg: Message<PossiblyUncachedTextableChannel>) {
+        const voice = this.bot.voiceConnections.get(msg.guildID!);
 
         if (voice) {
             voice.stopPlaying();
         } else {
-            void msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
+            void this.bot.createMessage(msg.channel.id, MESSAGE_NOTHING_PLAYING);
         }
     }
 
-    private commandBye(msg: Message) {
-        const voice = this.bot.voiceConnections.get((msg.channel as TextChannel).guild.id);
+    private commandBye(msg: Message<PossiblyUncachedTextableChannel>) {
+        const voice = this.bot.voiceConnections.get(msg.guildID!);
 
         if (voice) {
             this.bot.closeVoiceConnection(voice.id)
             this.playing.delete(voice.id);
         } else {
-            void msg.channel.createMessage(MESSAGE_NOTHING_PLAYING);
+            void this.bot.createMessage(msg.channel.id, MESSAGE_NOTHING_PLAYING);
         }
     }
 
-    private async commandRegister(msg: Message, args: string[]) {
+    private async commandRegister(msg: Message<PossiblyUncachedTextableChannel>, args: string[]) {
         if (args[0]) {
             try {
                 await this.user.createFromToken(args[0], { type: BIND_TYPE, id: msg.author.id });
             } catch (error) {
-                void msg.channel.createMessage(error.message as string);
+                void this.bot.createMessage(msg.channel.id, error.message as string);
                 return;
             }
         } else {
@@ -227,10 +226,10 @@ export class Discord {
         }
 
         const user = (await this.user.getFromBind(BIND_TYPE, msg.author.id))!;
-        void msg.channel.createMessage(`ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
+        void this.bot.createMessage(msg.channel.id, `ID: ${user._id}\nName: ${user.name}\nBind: ${user.bind.map(i => `${i.type}(${i.id})`).join(", ")}`);
     }
 
-    private async commandBind(msg: Message) {
+    private async commandBind(msg: Message<PossiblyUncachedTextableChannel>) {
         const user = await this.user.getFromBind(BIND_TYPE, msg.author.id);
 
         if (!user) {
@@ -242,7 +241,7 @@ export class Discord {
     }
 
     // @ts-ignore: TODO
-    private async procseeFile(msg: Message) {
+    private async procseeFile(msg: Message<PossiblyUncachedTextableChannel>) {
         const user = await this.user.getFromBind(BIND_TYPE, msg.author.id);
 
         if (!user) return;
@@ -256,7 +255,7 @@ export class Discord {
                 if (error === ERR_MISSING_TITLE) audio = await this.audio.add(user._id, file.url, { title: file.filename }); else throw error;
             }
 
-            void msg.channel.createMessage(`ID: ${audio._id}\nTitle: ${audio.title}`);
+            void this.bot.createMessage(msg.channel.id, `ID: ${audio._id}\nTitle: ${audio.title}`);
         });
     }
 
@@ -284,12 +283,12 @@ export class Discord {
         if (next) fields.push({ name: "Next", value: next.title, inline: true });
 
         return {
-            embed: {
+            embeds: [{
                 color: 4886754,
                 description: list.name,
                 fields,
                 title: "Playing"
-            }
+            }]
         } as MessageContent;
     }
 }
