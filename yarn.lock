@@ -861,9 +861,9 @@ end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
-erlpack@abalabahaha/erlpack:
+"erlpack@github:discord/erlpack":
   version "0.1.3"
-  resolved "https://codeload.github.com/abalabahaha/erlpack/tar.gz/f7d730debe32c416d1b55b4217f8aef2ade05874"
+  resolved "https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225"
   dependencies:
     bindings "^1.5.0"
     nan "^2.15.0"
