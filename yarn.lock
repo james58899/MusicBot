@@ -36,6 +36,28 @@
     tunnel-agent "^0.6.0"
     uuid "^8.3.2"
 
+"@emnapi/core@^1.4.3":
+  version "1.4.3"
+  resolved "https://registry.npmjs.org/@emnapi/core/-/core-1.4.3.tgz#9ac52d2d5aea958f67e52c40a065f51de59b77d6"
+  integrity sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g==
+  dependencies:
+    "@emnapi/wasi-threads" "1.0.2"
+    tslib "^2.4.0"
+
+"@emnapi/runtime@^1.4.3":
+  version "1.4.3"
+  resolved "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.4.3.tgz#c0564665c80dc81c448adac23f9dfbed6c838f7d"
+  integrity sha512-pBPWdu6MLKROBX05wSNKcNb++m5Er+KQ9QkB+WVM+pW2Kx9hoSrVTnu3BdkI5eBLZoKu/J6mW/B6i6bJB2ytXQ==
+  dependencies:
+    tslib "^2.4.0"
+
+"@emnapi/wasi-threads@1.0.2":
+  version "1.0.2"
+  resolved "https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.0.2.tgz#977f44f844eac7d6c138a415a123818c655f874c"
+  integrity sha512-5n3nTJblwRi8LlXkJ9eBzu+kZR8Yxcc7ubakyQTFzPMtIhFpUBRbsnc2Dv88IZDIbCDlBiWrknhB4Lsz7mg6BA==
+  dependencies:
+    tslib "^2.4.0"
+
 "@es-joy/jsdoccomment@~0.50.2":
   version "0.50.2"
   resolved "https://registry.npmjs.org/@es-joy/jsdoccomment/-/jsdoccomment-0.50.2.tgz#707768f0cb62abe0703d51aa9086986d230a5d5c"
@@ -213,6 +235,15 @@
   dependencies:
     sparse-bitfield "^3.0.3"
 
+"@napi-rs/wasm-runtime@^0.2.11":
+  version "0.2.11"
+  resolved "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.11.tgz#192c1610e1625048089ab4e35bc0649ce478500e"
+  integrity sha512-9DPkXtvHydrcOsopiYpUgPHpmj0HWZKMUnL2dZqpvC42lsratuBG06V5ipyno0fUek5VlFsNQ+AcFATSrJXgMA==
+  dependencies:
+    "@emnapi/core" "^1.4.3"
+    "@emnapi/runtime" "^1.4.3"
+    "@tybys/wasm-util" "^0.9.0"
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -234,15 +265,107 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@projectdysnomia/dysnomia@^0.2.3":
+"@projectdysnomia/dysnomia@github:Snazzah/dysnomia#feat/dave-protocol":
   version "0.2.3"
-  resolved "https://registry.npmjs.org/@projectdysnomia/dysnomia/-/dysnomia-0.2.3.tgz#2d17c19e3ea9f3ff583dce5fbf02b9b0a83d9ef2"
-  integrity sha512-BBF9JV0wEJJXUdO+Kxj+LlKoFfgwj02LCXZOgt0jD+vuh1q9Yw57XNjaFwWXQHurD7PfmwqERC+UINDBlOo9Xw==
+  resolved "https://codeload.github.com/Snazzah/dysnomia/tar.gz/2348d2df4266ef0b98f89feedfea71bb881c6ba9"
   dependencies:
     ws "^8.18.0"
   optionalDependencies:
+    "@snazzah/davey" "^0.1.6"
     "@stablelib/xchacha20poly1305" "~1.0.1"
     opusscript "^0.1.1"
+
+"@snazzah/davey-android-arm-eabi@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-android-arm-eabi/-/davey-android-arm-eabi-0.1.6.tgz#5b06c217b25e1869092465ca5aa41e6613e02a93"
+  integrity sha512-6Fso+kxvvIcmUdTgU4etHjvEZUwGwvIk+SUYxKTRZKz/S62pZvcFeZfbofpQC5ZIlt/rdp7l+4IM62J7PUduxQ==
+
+"@snazzah/davey-android-arm64@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-android-arm64/-/davey-android-arm64-0.1.6.tgz#3ab6ef424c5e6f946e9fc3e8e73c0949137d9aef"
+  integrity sha512-5ZGLumjewJAmGAcHqSHb2+KZSSufdNY++/GouzqdQXfhs2bSNBPuHpNn94u6//5UK0o73udJ6B1H/uLOLfEBLQ==
+
+"@snazzah/davey-darwin-arm64@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-darwin-arm64/-/davey-darwin-arm64-0.1.6.tgz#19186b6fcbd4e4909d0a9af6d31b36a93847f64a"
+  integrity sha512-0k6gOm29bcznz4ND1gfJVKeCxfyFw/EtfhPQvQ2PPJToSIaSvVqfYIlj/v9ogWW/lzuPI4EbLP0b6hnZkKidbQ==
+
+"@snazzah/davey-darwin-x64@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-darwin-x64/-/davey-darwin-x64-0.1.6.tgz#e9b0d085090b5a7d13193b4c47b1b9b5828a890d"
+  integrity sha512-y9UuymB5JTi9LSwjsCZDf/mjI6nAum1+uYX2h4xdO+VUxXQSAR4B2mr3lCI7l9KwYqW7JVDN5wETithAkXcTYA==
+
+"@snazzah/davey-freebsd-x64@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-freebsd-x64/-/davey-freebsd-x64-0.1.6.tgz#c8c51709463a266a5ca56dd39a78340cf2b05143"
+  integrity sha512-G0XzHi+pZqTZ5Zr7Z66J6oGOG07+Obw7f0CwD9nAJcSFlKnd8wYzTjL+krHfQxmLHnuA5w/9df+M9oDJDcGcJw==
+
+"@snazzah/davey-linux-arm-gnueabihf@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-linux-arm-gnueabihf/-/davey-linux-arm-gnueabihf-0.1.6.tgz#d00f68f12bab09dd9a3f05ef7a45619f6f0408d1"
+  integrity sha512-RaxTzO8iJfDvj4a8OcXRwcP+2WfaCcno28ZWFMTI0pHEviG3MfLH5COAIvtMQvg0XfC+HgFC4YA1d29S8Dhvbg==
+
+"@snazzah/davey-linux-arm64-gnu@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-linux-arm64-gnu/-/davey-linux-arm64-gnu-0.1.6.tgz#c91a402f857b07cfb0874c744ea0e154f2ac322a"
+  integrity sha512-2BIJSWs4rHq4U9A7B6WtF1LzwYJrbFUz5SQVmwqwQXKJ8cm81iizqclDGWr3zFGiVPTXLZ/+G3wnQNDB54oABQ==
+
+"@snazzah/davey-linux-arm64-musl@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-linux-arm64-musl/-/davey-linux-arm64-musl-0.1.6.tgz#60754fd6d36da5bef3961645723e82d1b529b9bf"
+  integrity sha512-N1egO+HT8cvSdIGCzJNRVH3ZhxCIYKVYxEkfzVZaBx26snN8NF737YTVRldl84w//3tdgohyl27yrn+dMkWS2Q==
+
+"@snazzah/davey-linux-x64-gnu@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-linux-x64-gnu/-/davey-linux-x64-gnu-0.1.6.tgz#2c32e80b6f08d521594024f6f1893ce24b6ceea3"
+  integrity sha512-RAC96Y//HHoMP+1MUf4rOkBq5Nx6GCiOGeGsNXt7r02lbIthoFEPYFQdbfc9jYA79k67gpzmCa0N5ws7ZLVU5A==
+
+"@snazzah/davey-linux-x64-musl@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-linux-x64-musl/-/davey-linux-x64-musl-0.1.6.tgz#121c0a646b1b9f57f81f96e64481bd0c7f5c0929"
+  integrity sha512-nBvxJTKlQFP9UsQ7ah78L+rGdcwLWKDR8z/knut/M+UZLe37vaponJAbY3F5ZqGAcfqJbwUi/CXR77t9E+TDmw==
+
+"@snazzah/davey-wasm32-wasi@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-wasm32-wasi/-/davey-wasm32-wasi-0.1.6.tgz#fcd95be6e7efcfd270654239251d07e8921f387a"
+  integrity sha512-hvpZH6a4mYZiXv6vdZaFwjPProgFtb3k4BoMvEEJZDXsEPuIDgp+d2BX5Q9nVazdnJa/6JR/XCuObzugPWp0Ew==
+  dependencies:
+    "@napi-rs/wasm-runtime" "^0.2.11"
+
+"@snazzah/davey-win32-arm64-msvc@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-win32-arm64-msvc/-/davey-win32-arm64-msvc-0.1.6.tgz#88099df9fabb10edbb6c189cf770ad7692337616"
+  integrity sha512-iuxYXXa0Z8eAEZotAlMYUc5DCy3VonRXQMm8/w2EvM/ZzGBI7SMap0GhPf6HjArEW32ETarTLh1s/Yi/jhFPDQ==
+
+"@snazzah/davey-win32-ia32-msvc@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-win32-ia32-msvc/-/davey-win32-ia32-msvc-0.1.6.tgz#78bfd443f151defc677bd1be0d39ae3b8da1ea7a"
+  integrity sha512-QEubcCIBR+ZZoQzRzJuOuKcH2IaF2pFXU+t48ITHG1o2WL4NAnvc3IpfVQGhbkr+DlydZ6fKNMMEemd1pRZzRA==
+
+"@snazzah/davey-win32-x64-msvc@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey-win32-x64-msvc/-/davey-win32-x64-msvc-0.1.6.tgz#fdcad3c518bf647909023d2e897aa91f4174db1b"
+  integrity sha512-8tR3o+amQOHJL8QzSwuSCCave+jm3SC1m1OKSh9Coy4wN/XoJN0XQUxqzA7ineSClAMW3yIO0ShFmMlMIXsC0A==
+
+"@snazzah/davey@^0.1.6":
+  version "0.1.6"
+  resolved "https://registry.npmjs.org/@snazzah/davey/-/davey-0.1.6.tgz#17f0aa37499de0d3d3d518097acaa8d35cf4807a"
+  integrity sha512-wKJDQ7iobl3rvuQDXLC2yZdpuVxPvMnbyjyPpkcETqPfqNVrdyX9zSdV74dnkpx7aLpINEmKh8ZEIlCIJA2h1w==
+  optionalDependencies:
+    "@snazzah/davey-android-arm-eabi" "0.1.6"
+    "@snazzah/davey-android-arm64" "0.1.6"
+    "@snazzah/davey-darwin-arm64" "0.1.6"
+    "@snazzah/davey-darwin-x64" "0.1.6"
+    "@snazzah/davey-freebsd-x64" "0.1.6"
+    "@snazzah/davey-linux-arm-gnueabihf" "0.1.6"
+    "@snazzah/davey-linux-arm64-gnu" "0.1.6"
+    "@snazzah/davey-linux-arm64-musl" "0.1.6"
+    "@snazzah/davey-linux-x64-gnu" "0.1.6"
+    "@snazzah/davey-linux-x64-musl" "0.1.6"
+    "@snazzah/davey-wasm32-wasi" "0.1.6"
+    "@snazzah/davey-win32-arm64-msvc" "0.1.6"
+    "@snazzah/davey-win32-ia32-msvc" "0.1.6"
+    "@snazzah/davey-win32-x64-msvc" "0.1.6"
 
 "@stablelib/aead@^1.0.1":
   version "1.0.1"
@@ -318,6 +441,13 @@
     "@stablelib/constant-time" "^1.0.1"
     "@stablelib/wipe" "^1.0.1"
     "@stablelib/xchacha20" "^1.0.1"
+
+"@tybys/wasm-util@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.npmjs.org/@tybys/wasm-util/-/wasm-util-0.9.0.tgz#3e75eb00604c8d6db470bf18c37b7d984a0e3355"
+  integrity sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==
+  dependencies:
+    tslib "^2.4.0"
 
 "@types/caseless@*":
   version "0.12.5"
@@ -2666,6 +2796,11 @@ ts-api-utils@^1.3.0:
   version "1.4.3"
   resolved "https://registry.npmjs.org/ts-api-utils/-/ts-api-utils-1.4.3.tgz#bfc2215fe6528fecab2b0fba570a2e8a4263b064"
   integrity sha512-i3eMG77UTMD0hZhgRS562pv83RC6ukSAC2GMNWc+9dieh/+jDM5u5YG+NHX6VNDRHQcHwmsTHctP9LhbC3WxVw==
+
+tslib@^2.4.0:
+  version "2.8.1"
+  resolved "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz#612efe4ed235d567e8aba5f2a5fab70280ade83f"
+  integrity sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
