@@ -1,3 +1,16 @@
+diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
+index 85e734c..e4d1d51 100644
+--- a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
++++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
+@@ -392,7 +392,7 @@ class VoiceConnection extends EventEmitter {
+                             this.disconnect(err);
+                         }
+                     });
+-                    const udpMessage = Buffer.allocUnsafe(74);
++                    const udpMessage = Buffer.alloc(74);
+                     udpMessage.writeUInt16BE(0x1, 0);
+                     udpMessage.writeUInt16BE(70, 2);
+                     udpMessage.writeUInt32BE(this.ssrc, 4);
 diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/BaseTransformer.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/BaseTransformer.js
 index a1b342f..66ba272 100644
 --- a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/BaseTransformer.js
