@@ -1,5 +1,5 @@
 diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
-index c8f696a..61966ca 100644
+index c8f696a..5101e99 100644
 --- a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
 +++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
 @@ -392,7 +392,7 @@ class VoiceConnection extends EventEmitter {
@@ -11,7 +11,15 @@ index c8f696a..61966ca 100644
                      udpMessage.writeUInt16BE(0x1, 0);
                      udpMessage.writeUInt16BE(70, 2);
                      udpMessage.writeUInt32BE(this.ssrc, 4);
-@@ -546,8 +546,13 @@ class VoiceConnection extends EventEmitter {
+@@ -403,6 +403,7 @@ class VoiceConnection extends EventEmitter {
+                     this.connecting = false;
+                     this.reconnecting = false;
+                     this.ready = true;
++                    if(this.paused) this.resume();
+                     /**
+                      * Fired when the voice connection was resumed
+                      * @event VoiceConnection#resumed
+@@ -546,8 +547,13 @@ class VoiceConnection extends EventEmitter {
              if(this.connecting || this.ready) {
                  let reconnecting = true;
                  if(code === 4006) {
@@ -27,7 +35,7 @@ index c8f696a..61966ca 100644
                      if(this.channelID) {
                          data.endpoint = null;
                          reconnecting = true;
-@@ -555,15 +560,15 @@ class VoiceConnection extends EventEmitter {
+@@ -555,15 +561,15 @@ class VoiceConnection extends EventEmitter {
                      } else {
                          reconnecting = false;
                      }
@@ -46,7 +54,7 @@ index c8f696a..61966ca 100644
                      if(!canResume) {
                          this.wsSequence = -1;
                          this.sessionID = null;
-@@ -651,7 +656,7 @@ class VoiceConnection extends EventEmitter {
+@@ -651,7 +657,7 @@ class VoiceConnection extends EventEmitter {
          }
      }
  
@@ -55,7 +63,7 @@ index c8f696a..61966ca 100644
          this.connecting = false;
          this.reconnecting = reconnecting;
          this.ready = false;
-@@ -662,11 +667,15 @@ class VoiceConnection extends EventEmitter {
+@@ -662,11 +668,15 @@ class VoiceConnection extends EventEmitter {
          }
  
          try {
@@ -73,7 +81,7 @@ index c8f696a..61966ca 100644
              }
          } catch(err) {
              this.emit("error", err);
-@@ -675,7 +684,7 @@ class VoiceConnection extends EventEmitter {
+@@ -675,7 +685,7 @@ class VoiceConnection extends EventEmitter {
              clearInterval(this.heartbeatInterval);
              this.heartbeatInterval = null;
          }
