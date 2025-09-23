@@ -1,30 +1,25 @@
 diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
-index ee9c237..b267fb2 100644
+index 5b33fb4..b57b06e 100644
 --- a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
 +++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
-@@ -430,8 +430,13 @@ class VoiceConnection extends EventEmitter {
+@@ -572,7 +572,14 @@ class VoiceConnection extends EventEmitter {
+             this.emit("warn", `Voice WS close ${code}: ${reason}`);
              if(this.connecting || this.ready) {
                  let reconnecting = true;
-                 if(code === 4006) {
--                    reconnecting = false;
--                } else if(code === 4014) {
+-                if(code === 1000 || code === 4006 || code === 4021) {
++                if(code === 4006) {
 +                    if (this.channelID) {
 +                        reconnecting = true;
 +                        err = null;
 +                    } else {
 +                        reconnecting = false;
 +                    }
-+                } else if(code === 4014 || code === 4022 || code === 4901) {
-                     if(this.channelID) {
-                         data.endpoint = null;
-                         reconnecting = true;
-@@ -439,15 +444,15 @@ class VoiceConnection extends EventEmitter {
-                     } else {
-                         reconnecting = false;
-                     }
--                } else if(code === 1000) {
 +                } else if(code === 1000 || code === 4021) {
                      reconnecting = false;
+                 } else if(code === 4014 || code === 4022) {
+                     if(this.channelID) {
+@@ -584,11 +591,11 @@ class VoiceConnection extends EventEmitter {
+                     }
                  }
  
 -                this.disconnect(err, reconnecting);
@@ -37,8 +32,8 @@ index ee9c237..b267fb2 100644
                      if(!canResume) {
                          this.wsSequence = -1;
                          this.sessionID = null;
-@@ -477,13 +482,10 @@ class VoiceConnection extends EventEmitter {
-         }
+@@ -680,7 +687,7 @@ class VoiceConnection extends EventEmitter {
+         return this.daveSession?.voicePrivacyCode ?? undefined;
      }
  
 -    disconnect(error, reconnecting) {
@@ -46,35 +41,25 @@ index ee9c237..b267fb2 100644
          this.connecting = false;
          this.reconnecting = reconnecting;
          this.ready = false;
--        this.speaking = false;
--        this.timestamp = 0;
--        this.sequence = 0;
- 
-         if(this.connectionTimeout) {
-             clearTimeout(this.connectionTimeout);
-@@ -491,11 +493,16 @@ class VoiceConnection extends EventEmitter {
+@@ -691,11 +698,15 @@ class VoiceConnection extends EventEmitter {
          }
  
          try {
--            if(reconnecting) {
--                this.pause();
--            } else {
--                this.stopPlaying();
--            }
+-            if(!reconnecting) {
 +            if(!resume) {
-+                this.speaking = false;
-+                this.timestamp = 0;
-+                this.sequence = 0;
+                 this.speaking = false;
+                 this.timestamp = 0;
+                 this.sequence = 0;
+-                this.stopPlaying();
 +                if(reconnecting) {
 +                    this.pause();
 +                } else {
 +                    this.stopPlaying();
 +                }
-+             }
+             }
          } catch(err) {
              this.emit("error", err);
-         }
-@@ -503,7 +510,7 @@ class VoiceConnection extends EventEmitter {
+@@ -704,7 +715,7 @@ class VoiceConnection extends EventEmitter {
              clearInterval(this.heartbeatInterval);
              this.heartbeatInterval = null;
          }
@@ -84,7 +69,7 @@ index ee9c237..b267fb2 100644
          }
          if(this.ws) {
 diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
-index b862645..cfc778c 100644
+index fc4016a..cfc778c 100644
 --- a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
 +++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
 @@ -5,6 +5,7 @@ const BaseTransformer = require("./BaseTransformer");
@@ -116,7 +101,7 @@ index b862645..cfc778c 100644
                      this.push(segment);
                  }
              } else if(byte === "OpusHead") {
-@@ -67,12 +69,19 @@ class OggOpusTransformer extends BaseTransformer {
+@@ -67,6 +69,12 @@ class OggOpusTransformer extends BaseTransformer {
                  this.emit("debug", "Invalid codec: " + byte);
              }
          }
@@ -128,12 +113,4 @@ index b862645..cfc778c 100644
 +        }
      }
  
--    _final() {
-+    _final(cb) {
-         if(!this.#bitstream) {
-             this.emit("error", new Error("No Opus stream was found"));
-         }
-+        cb();
-     }
- 
-     _transform(chunk, enc, cb) {
+     _final(cb) {
