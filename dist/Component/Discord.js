@@ -17,6 +17,7 @@ const MESSAGE_HI = "Hi!\nWant some music?";
 const MESSAGE_HI_NOT_IN_VOICE = "Hi!\nYou are not in voice channel, so only can say hi using text.";
 const MESSAGE_LIST_NOT_FOUND = "Play list not found!";
 const MESSAGE_NOT_IN_VOICE = "You should say hi to me first!";
+const MESSAGE_VOICE_NOT_READY = "Voice connection not ready!";
 const MESSAGE_NOTHING_PLAYING = "Nothing playing";
 var PlayMode;
 (function (PlayMode) {
@@ -98,6 +99,10 @@ class Discord {
         }
         if (!voice) {
             void this.bot.createMessage(msg.channel.id, MESSAGE_NOT_IN_VOICE);
+            return;
+        }
+        if (!voice.ready) {
+            void this.bot.createMessage(msg.channel.id, MESSAGE_VOICE_NOT_READY);
             return;
         }
         let isPlaying = false;
