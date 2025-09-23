@@ -1,8 +1,27 @@
 diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
-index 5b33fb4..9a76f47 100644
+index 5b33fb4..0e71c5c 100644
 --- a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
 +++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
-@@ -422,6 +422,7 @@ class VoiceConnection extends EventEmitter {
+@@ -258,7 +258,7 @@ class VoiceConnection extends EventEmitter {
+                 clearTimeout(this.connectionTimeout);
+                 this.connectionTimeout = null;
+             }
+-            if(this.reconnecting && data.session_id === this.sessionID && data.token === this.token && lastEndpoint === this.endpoint.hostname) {
++            if(this.reconnecting && this.wsSequence !== -1 && data.session_id === this.sessionID && data.token === this.token && lastEndpoint === this.endpoint.hostname) {
+                 this.emit("debug", `Resuming session (sequence ${this.wsSequence})`);
+                 this.sendWS(VoiceOPCodes.RESUME, {
+                     server_id: this.id,
+@@ -407,7 +407,8 @@ class VoiceConnection extends EventEmitter {
+                     });
+                     this.udpTimeout = setTimeout(() => {
+                         if(!this.ready) {
+-                            this.disconnect(new Error("IP discovery timeout"));
++                            this.emit("warn", "IP discovery timeout");
++                            this.connect(data); // Reconnect
+                         }
+                         this.udpTimeout = null;
+                     }, this.udpTimeoutAmount).unref();
+@@ -422,6 +423,7 @@ class VoiceConnection extends EventEmitter {
                      this.connecting = false;
                      this.reconnecting = false;
                      this.ready = true;
@@ -10,7 +29,7 @@ index 5b33fb4..9a76f47 100644
                      /**
                       * Fired when the voice connection was resumed
                       * @event VoiceConnection#resumed
-@@ -572,7 +573,14 @@ class VoiceConnection extends EventEmitter {
+@@ -572,7 +574,14 @@ class VoiceConnection extends EventEmitter {
              this.emit("warn", `Voice WS close ${code}: ${reason}`);
              if(this.connecting || this.ready) {
                  let reconnecting = true;
@@ -26,7 +45,7 @@ index 5b33fb4..9a76f47 100644
                      reconnecting = false;
                  } else if(code === 4014 || code === 4022) {
                      if(this.channelID) {
-@@ -584,11 +592,11 @@ class VoiceConnection extends EventEmitter {
+@@ -584,11 +593,11 @@ class VoiceConnection extends EventEmitter {
                      }
                  }
  
@@ -40,7 +59,7 @@ index 5b33fb4..9a76f47 100644
                      if(!canResume) {
                          this.wsSequence = -1;
                          this.sessionID = null;
-@@ -680,7 +688,7 @@ class VoiceConnection extends EventEmitter {
+@@ -680,7 +689,7 @@ class VoiceConnection extends EventEmitter {
          return this.daveSession?.voicePrivacyCode ?? undefined;
      }
  
@@ -49,7 +68,7 @@ index 5b33fb4..9a76f47 100644
          this.connecting = false;
          this.reconnecting = reconnecting;
          this.ready = false;
-@@ -691,11 +699,15 @@ class VoiceConnection extends EventEmitter {
+@@ -691,11 +700,15 @@ class VoiceConnection extends EventEmitter {
          }
  
          try {
@@ -67,7 +86,7 @@ index 5b33fb4..9a76f47 100644
              }
          } catch(err) {
              this.emit("error", err);
-@@ -704,7 +716,7 @@ class VoiceConnection extends EventEmitter {
+@@ -704,7 +717,7 @@ class VoiceConnection extends EventEmitter {
              clearInterval(this.heartbeatInterval);
              this.heartbeatInterval = null;
          }
