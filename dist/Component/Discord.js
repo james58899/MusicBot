@@ -32,8 +32,7 @@ class Discord {
         this.bot = new dysnomia_1.Client(this.config.token, {
             gateway: {
                 intents: ['guilds', 'guildMessages', 'guildVoiceStates'],
-            },
-            opusOnly: true
+            }
         });
         this.audio = core.audioManager;
         this.list = core.listManager;
@@ -79,7 +78,7 @@ class Discord {
         if (!msg.member)
             return;
         if (msg.member.voiceState.channelID) {
-            void this.bot.joinVoiceChannel(msg.member.voiceState.channelID).then(voice => {
+            void this.bot.joinVoiceChannel(msg.member.voiceState.channelID, { opusOnly: true }).then(voice => {
                 voice.on('warn', msg => console.error(`[Discord] warn: ${msg}`));
                 voice.on('error', err => console.error("[Discord] error: ", err));
             });
