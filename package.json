@@ -26,10 +26,10 @@
     "@types/promise-queue": "^2.2.3",
     "@types/shuffle-array": "^1.0.5",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
     "eslint": "^8.57.1",
-    "eslint-plugin-jsdoc": "^50.8.0",
+    "eslint-plugin-jsdoc": "^60.3.0",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "husky": "^9.1.7",
     "typescript": "^5.9.2"

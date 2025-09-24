@@ -7,7 +7,6 @@ try {
     execFileSync("ffprobe", ["-version"], { stdio: "ignore" });
     ffprobe = "ffprobe";
 } catch (err) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     ffprobe = require("@ffprobe-installer/ffprobe").path;
 }
 
@@ -27,7 +26,7 @@ export async function getMediaInfo(file: string) {
     return new Promise<IAudioMetadata>((resolve, reject) => {
         execFile(ffprobe, ffprobeOption, execOption, (err, stdout) => {
             if (err) {
-                reject(err);
+                reject(err as Error);
                 return;
             }
 

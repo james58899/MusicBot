@@ -43,6 +43,21 @@
             {
                 "ignoreVoid": true
             }
+        ],
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                "caughtErrors": "none"
+            }
+        ],
+        "@typescript-eslint/no-require-imports": [
+            "error",
+            {
+                "allow": [
+                    "@ffmpeg-installer/ffmpeg",
+                    "@ffprobe-installer/ffprobe"
+                ]
+            }
         ]
     }
 }

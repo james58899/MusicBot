@@ -75,6 +75,7 @@ export class Encoder {
     }
 
     private async getNormalize(input: string) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return new Promise<any>((resolve, reject) => {
             const ffmpeg = FFmpeg({ stdoutLines: 20, timeout: 300 });
             if (this.ffmpegPath) ffmpeg.setFfmpegPath(this.ffmpegPath);
@@ -97,7 +98,7 @@ export class Encoder {
                     }
                     else {
                         console.error(stderr);
-                        reject("ffmpeg loudnorm report parser failed.");
+                        reject(new Error("ffmpeg loudnorm report parser failed."));
                     }
                 });
         });

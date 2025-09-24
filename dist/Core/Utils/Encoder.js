@@ -122,7 +122,7 @@ class Encoder {
                 }
                 else {
                     console.error(stderr);
-                    reject("ffmpeg loudnorm report parser failed.");
+                    reject(new Error("ffmpeg loudnorm report parser failed."));
                 }
             });
         });
