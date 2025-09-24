@@ -1,7 +1,7 @@
-diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
-index 5b33fb4..0e71c5c 100644
---- a/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
-+++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/VoiceConnection.js
+diff --git a/lib/voice/VoiceConnection.js b/lib/voice/VoiceConnection.js
+index 5b33fb4f4fbace7d6638944fcd5f1e5877924981..0e71c5c7538a7e13e39618ac7001f267dea68e7c 100644
+--- a/lib/voice/VoiceConnection.js
++++ b/lib/voice/VoiceConnection.js
 @@ -258,7 +258,7 @@ class VoiceConnection extends EventEmitter {
                  clearTimeout(this.connectionTimeout);
                  this.connectionTimeout = null;
@@ -95,10 +95,10 @@ index 5b33fb4..0e71c5c 100644
              this.#closeUDP();
          }
          if(this.ws) {
-diff --git a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
-index fc4016a..cfc778c 100644
---- a/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
-+++ b/node_modules/@projectdysnomia/dysnomia/lib/voice/streams/OggOpusTransformer.js
+diff --git a/lib/voice/streams/OggOpusTransformer.js b/lib/voice/streams/OggOpusTransformer.js
+index fc4016a146d5dc606e53ae44c177536ebcfc2405..cfc778c87a511c21ed003855f74726cdbb2ad4ba 100644
+--- a/lib/voice/streams/OggOpusTransformer.js
++++ b/lib/voice/streams/OggOpusTransformer.js
 @@ -5,6 +5,7 @@ const BaseTransformer = require("./BaseTransformer");
  class OggOpusTransformer extends BaseTransformer {
      #bitstream = null;

@@ -1,0 +1,22 @@
+onlyBuiltDependencies:
+  - '@ffmpeg-installer/linux-x64'
+  - '@ffprobe-installer/linux-x64'
+  - bufferutil
+  - erlpack
+
+overrides:
+  form-data@<2.5.4: '>=2.5.4'
+  tough-cookie@<4.1.3: '>=4.1.3'
+
+allowedDeprecatedVersions:
+  'eslint': '8'
+  'fluent-ffmpeg': '*'
+  'request': '2'
+
+patchedDependencies:
+  '@projectdysnomia/dysnomia@0.2.3': patches/@projectdysnomia__dysnomia@0.2.3.patch
+
+peerDependencyRules:
+  allowedVersions:
+    '@projectdysnomia/dysnomia>erlpack': '*'
+    '@projectdysnomia/dysnomia>sodium-native@4': '5'
