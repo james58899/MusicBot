@@ -27,7 +27,7 @@
     "@types/shuffle-array": "^1.0.5",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
-    "@typescript-eslint/parser": "^8.44.1",
+    "@typescript-eslint/parser": "^8.46.0",
     "eslint": "^8.57.1",
     "eslint-plugin-jsdoc": "^60.3.0",
     "eslint-plugin-prefer-arrow": "^1.2.3",
