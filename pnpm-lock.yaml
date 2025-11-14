@@ -19,7 +19,7 @@ importers:
     dependencies:
       '@projectdysnomia/dysnomia':
         specifier: github:projectdysnomia/dysnomia#3b354c30b255b892e75860bc60df6a9ed7495386
-        version: https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(bufferutil@4.0.9)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225)(eventemitter3@5.0.1)(pako@2.1.0)(sodium-native@5.0.8)
+        version: https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(bufferutil@4.0.9)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.1)(pako@2.1.0)(sodium-native@5.0.10(bare-url@2.2.2))
       fluent-ffmpeg:
         specifier: ^2.1.3
         version: 2.1.3
@@ -90,7 +90,7 @@ importers:
         version: 4.0.9
       erlpack:
         specifier: github:discord/erlpack
-        version: https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225
+        version: https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
@@ -98,8 +98,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       sodium-native:
-        specifier: ^5.0.8
-        version: 5.0.8
+        specifier: ^5.0.10
+        version: 5.0.10(bare-url@2.2.2)
 
 packages:
 
@@ -575,16 +575,16 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  bare-addon-resolve@1.9.4:
-    resolution: {integrity: sha512-unn6Vy/Yke6F99vg/7tcrvM2KUvIhTNniaSqDbam4AWkd4NhvDVSrQiRYVlNzUV2P7SPobkCK7JFVxrJk9btCg==}
+  bare-addon-resolve@1.9.6:
+    resolution: {integrity: sha512-hvOQY1zDK6u0rSr27T6QlULoVLwi8J2k8HHHJlxSfT7XQdQ/7bsS+AnjYkHtu/TkL+gm3aMXAKucJkJAbrDG/g==}
     peerDependencies:
       bare-url: '*'
     peerDependenciesMeta:
       bare-url:
         optional: true
 
-  bare-module-resolve@1.11.1:
-    resolution: {integrity: sha512-DCxeT9i8sTs3vUMA3w321OX/oXtNEu5EjObQOnTmCdNp5RXHBAvAaBDHvAi9ta0q/948QPz+co6SsGi6aQMYRg==}
+  bare-module-resolve@1.12.0:
+    resolution: {integrity: sha512-JrzrqlC3Tds0iKRwQs8xIIJ+FRieKA9ll0jaqpotDLZtjJPVevzRoeuUYZ5GIo1t1z7/pIRdk85Q3i/2xQLfEQ==}
     peerDependencies:
       bare-url: '*'
     peerDependenciesMeta:
@@ -598,8 +598,8 @@ packages:
   bare-path@3.0.0:
     resolution: {integrity: sha512-tyfW2cQcB5NN8Saijrhqn0Zh7AnFNsnczRcuWODH0eYAXBsJ5gVxAUuNr7tsHSC6IZ77cA0SitzT+s47kot8Mw==}
 
-  bare-semver@1.0.1:
-    resolution: {integrity: sha512-UtggzHLiTrmFOC/ogQ+Hy7VfoKoIwrP1UFcYtTxoCUdLtsIErT8+SWtOC2DH/snT9h+xDrcBEPcwKei1mzemgg==}
+  bare-semver@1.0.2:
+    resolution: {integrity: sha512-ESVaN2nzWhcI5tf3Zzcq9aqCZ676VWzqw07eEZ0qxAcEOAFYBa0pWq8sK34OQeHLY3JsfKXZS9mDyzyxGjeLzA==}
 
   bare-url@2.2.2:
     resolution: {integrity: sha512-g+ueNGKkrjMazDG3elZO1pNs3HY5+mMmOet1jtKyhOaCnkLzitxf26z7hoAEkDNgdNmnc1KIlt/dw6Po6xZMpA==}
@@ -747,8 +747,8 @@ packages:
   end-of-stream@1.4.5:
     resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
 
-  erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225:
-    resolution: {tarball: https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225}
+  erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59:
+    resolution: {tarball: https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59}
     version: 0.1.3
 
   es-abstract@1.24.0:
@@ -1431,8 +1431,8 @@ packages:
     engines: {node: '>= 6'}
     deprecated: request has been deprecated, see https://github.com/request/request/issues/3142
 
-  require-addon@1.1.0:
-    resolution: {integrity: sha512-KbXAD5q2+v1GJnkzd8zzbOxchTkStSyJZ9QwoCq3QwEXAaIlG3wDYRZGzVD357jmwaGY7hr5VaoEAL0BkF0Kvg==}
+  require-addon@1.2.0:
+    resolution: {integrity: sha512-VNPDZlYgIYQwWp9jMTzljx+k0ZtatKlcvOhktZ/anNPI3dQ9NXk7cq2U4iJ1wd9IrytRnYhyEocFWbkdPb+MYA==}
     engines: {bare: '>=1.10.0'}
 
   requires-port@1.0.0:
@@ -1522,8 +1522,8 @@ packages:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
     engines: {node: '>= 0.4'}
 
-  sodium-native@5.0.8:
-    resolution: {integrity: sha512-2ZxmF9Llvo/3X3NAc8VV6JFoswObg9u27Q8Be4BtCLDiejXuTt6Nm7+iIWUv+WMcs1eJ7YV5U2f4e8LidfIlRQ==}
+  sodium-native@5.0.10:
+    resolution: {integrity: sha512-UIw+0AbpCQRuTJF88JWrZomP4O+PXhlWvdopiAJOsUivTyHTf3korMyStxkZuPngSbBEtEfDdc4ewEd8/T4/lA==}
     engines: {bare: '>=1.16.0'}
 
   sparse-bitfield@3.0.3:
@@ -1584,15 +1584,15 @@ packages:
   tldts-core@6.1.86:
     resolution: {integrity: sha512-Je6p7pkk+KMzMv2XXKmAE3McmolOQFdxkKw0R8EYNr7sELW46JqnNeTX8ybPiQgvg1ymCoF8LXs5fzFaZvJPTA==}
 
-  tldts-core@7.0.16:
-    resolution: {integrity: sha512-XHhPmHxphLi+LGbH0G/O7dmUH9V65OY20R7vH8gETHsp5AZCjBk9l8sqmRKLaGOxnETU7XNSDUPtewAy/K6jbA==}
+  tldts-core@7.0.17:
+    resolution: {integrity: sha512-DieYoGrP78PWKsrXr8MZwtQ7GLCUeLxihtjC1jZsW1DnvSMdKPitJSe8OSYDM2u5H6g3kWJZpePqkp43TfLh0g==}
 
   tldts@6.1.86:
     resolution: {integrity: sha512-WMi/OQ2axVTf/ykqCQgXiIct+mSQDFdH2fkwhPwgEwvJ1kSzZRiinb0zF2Xb8u4+OqPChmyI6MEu4EezNJz+FQ==}
     hasBin: true
 
-  tldts@7.0.16:
-    resolution: {integrity: sha512-5bdPHSwbKTeHmXrgecID4Ljff8rQjv7g8zKQPkCozRo2HWWni+p310FSn5ImI+9kWw9kK4lzOB5q/a6iv0IJsw==}
+  tldts@7.0.17:
+    resolution: {integrity: sha512-Y1KQBgDd/NUc+LfOtKS6mNsC9CCaH+m2P1RoIZy7RAPo3C3/t8X45+zgut31cRZtZ3xKPjfn3TkGTrctC2TQIQ==}
     hasBin: true
 
   to-regex-range@5.0.1:
@@ -1946,17 +1946,17 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@projectdysnomia/dysnomia@https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(bufferutil@4.0.9)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225)(eventemitter3@5.0.1)(pako@2.1.0)(sodium-native@5.0.8)':
+  '@projectdysnomia/dysnomia@https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(bufferutil@4.0.9)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.1)(pako@2.1.0)(sodium-native@5.0.10(bare-url@2.2.2))':
     dependencies:
       ws: 8.18.3(bufferutil@4.0.9)
     optionalDependencies:
       '@snazzah/davey': 0.1.7
       '@stablelib/xchacha20poly1305': 1.0.1
-      erlpack: https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225
+      erlpack: https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59
       eventemitter3: 5.0.1
       opusscript: 0.1.1
       pako: 2.1.0
-      sodium-native: 5.0.8
+      sodium-native: 5.0.10(bare-url@2.2.2)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -2287,17 +2287,17 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  bare-addon-resolve@1.9.4(bare-url@2.2.2):
+  bare-addon-resolve@1.9.6(bare-url@2.2.2):
     dependencies:
-      bare-module-resolve: 1.11.1(bare-url@2.2.2)
-      bare-semver: 1.0.1
+      bare-module-resolve: 1.12.0(bare-url@2.2.2)
+      bare-semver: 1.0.2
     optionalDependencies:
       bare-url: 2.2.2
     optional: true
 
-  bare-module-resolve@1.11.1(bare-url@2.2.2):
+  bare-module-resolve@1.12.0(bare-url@2.2.2):
     dependencies:
-      bare-semver: 1.0.1
+      bare-semver: 1.0.2
     optionalDependencies:
       bare-url: 2.2.2
     optional: true
@@ -2310,7 +2310,7 @@ snapshots:
       bare-os: 3.6.2
     optional: true
 
-  bare-semver@1.0.1:
+  bare-semver@1.0.2:
     optional: true
 
   bare-url@2.2.2:
@@ -2469,7 +2469,7 @@ snapshots:
     dependencies:
       once: 1.4.0
 
-  erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225:
+  erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59:
     dependencies:
       bindings: 1.5.0
       nan: 2.23.0
@@ -3270,10 +3270,11 @@ snapshots:
       tunnel-agent: 0.6.0
       uuid: 3.4.0
 
-  require-addon@1.1.0:
+  require-addon@1.2.0(bare-url@2.2.2):
     dependencies:
-      bare-addon-resolve: 1.9.4(bare-url@2.2.2)
-      bare-url: 2.2.2
+      bare-addon-resolve: 1.9.6(bare-url@2.2.2)
+    transitivePeerDependencies:
+      - bare-url
     optional: true
 
   requires-port@1.0.0: {}
@@ -3377,10 +3378,12 @@ snapshots:
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
 
-  sodium-native@5.0.8:
+  sodium-native@5.0.10(bare-url@2.2.2):
     dependencies:
-      require-addon: 1.1.0
+      require-addon: 1.2.0(bare-url@2.2.2)
       which-runtime: 1.3.2
+    transitivePeerDependencies:
+      - bare-url
     optional: true
 
   sparse-bitfield@3.0.3:
@@ -3456,15 +3459,15 @@ snapshots:
 
   tldts-core@6.1.86: {}
 
-  tldts-core@7.0.16: {}
+  tldts-core@7.0.17: {}
 
   tldts@6.1.86:
     dependencies:
       tldts-core: 6.1.86
 
-  tldts@7.0.16:
+  tldts@7.0.17:
     dependencies:
-      tldts-core: 7.0.16
+      tldts-core: 7.0.17
 
   to-regex-range@5.0.1:
     dependencies:
@@ -3483,7 +3486,7 @@ snapshots:
 
   tough-cookie@6.0.0:
     dependencies:
-      tldts: 7.0.16
+      tldts: 7.0.17
 
   tr46@5.1.1:
     dependencies:
