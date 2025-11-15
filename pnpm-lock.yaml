@@ -19,7 +19,7 @@ importers:
     dependencies:
       '@projectdysnomia/dysnomia':
         specifier: github:projectdysnomia/dysnomia#3b354c30b255b892e75860bc60df6a9ed7495386
-        version: https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(bufferutil@4.0.9)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225)(eventemitter3@5.0.1)(pako@2.1.0)(sodium-native@5.0.8)
+        version: https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(bufferutil@4.0.9)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.1)(pako@2.1.0)(sodium-native@5.0.8)
       fluent-ffmpeg:
         specifier: ^2.1.3
         version: 2.1.3
@@ -90,7 +90,7 @@ importers:
         version: 4.0.9
       erlpack:
         specifier: github:discord/erlpack
-        version: https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225
+        version: https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
@@ -747,8 +747,8 @@ packages:
   end-of-stream@1.4.5:
     resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
 
-  erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225:
-    resolution: {tarball: https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225}
+  erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59:
+    resolution: {tarball: https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59}
     version: 0.1.3
 
   es-abstract@1.24.0:
@@ -1584,15 +1584,15 @@ packages:
   tldts-core@6.1.86:
     resolution: {integrity: sha512-Je6p7pkk+KMzMv2XXKmAE3McmolOQFdxkKw0R8EYNr7sELW46JqnNeTX8ybPiQgvg1ymCoF8LXs5fzFaZvJPTA==}
 
-  tldts-core@7.0.16:
-    resolution: {integrity: sha512-XHhPmHxphLi+LGbH0G/O7dmUH9V65OY20R7vH8gETHsp5AZCjBk9l8sqmRKLaGOxnETU7XNSDUPtewAy/K6jbA==}
+  tldts-core@7.0.17:
+    resolution: {integrity: sha512-DieYoGrP78PWKsrXr8MZwtQ7GLCUeLxihtjC1jZsW1DnvSMdKPitJSe8OSYDM2u5H6g3kWJZpePqkp43TfLh0g==}
 
   tldts@6.1.86:
     resolution: {integrity: sha512-WMi/OQ2axVTf/ykqCQgXiIct+mSQDFdH2fkwhPwgEwvJ1kSzZRiinb0zF2Xb8u4+OqPChmyI6MEu4EezNJz+FQ==}
     hasBin: true
 
-  tldts@7.0.16:
-    resolution: {integrity: sha512-5bdPHSwbKTeHmXrgecID4Ljff8rQjv7g8zKQPkCozRo2HWWni+p310FSn5ImI+9kWw9kK4lzOB5q/a6iv0IJsw==}
+  tldts@7.0.17:
+    resolution: {integrity: sha512-Y1KQBgDd/NUc+LfOtKS6mNsC9CCaH+m2P1RoIZy7RAPo3C3/t8X45+zgut31cRZtZ3xKPjfn3TkGTrctC2TQIQ==}
     hasBin: true
 
   to-regex-range@5.0.1:
@@ -1946,13 +1946,13 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@projectdysnomia/dysnomia@https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(bufferutil@4.0.9)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225)(eventemitter3@5.0.1)(pako@2.1.0)(sodium-native@5.0.8)':
+  '@projectdysnomia/dysnomia@https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(bufferutil@4.0.9)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.1)(pako@2.1.0)(sodium-native@5.0.8)':
     dependencies:
       ws: 8.18.3(bufferutil@4.0.9)
     optionalDependencies:
       '@snazzah/davey': 0.1.7
       '@stablelib/xchacha20poly1305': 1.0.1
-      erlpack: https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225
+      erlpack: https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59
       eventemitter3: 5.0.1
       opusscript: 0.1.1
       pako: 2.1.0
@@ -2469,7 +2469,7 @@ snapshots:
     dependencies:
       once: 1.4.0
 
-  erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225:
+  erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59:
     dependencies:
       bindings: 1.5.0
       nan: 2.23.0
@@ -3456,15 +3456,15 @@ snapshots:
 
   tldts-core@6.1.86: {}
 
-  tldts-core@7.0.16: {}
+  tldts-core@7.0.17: {}
 
   tldts@6.1.86:
     dependencies:
       tldts-core: 6.1.86
 
-  tldts@7.0.16:
+  tldts@7.0.17:
     dependencies:
-      tldts-core: 7.0.16
+      tldts-core: 7.0.17
 
   to-regex-range@5.0.1:
     dependencies:
@@ -3483,7 +3483,7 @@ snapshots:
 
   tough-cookie@6.0.0:
     dependencies:
-      tldts: 7.0.16
+      tldts: 7.0.17
 
   tr46@5.1.1:
     dependencies:
