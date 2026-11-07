@@ -1,0 +1,54 @@
+diff --git a/src/opus/OggDemuxer.js b/src/opus/OggDemuxer.js
+index 3ede82afc7334f34b0bdec8fab04494bc8242bea..15c4f78ba8b9a5701f4e0af3811ef3986cc2b7c1 100644
+--- a/src/opus/OggDemuxer.js
++++ b/src/opus/OggDemuxer.js
+@@ -24,6 +24,7 @@ class OggDemuxer extends Transform {
+     this._remainder = null;
+     this._head = null;
+     this._bitstream = null;
++    this._partial = null;
+   }
+ 
+   _transform(chunk, encoding, done) {
+@@ -74,8 +75,7 @@ class OggDemuxer extends Transform {
+ 
+     for (let i = 0; i < pageSegments;) {
+       let size = 0, x = 255;
+-      while (x === 255) {
+-        if (i >= table.length) return false;
++      while (x === 255 && i < table.length) {
+         x = table.readUInt8(i);
+         i++;
+         size += x;
+@@ -83,12 +83,29 @@ class OggDemuxer extends Transform {
+       sizes.push(size);
+       totalSize += size;
+     }
++    // Last lacing value 255 = packet continues on the next page
++    const continues = pageSegments > 0 && table.readUInt8(pageSegments - 1) === 255;
++    const continued = (chunk.readUInt8(5) & 1) === 1;
+ 
+     if (chunk.length < 27 + pageSegments + totalSize) return false;
+ 
+     let start = 27 + pageSegments;
+-    for (const size of sizes) {
+-      const segment = chunk.slice(start, start + size);
++    for (let j = 0; j < sizes.length; j++) {
++      const size = sizes[j];
++      let segment = chunk.slice(start, start + size);
++      if (j === 0 && continued) {
++        if (!this._partial) {
++          start += size;
++          continue;
++        }
++        segment = Buffer.concat([this._partial, segment]);
++        this._partial = null;
++      }
++      if (j === sizes.length - 1 && continues) {
++        this._partial = segment;
++        start += size;
++        continue;
++      }
+       const header = segment.slice(0, 8);
+       if (this._head) {
+         if (header.equals(OPUS_TAGS)) this.emit('tags', segment);

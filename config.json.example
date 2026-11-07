@@ -15,5 +15,9 @@
     "discord": {
         "token": "",
         "owner": "self"
+    },
+    "fluxer": {
+        "endpoint": "",
+        "token": ""
     }
 }

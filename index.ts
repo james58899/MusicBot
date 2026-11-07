@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import { existsSync, mkdirSync } from "fs";
 import { resolve } from "path";
 import { Discord } from "./Component/Discord";
+import { Fluxer } from "./Component/Fluxer";
 import { Telegram } from "./Component/Telegram";
 import { AudioManager } from "./Core/AudioManager";
 import { ListManager } from "./Core/ListManager";
@@ -39,6 +40,13 @@ export class Core extends EventEmitter {
             try {
                 // tslint:disable-next-line:no-unused-expression
                 new Discord(this);
+            } catch (error) {
+                console.error(error);
+            }
+
+            try {
+                // tslint:disable-next-line:no-unused-expression
+                new Fluxer(this);
             } catch (error) {
                 console.error(error);
             }
