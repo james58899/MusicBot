@@ -1,8 +1,8 @@
-onlyBuiltDependencies:
-  - '@ffmpeg-installer/linux-x64'
-  - '@ffprobe-installer/linux-x64'
-  - bufferutil
-  - erlpack
+allowBuilds:
+  '@ffmpeg-installer/linux-x64': true
+  '@ffprobe-installer/linux-x64': true
+  bufferutil: true
+  'erlpack@https://codeload.github.com/discord/erlpack/tar.gz/936ba12231719af096fe1c37525e966f3690a225': true
 
 overrides:
   form-data@<2.5.4: '>=2.5.4'

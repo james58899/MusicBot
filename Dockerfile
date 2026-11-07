@@ -7,7 +7,7 @@ WORKDIR /app
 RUN --mount=type=cache,id=alpine,target=/etc/apk/cache apk -U add python3 libtool autoconf automake build-base
 
 ADD . .
-RUN corepack enable
+RUN npm i -g pnpm@12.18.0
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm remove @ffmpeg-installer/ffmpeg @ffprobe-installer/ffprobe && pnpm build || true && rm -rf node_modules && pnpm i -P
 RUN du -hd 1 node_modules
 
