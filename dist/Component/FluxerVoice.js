@@ -37,10 +37,8 @@ class FluxerVoice {
             if (!data.guild_id)
                 return;
             this.setState(data.guild_id, data.user_id, data.channel_id);
-            if (data.user_id !== client.user?.id)
+            if (data.user_id !== client.user?.id || this.isOtherConnection(data.guild_id, data.connection_id))
                 return;
-            if (data.connection_id)
-                this.connectionIds.set(data.guild_id, data.connection_id);
             if (!data.channel_id && !this.pending.has(data.guild_id))
                 this.connections.get(data.guild_id)?.disconnect("removed from voice channel");
         });
@@ -56,7 +54,7 @@ class FluxerVoice {
         });
         client.on(core_1.Events.VoiceServerUpdate, data => {
             const guildId = data.guild_id;
-            if (!guildId)
+            if (!guildId || this.isOtherConnection(guildId, data.connection_id))
                 return;
             if (data.connection_id)
                 this.connectionIds.set(guildId, data.connection_id);
@@ -99,6 +97,7 @@ class FluxerVoice {
             return current;
         if (current)
             this.leave(guildId);
+        this.connectionIds.delete(guildId);
         this.pending.get(guildId)?.reject(Error("Voice join superseded"));
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => pending.reject(ERR_JOIN_TIMEOUT), JOIN_TIMEOUT);
@@ -125,6 +124,10 @@ class FluxerVoice {
         this.connectionIds.delete(guildId);
         if (connectionId)
             this.sendVoiceState({ guild_id: guildId, channel_id: null, connection_id: connectionId, self_mute: false, self_deaf: false });
+    }
+    isOtherConnection(guildId, connectionId) {
+        const ours = this.connectionIds.get(guildId);
+        return !!connectionId && !!ours && connectionId !== ours;
     }
     setState(guildId, userId, channelId) {
         let guild = this.states.get(guildId);

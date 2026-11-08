@@ -51,8 +51,7 @@ export class FluxerVoice {
         client.on(Events.VoiceStateUpdate, data => {
             if (!data.guild_id) return;
             this.setState(data.guild_id, data.user_id, data.channel_id);
-            if (data.user_id !== client.user?.id) return;
-            if (data.connection_id) this.connectionIds.set(data.guild_id, data.connection_id);
+            if (data.user_id !== client.user?.id || this.isOtherConnection(data.guild_id, data.connection_id)) return;
             // Removed from voice by someone else (kick / channel deleted)
             if (!data.channel_id && !this.pending.has(data.guild_id)) this.connections.get(data.guild_id)?.disconnect("removed from voice channel");
         });
@@ -66,7 +65,7 @@ export class FluxerVoice {
         });
         client.on(Events.VoiceServerUpdate, data => {
             const guildId = data.guild_id;
-            if (!guildId) return;
+            if (!guildId || this.isOtherConnection(guildId, data.connection_id)) return;
             if (data.connection_id) this.connectionIds.set(guildId, data.connection_id);
 
             const pending = this.pending.get(guildId);
@@ -107,6 +106,7 @@ export class FluxerVoice {
         const current = this.connections.get(guildId);
         if (current?.channelId === channelId && current.isConnected()) return current;
         if (current) this.leave(guildId);
+        this.connectionIds.delete(guildId); // the new connection's id comes from its ack / server update
         this.pending.get(guildId)?.reject(Error("Voice join superseded"));
 
         return new Promise<VoiceConnection>((resolve, reject) => {
@@ -134,6 +134,15 @@ export class FluxerVoice {
         const connectionId = this.connectionIds.get(guildId);
         this.connectionIds.delete(guildId);
         if (connectionId) this.sendVoiceState({ guild_id: guildId, channel_id: null, connection_id: connectionId, self_mute: false, self_deaf: false });
+    }
+
+    /**
+     * Event for another voice connection of this bot, e.g. one left over from before a restart:
+     * its timeout must not end (or re-key) ours.
+     */
+    private isOtherConnection(guildId: string, connectionId: string | null | undefined) {
+        const ours = this.connectionIds.get(guildId);
+        return !!connectionId && !!ours && connectionId !== ours;
     }
 
     private setState(guildId: string, userId: string, channelId: string | null | undefined) {
