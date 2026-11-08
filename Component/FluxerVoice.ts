@@ -52,7 +52,7 @@ export class FluxerVoice {
             if (data.user_id !== client.user?.id) return;
             if (data.connection_id) this.connectionIds.set(data.guild_id, data.connection_id);
             // Removed from voice by someone else (kick / channel deleted)
-            if (!data.channel_id && !this.pending.has(data.guild_id)) this.connections.get(data.guild_id)?.disconnect();
+            if (!data.channel_id && !this.pending.has(data.guild_id)) this.connections.get(data.guild_id)?.disconnect("removed from voice channel");
         });
         client.on(Events.VoiceStateAck, data => {
             const entry = [...this.pending].find(([, p]) => p.mutationId === data.mutation_id);
@@ -73,7 +73,7 @@ export class FluxerVoice {
                 // Fresh grant for an existing connection: token refresh, or the voice server moved
                 if (!current) return;
                 if (data.endpoint && data.token) current.updateServer(data.endpoint, data.token, data.channel_id ?? current.channelId);
-                else current.disconnect();
+                else current.disconnect("voice server unavailable");
                 return;
             }
             if (!data.endpoint || !data.token) {
@@ -87,7 +87,7 @@ export class FluxerVoice {
                 if (this.connections.get(guildId) === conn) this.connections.delete(guildId);
             });
             conn.connect(data.token).then(() => pending.resolve(conn), (err: Error) => {
-                conn.disconnect();
+                conn.disconnect(`join failed: ${err.message}`);
                 pending.reject(err);
             });
         });
@@ -127,7 +127,7 @@ export class FluxerVoice {
     public leave(guildId: string) {
         const conn = this.connections.get(guildId);
         this.connections.delete(guildId);
-        conn?.disconnect();
+        conn?.disconnect("left");
 
         const connectionId = this.connectionIds.get(guildId);
         this.connectionIds.delete(guildId);
@@ -266,9 +266,10 @@ export class VoiceConnection extends EventEmitter {
         if (this.current) this.finish(this.current);
     }
 
-    public disconnect() {
+    public disconnect(reason: string) {
         if (this.closed) return;
         this.closed = true;
+        console.log(`[FluxerVoice] Disconnected guild ${this.guildId} channel ${this.channelId}: ${reason}`);
         this.stop();
         this.session?.close(true);
         this.session = undefined;
@@ -287,7 +288,10 @@ export class VoiceConnection extends EventEmitter {
     private async openSession() {
         const session = new LiveKitSession(this.endpoint, this.token);
         session.on("token", (token: string) => { this.token = token; });
-        session.once("lost", (fatal: boolean) => this.onSessionLost(session, fatal));
+        session.once("lost", (fatal: boolean, reason: string) => {
+            if (session === this.session) console.warn(`[FluxerVoice] Session lost guild ${this.guildId}: ${reason}`);
+            this.onSessionLost(session, fatal);
+        });
         try {
             await session.open();
         } catch (err) {
@@ -304,7 +308,7 @@ export class VoiceConnection extends EventEmitter {
         // A planned move leaves the old room on purpose; a drop keeps it resumable
         session.close(immediate);
         if (fatal) {
-            this.disconnect();
+            this.disconnect("removed by voice server");
         } else {
             void this.reconnect(immediate);
         }
@@ -329,13 +333,13 @@ export class VoiceConnection extends EventEmitter {
             }
         }
         this.reconnecting = false;
-        if (!this.session) this.disconnect();
+        if (!this.session) this.disconnect("reconnect failed");
     }
 }
 
 /**
  * One LiveKit signaling session (v0 /rtc) with werift publisher/subscriber peers and one stereo Opus track.
- * @emits lost(fatal: boolean) - session dropped; fatal when the server ended it for good (once)
+ * @emits lost(fatal: boolean, reason: string) - session dropped; fatal when the server ended it for good (once)
  * @emits token(token: string) - refreshed access token for reconnecting
  */
 class LiveKitSession extends EventEmitter {
@@ -363,7 +367,7 @@ class LiveKitSession extends EventEmitter {
         // ws package, not Node's built-in WebSocket: the built-in one drops the server's final "leave" before close
         const ws = this.ws = new WebSocket(url);
         ws.on("message", (data: Buffer) => this.onSignal(SignalResponse.fromBinary(data)).catch(err => console.error("[FluxerVoice] signal error:", err)));
-        ws.on("close", () => this.markLost(false));
+        ws.on("close", (code, reason) => this.markLost(false, `signal socket closed (${code} ${reason.toString()})`));
         ws.on("error", err => console.error("[FluxerVoice] signal socket error:", err.message));
 
         const join = await this.wait("join");
@@ -418,10 +422,10 @@ class LiveKitSession extends EventEmitter {
         void this.sub?.close();
     }
 
-    private markLost(fatal: boolean) {
+    private markLost(fatal: boolean, reason: string) {
         if (this.lost) return;
         this.lost = true;
-        this.emit("lost", fatal);
+        this.emit("lost", fatal, reason);
     }
 
     private createPeer(config: ConstructorParameters<typeof RTCPeerConnection>[0], target: SignalTarget) {
@@ -430,7 +434,7 @@ class LiveKitSession extends EventEmitter {
             if (candidate) this.send({ case: "trickle", value: new TrickleRequest({ candidateInit: JSON.stringify(candidate.toJSON()), target }) });
         });
         pc.connectionStateChange.subscribe(state => {
-            if (state === "failed" || state === "closed") this.markLost(false);
+            if (state === "failed" || state === "closed") this.markLost(false, `${SignalTarget[target]} peer ${state}`);
         });
         return pc;
     }
@@ -479,7 +483,8 @@ class LiveKitSession extends EventEmitter {
                 break;
             case "leave":
                 // DISCONNECT = removed for good (kicked, room closed); RESUME/RECONNECT = rejoin
-                this.markLost(message.value.action === LeaveRequest_Action.DISCONNECT && !message.value.canReconnect);
+                this.markLost(message.value.action === LeaveRequest_Action.DISCONNECT && !message.value.canReconnect,
+                    `server leave (action ${LeaveRequest_Action[message.value.action]}, reason ${DisconnectReason[message.value.reason]})`);
                 break;
         }
     }
