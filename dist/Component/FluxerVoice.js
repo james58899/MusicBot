@@ -16,6 +16,7 @@ const werift_1 = require("werift");
 const protocol_1 = require("@livekit/protocol");
 const JOIN_TIMEOUT = 20000;
 const SUBSCRIBE_TIMEOUT = 5000;
+const SILENCE_FRAME = Buffer.from([0xf8, 0xff, 0xfe]);
 const RECONNECT_ATTEMPTS = 6;
 const ERR_JOIN_TIMEOUT = Error("Voice join timeout");
 const ERR_NO_VOICE_SERVER = Error("Voice server unavailable");
@@ -178,10 +179,10 @@ class VoiceConnection extends events_1.EventEmitter {
         let ended = false;
         let first = true;
         let sentMs = 0;
-        let start = performance.now();
+        let start = Math.max(performance.now(), this.endAt ?? 0);
         let pausedAt;
-        if (this.lastEndAt !== undefined)
-            this.ts = (this.ts + Math.round((start - this.lastEndAt) * 48)) >>> 0;
+        if (this.endAt !== undefined)
+            this.ts = (this.ts + Math.round((start - this.endAt) * 48)) >>> 0;
         const playback = {
             demuxer,
             timer: setInterval(() => {
@@ -196,14 +197,10 @@ class VoiceConnection extends events_1.EventEmitter {
                 }
                 const now = performance.now() - start;
                 while (queue.length && sentMs <= now + 20) {
-                    const payload = queue.shift();
-                    const samples = opusSamples(payload);
-                    this.session.write(new werift_1.RtpPacket(new werift_1.RtpHeader({ payloadType: 111, sequenceNumber: this.seq, timestamp: this.ts, marker: first }), payload));
-                    this.seq = (this.seq + 1) & 0xffff;
-                    this.ts = (this.ts + samples) >>> 0;
-                    sentMs += samples / 48;
+                    sentMs += this.writeRtp(this.session, queue.shift(), first) / 48;
                     first = false;
                 }
+                this.endAt = start + sentMs;
                 if (queue.length < 50 && demuxer.isPaused())
                     demuxer.resume();
                 if (ended && !queue.length)
@@ -246,8 +243,19 @@ class VoiceConnection extends events_1.EventEmitter {
         this.current = undefined;
         clearInterval(playback.timer);
         playback.demuxer.destroy();
-        this.lastEndAt = performance.now();
+        if (this.session) {
+            for (let i = 0; i < 5; i++)
+                this.writeRtp(this.session, SILENCE_FRAME, false);
+            this.endAt = (this.endAt ?? performance.now()) + 100;
+        }
         this.emit("end");
+    }
+    writeRtp(session, payload, marker) {
+        const samples = opusSamples(payload);
+        session.write(new werift_1.RtpPacket(new werift_1.RtpHeader({ payloadType: 111, sequenceNumber: this.seq, timestamp: this.ts, marker }), payload));
+        this.seq = (this.seq + 1) & 0xffff;
+        this.ts = (this.ts + samples) >>> 0;
+        return samples;
     }
     async openSession() {
         const session = new LiveKitSession(this.endpoint, this.token);

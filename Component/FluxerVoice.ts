@@ -14,6 +14,7 @@ import {
 
 const JOIN_TIMEOUT = 20000;
 const SUBSCRIBE_TIMEOUT = 5000;
+const SILENCE_FRAME = Buffer.from([0xf8, 0xff, 0xfe]); // 20 ms CELT silence
 const RECONNECT_ATTEMPTS = 6; // backoff 1s..30s, ~1 minute total
 const ERR_JOIN_TIMEOUT = Error("Voice join timeout");
 const ERR_NO_VOICE_SERVER = Error("Voice server unavailable");
@@ -169,7 +170,7 @@ export class VoiceConnection extends EventEmitter {
     // RTP state is continuous across tracks; gaps advance the timestamp by wall time
     private seq = 0;
     private ts = 0;
-    private lastEndAt?: number;
+    private endAt?: number; // wall time where the media sent so far ends (ts maps to this)
 
     constructor(public readonly guildId: string, public channelId: string, public endpoint: string) {
         super();
@@ -215,9 +216,10 @@ export class VoiceConnection extends EventEmitter {
         let ended = false;
         let first = true;
         let sentMs = 0;
-        let start = performance.now();
+        // Never start before already-sent media (e.g. trailing silence) has played out
+        let start = Math.max(performance.now(), this.endAt ?? 0);
         let pausedAt: number | undefined;
-        if (this.lastEndAt !== undefined) this.ts = (this.ts + Math.round((start - this.lastEndAt) * 48)) >>> 0;
+        if (this.endAt !== undefined) this.ts = (this.ts + Math.round((start - this.endAt) * 48)) >>> 0;
 
         const playback: IPlayback = {
             demuxer,
@@ -235,14 +237,10 @@ export class VoiceConnection extends EventEmitter {
 
                 const now = performance.now() - start;
                 while (queue.length && sentMs <= now + 20) {
-                    const payload = queue.shift()!;
-                    const samples = opusSamples(payload);
-                    this.session.write(new RtpPacket(new RtpHeader({ payloadType: 111, sequenceNumber: this.seq, timestamp: this.ts, marker: first }), payload));
-                    this.seq = (this.seq + 1) & 0xffff;
-                    this.ts = (this.ts + samples) >>> 0;
-                    sentMs += samples / 48;
+                    sentMs += this.writeRtp(this.session, queue.shift()!, first) / 48;
                     first = false;
                 }
+                this.endAt = start + sentMs;
                 if (queue.length < 50 && demuxer.isPaused()) demuxer.resume();
                 if (ended && !queue.length) this.finish(playback);
             }, 10)
@@ -282,8 +280,21 @@ export class VoiceConnection extends EventEmitter {
         this.current = undefined;
         clearInterval(playback.timer);
         playback.demuxer.destroy();
-        this.lastEndAt = performance.now();
+        // Trailing silence so receivers don't conceal (smear) the cut-off audio across the gap
+        if (this.session) {
+            for (let i = 0; i < 5; i++) this.writeRtp(this.session, SILENCE_FRAME, false);
+            this.endAt = (this.endAt ?? performance.now()) + 100;
+        }
         this.emit("end");
+    }
+
+    /** Send one Opus packet at the current RTP position; returns its samples. */
+    private writeRtp(session: LiveKitSession, payload: Buffer, marker: boolean) {
+        const samples = opusSamples(payload);
+        session.write(new RtpPacket(new RtpHeader({ payloadType: 111, sequenceNumber: this.seq, timestamp: this.ts, marker }), payload));
+        this.seq = (this.seq + 1) & 0xffff;
+        this.ts = (this.ts + samples) >>> 0;
+        return samples;
     }
 
     private async openSession() {
