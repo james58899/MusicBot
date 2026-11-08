@@ -338,6 +338,7 @@ class LiveKitSession extends events_1.EventEmitter {
         ws.on("close", (code, reason) => this.markLost(false, `signal socket closed (${code} ${reason.toString()})`));
         ws.on("error", err => console.error("[FluxerVoice] signal socket error:", err.message));
         const join = await this.wait("join");
+        this.identity = join.participant?.identity;
         const iceServers = join.iceServers.map(s => ({ urls: s.urls[0], username: s.username || undefined, credential: s.credential || undefined }));
         const codecs = {
             audio: [new werift_1.RTCRtpCodecParameters({
@@ -357,6 +358,7 @@ class LiveKitSession extends events_1.EventEmitter {
             value: new protocol_1.AddTrackRequest({ cid, name: "music", type: protocol_1.TrackType.AUDIO, source: protocol_1.TrackSource.MICROPHONE, stereo: true, disableDtx: true, disableRed: true })
         });
         const { track } = await published;
+        this.trackSid = track?.sid;
         const subscribed = this.wait("trackSubscribed", v => v.trackSid === track?.sid).catch(() => undefined);
         await this.pub.setLocalDescription(await this.pub.createOffer());
         this.send({ case: "offer", value: new protocol_1.SessionDescription({ type: "offer", sdp: this.pub.localDescription.sdp, id: 1 }) });
@@ -439,6 +441,14 @@ class LiveKitSession extends events_1.EventEmitter {
             case "trickle": {
                 const pc = message.value.target === protocol_1.SignalTarget.PUBLISHER ? this.pub : this.sub;
                 await pc?.addIceCandidate(JSON.parse(message.value.candidateInit));
+                break;
+            }
+            case "update": {
+                const self = message.value.participants.find(p => p.identity === this.identity);
+                if (self && !self.attributes.server_mute && self.tracks.some(t => t.sid === this.trackSid && t.muted)) {
+                    console.log("[FluxerVoice] Server mute lifted, unmuting track");
+                    this.send({ case: "mute", value: new protocol_1.MuteTrackRequest({ sid: this.trackSid, muted: false }) });
+                }
                 break;
             }
             case "refreshToken":

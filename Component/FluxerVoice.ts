@@ -8,7 +8,7 @@ import { Client, Events, GatewayOpcodes } from "@fluxerjs/core";
 import { opus } from "prism-media";
 import { MediaStream, MediaStreamTrack, RTCPeerConnection, RTCRtpCodecParameters, RtpHeader, RtpPacket } from "werift";
 import {
-    AddTrackRequest, DisconnectReason, LeaveRequest, LeaveRequest_Action, Ping, SessionDescription, SignalRequest, SignalResponse,
+    AddTrackRequest, DisconnectReason, LeaveRequest, LeaveRequest_Action, MuteTrackRequest, Ping, SessionDescription, SignalRequest, SignalResponse,
     SignalTarget, TrackSource, TrackType, TrickleRequest
 } from "@livekit/protocol";
 
@@ -360,6 +360,8 @@ class LiveKitSession extends EventEmitter {
     private pub?: RTCPeerConnection;
     private sub?: RTCPeerConnection;
     private track = new MediaStreamTrack({ kind: "audio" });
+    private trackSid?: string;
+    private identity?: string;
     private pingTimer?: NodeJS.Timeout;
     private waiters = new Map<SignalCase, { filter(value: unknown): boolean; resolve(value: unknown): void }>();
 
@@ -383,6 +385,7 @@ class LiveKitSession extends EventEmitter {
         ws.on("error", err => console.error("[FluxerVoice] signal socket error:", err.message));
 
         const join = await this.wait("join");
+        this.identity = join.participant?.identity;
         const iceServers = join.iceServers.map(s => ({ urls: s.urls[0], username: s.username || undefined, credential: s.credential || undefined }));
         const codecs = {
             audio: [new RTCRtpCodecParameters({
@@ -404,6 +407,7 @@ class LiveKitSession extends EventEmitter {
             value: new AddTrackRequest({ cid, name: "music", type: TrackType.AUDIO, source: TrackSource.MICROPHONE, stereo: true, disableDtx: true, disableRed: true })
         });
         const { track } = await published;
+        this.trackSid = track?.sid;
         // The SFU drops packets until a listener's downtrack is bound, then sends trackSubscribed (once per track)
         const subscribed = this.wait("trackSubscribed", v => v.trackSid === track?.sid).catch(() => undefined);
 
@@ -491,6 +495,16 @@ class LiveKitSession extends EventEmitter {
             case "trickle": {
                 const pc = message.value.target === SignalTarget.PUBLISHER ? this.pub : this.sub;
                 await pc?.addIceCandidate(JSON.parse(message.value.candidateInit) as Parameters<RTCPeerConnection["addIceCandidate"]>[0]);
+                break;
+            }
+            case "update": {
+                // Fluxer server mute = admin track mute + "server_mute" attribute. Remote unmute is disabled on the
+                // server, so unmuting only drops the attribute and the client must unmute its own track
+                const self = message.value.participants.find(p => p.identity === this.identity);
+                if (self && !self.attributes.server_mute && self.tracks.some(t => t.sid === this.trackSid && t.muted)) {
+                    console.log("[FluxerVoice] Server mute lifted, unmuting track");
+                    this.send({ case: "mute", value: new MuteTrackRequest({ sid: this.trackSid, muted: false }) });
+                }
                 break;
             }
             case "refreshToken":
