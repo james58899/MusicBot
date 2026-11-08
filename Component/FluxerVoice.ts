@@ -13,6 +13,7 @@ import {
 } from "@livekit/protocol";
 
 const JOIN_TIMEOUT = 20000;
+const SUBSCRIBE_TIMEOUT = 5000;
 const RECONNECT_ATTEMPTS = 6; // backoff 1s..30s, ~1 minute total
 const ERR_JOIN_TIMEOUT = Error("Voice join timeout");
 const ERR_NO_VOICE_SERVER = Error("Voice server unavailable");
@@ -391,7 +392,9 @@ class LiveKitSession extends EventEmitter {
             case: "addTrack",
             value: new AddTrackRequest({ cid, name: "music", type: TrackType.AUDIO, source: TrackSource.MICROPHONE, stereo: true, disableDtx: true, disableRed: true })
         });
-        await published;
+        const { track } = await published;
+        // The SFU drops packets until a listener's downtrack is bound, then sends trackSubscribed (once per track)
+        const subscribed = this.wait("trackSubscribed", v => v.trackSid === track?.sid).catch(() => undefined);
 
         await this.pub.setLocalDescription(await this.pub.createOffer());
         this.send({ case: "offer", value: new SessionDescription({ type: "offer", sdp: this.pub.localDescription!.sdp, id: 1 }) });
@@ -405,6 +408,8 @@ class LiveKitSession extends EventEmitter {
             });
             this.once("lost", () => reject(ERR_DISCONNECTED));
         });
+        // Hold playback until someone can hear it; no listener (or an old server) just delays the start
+        await Promise.race([subscribed, sleep(SUBSCRIBE_TIMEOUT)]);
     }
 
     public write(packet: RtpPacket) {

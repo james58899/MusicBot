@@ -15,6 +15,7 @@ const prism_media_1 = require("prism-media");
 const werift_1 = require("werift");
 const protocol_1 = require("@livekit/protocol");
 const JOIN_TIMEOUT = 20000;
+const SUBSCRIBE_TIMEOUT = 5000;
 const RECONNECT_ATTEMPTS = 6;
 const ERR_JOIN_TIMEOUT = Error("Voice join timeout");
 const ERR_NO_VOICE_SERVER = Error("Voice server unavailable");
@@ -347,7 +348,8 @@ class LiveKitSession extends events_1.EventEmitter {
             case: "addTrack",
             value: new protocol_1.AddTrackRequest({ cid, name: "music", type: protocol_1.TrackType.AUDIO, source: protocol_1.TrackSource.MICROPHONE, stereo: true, disableDtx: true, disableRed: true })
         });
-        await published;
+        const { track } = await published;
+        const subscribed = this.wait("trackSubscribed", v => v.trackSid === track?.sid).catch(() => undefined);
         await this.pub.setLocalDescription(await this.pub.createOffer());
         this.send({ case: "offer", value: new protocol_1.SessionDescription({ type: "offer", sdp: this.pub.localDescription.sdp, id: 1 }) });
         await new Promise((resolve, reject) => {
@@ -361,6 +363,7 @@ class LiveKitSession extends events_1.EventEmitter {
             });
             this.once("lost", () => reject(ERR_DISCONNECTED));
         });
+        await Promise.race([subscribed, (0, promises_1.setTimeout)(SUBSCRIBE_TIMEOUT)]);
     }
     write(packet) {
         this.track.writeRtp(packet);
