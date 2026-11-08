@@ -52,7 +52,10 @@ class Fluxer {
     }
     registerCommand() {
         this.bot.on(core_1.Events.MessageCreate, (msg) => {
-            switch (msg.content.split(" ")[1]) {
+            const [mention, cmd] = msg.content.split(" ");
+            if (mention !== `<@${this.bot.user?.id}>`)
+                return;
+            switch (cmd) {
                 case "hi":
                     this.commandHi(msg);
                     break;

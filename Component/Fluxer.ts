@@ -80,7 +80,9 @@ export class Fluxer {
 
     private registerCommand() {
         this.bot.on(Events.MessageCreate, (msg: Message) => {
-            switch (msg.content.split(" ")[1]) {
+            const [mention, cmd] = msg.content.split(" ");
+            if (mention !== `<@${this.bot.user?.id}>`) return; // Fluxer has no intents, so filter "@bot cmd" ourselves
+            switch (cmd) {
                 case "hi":
                     this.commandHi(msg);
                     break;
