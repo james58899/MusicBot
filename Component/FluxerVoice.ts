@@ -372,6 +372,7 @@ class LiveKitSession extends EventEmitter {
     private trackSid?: string;
     private identity?: string;
     private pingTimer?: NodeJS.Timeout;
+    private lastPong = Date.now();
     private waiters = new Map<SignalCase, { filter(value: unknown): boolean; resolve(value: unknown): void }>();
 
     constructor(private endpoint: string, private token: string) {
@@ -405,7 +406,16 @@ class LiveKitSession extends EventEmitter {
         };
         this.pub = this.createPeer({ iceServers, codecs }, SignalTarget.PUBLISHER);
         this.sub = this.createPeer({ iceServers, codecs }, SignalTarget.SUBSCRIBER);
-        this.pingTimer = setInterval(() => this.send({ case: "pingReq", value: new Ping({ timestamp: BigInt(Date.now()) }) }), (join.pingInterval || 5) * 1000);
+        // A half-open socket never fires "close"; missing pongs are the only sign it is dead
+        const pingTimeout = (join.pingTimeout || 15) * 1000;
+        this.lastPong = Date.now();
+        this.pingTimer = setInterval(() => {
+            if (Date.now() - this.lastPong > pingTimeout) {
+                this.markLost(false, "signal ping timeout");
+                return;
+            }
+            this.send({ case: "pingReq", value: new Ping({ timestamp: BigInt(Date.now()) }) });
+        }, (join.pingInterval || 5) * 1000);
 
         // Publish the track once; tracks are played into it, so listeners stay subscribed between songs
         this.pub.addTrack(this.track, new MediaStream([this.track]));
@@ -516,6 +526,9 @@ class LiveKitSession extends EventEmitter {
                 }
                 break;
             }
+            case "pongResp":
+                this.lastPong = Date.now();
+                break;
             case "refreshToken":
                 this.token = message.value;
                 this.emit("token", message.value);

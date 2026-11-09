@@ -327,6 +327,7 @@ class LiveKitSession extends events_1.EventEmitter {
         this.token = token;
         this.lost = false;
         this.track = new werift_1.MediaStreamTrack({ kind: "audio" });
+        this.lastPong = Date.now();
         this.waiters = new Map();
     }
     async open() {
@@ -352,7 +353,15 @@ class LiveKitSession extends events_1.EventEmitter {
         };
         this.pub = this.createPeer({ iceServers, codecs }, protocol_1.SignalTarget.PUBLISHER);
         this.sub = this.createPeer({ iceServers, codecs }, protocol_1.SignalTarget.SUBSCRIBER);
-        this.pingTimer = setInterval(() => this.send({ case: "pingReq", value: new protocol_1.Ping({ timestamp: BigInt(Date.now()) }) }), (join.pingInterval || 5) * 1000);
+        const pingTimeout = (join.pingTimeout || 15) * 1000;
+        this.lastPong = Date.now();
+        this.pingTimer = setInterval(() => {
+            if (Date.now() - this.lastPong > pingTimeout) {
+                this.markLost(false, "signal ping timeout");
+                return;
+            }
+            this.send({ case: "pingReq", value: new protocol_1.Ping({ timestamp: BigInt(Date.now()) }) });
+        }, (join.pingInterval || 5) * 1000);
         this.pub.addTrack(this.track, new werift_1.MediaStream([this.track]));
         const cid = this.track.id;
         const published = this.wait("trackPublished", v => v.cid === cid);
@@ -454,6 +463,9 @@ class LiveKitSession extends events_1.EventEmitter {
                 }
                 break;
             }
+            case "pongResp":
+                this.lastPong = Date.now();
+                break;
             case "refreshToken":
                 this.token = message.value;
                 this.emit("token", message.value);
