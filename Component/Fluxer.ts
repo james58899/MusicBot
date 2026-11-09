@@ -68,6 +68,10 @@ export class Fluxer {
         });
 
         this.bot.on(Events.Error, err => console.error("[Fluxer] Error:", err));
+        // A non-resumed reconnect drops our voice state; Fluxer then kicks the bot from LiveKit
+        this.bot.on(Events.ShardDisconnect, (id, code) => console.warn(`[Fluxer] Gateway shard ${id} disconnected (${code})`));
+        this.bot.on(Events.ShardResumed, id => console.log(`[Fluxer] Gateway shard ${id} resumed`));
+        this.bot.on(Events.ShardReady, id => console.log(`[Fluxer] Gateway shard ${id} ready (new session)`));
 
         // this.bot.on(Events.MessageCreate, msg => {
         //     if (msg.attachments.size > 0) this.procseeFile(msg);

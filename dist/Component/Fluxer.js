@@ -47,6 +47,9 @@ class Fluxer {
             });
         });
         this.bot.on(core_1.Events.Error, err => console.error("[Fluxer] Error:", err));
+        this.bot.on(core_1.Events.ShardDisconnect, (id, code) => console.warn(`[Fluxer] Gateway shard ${id} disconnected (${code})`));
+        this.bot.on(core_1.Events.ShardResumed, id => console.log(`[Fluxer] Gateway shard ${id} resumed`));
+        this.bot.on(core_1.Events.ShardReady, id => console.log(`[Fluxer] Gateway shard ${id} ready (new session)`));
         this.registerCommand();
         await this.bot.login(this.config.token);
     }
