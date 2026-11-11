@@ -320,6 +320,31 @@ class VoiceConnection extends events_1.EventEmitter {
     }
 }
 exports.VoiceConnection = VoiceConnection;
+const CODEC_ADVERTISEMENT = new protocol_1.DataPacket({
+    kind: protocol_1.DataPacket_Kind.RELIABLE,
+    value: {
+        case: "user",
+        value: new protocol_1.UserPacket({
+            topic: "fluxer.rtc.codec-negotiation.v1",
+            payload: Buffer.from(JSON.stringify({
+                op: 1,
+                d: {
+                    protocol: "livekit",
+                    data: { mode: "livekit-sfu" },
+                    codecs: [
+                        { name: "opus", type: "audio", payload_type: 120, priority: 1000, encode: true, decode: true },
+                        ...["AV1", "H265", "H264", "VP9", "VP8"].map((name, i) => ({
+                            name, type: "video", payload_type: [101, 105, 103, 109, 107][i], rtx_payload_type: [102, 106, 104, 110, 108][i],
+                            priority: 5000 - i * 1000, encode: false, decode: true
+                        }))
+                    ],
+                    rtc_connection_id: null,
+                    experiments: []
+                }
+            }))
+        })
+    }
+}).toBinary();
 class LiveKitSession extends events_1.EventEmitter {
     constructor(endpoint, token) {
         super();
@@ -363,6 +388,8 @@ class LiveKitSession extends events_1.EventEmitter {
             this.send({ case: "pingReq", value: new protocol_1.Ping({ timestamp: BigInt(Date.now()) }) });
         }, (join.pingInterval || 5) * 1000);
         this.pub.addTrack(this.track, new werift_1.MediaStream([this.track]));
+        this.data = this.pub.createDataChannel("_reliable");
+        this.data.onopen = () => this.advertiseCodecs();
         const cid = this.track.id;
         const published = this.wait("trackPublished", v => v.cid === cid);
         this.send({
@@ -399,6 +426,10 @@ class LiveKitSession extends events_1.EventEmitter {
         this.ws?.close();
         void this.pub?.close();
         void this.sub?.close();
+    }
+    advertiseCodecs() {
+        if (this.data?.readyState === "open")
+            this.data.send(Buffer.from(CODEC_ADVERTISEMENT));
     }
     markLost(fatal, reason) {
         if (this.lost)
@@ -456,6 +487,7 @@ class LiveKitSession extends events_1.EventEmitter {
                 break;
             }
             case "update": {
+                this.advertiseCodecs();
                 const self = message.value.participants.find(p => p.identity === this.identity);
                 if (self && !self.attributes.server_mute && self.tracks.some(t => t.sid === this.trackSid && t.muted)) {
                     console.log("[FluxerVoice] Server mute lifted, unmuting track");
