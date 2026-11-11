@@ -1,0 +1,160 @@
+diff --git a/dist/index.js b/dist/index.js
+index 0cd9ad3134f93bda5cd45edad56336bff7b55d59..0fe6b365a7034f15678c4a165caadd78be261e83 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -449,14 +449,15 @@ var WebSocketShard = class extends import_node_events.EventEmitter {
+           this.seq = null;
+           void this.persistSession(null);
+         }
+-        this.ws?.close(1e3);
++        this.ws?.close(4e3);
+         break;
+       }
+       case import_types.GatewayOpcodes.Reconnect:
+         this.debug("Reconnect requested");
+-        this.ws?.close(1e3);
++        this.ws?.close(4e3);
+         break;
+       case import_types.GatewayOpcodes.Heartbeat:
++        this.lastHeartbeatAck = true;
+         this.sendHeartbeat();
+         break;
+       case import_types.GatewayOpcodes.GatewayError: {
+@@ -525,7 +526,7 @@ var WebSocketShard = class extends import_node_events.EventEmitter {
+     if (this.phase === Phase.Destroyed || !this.ws) return;
+     this.phase = Phase.Idle;
+     try {
+-      this.ws.close(1e3);
++      this.ws.close(4e3);
+     } catch {
+     }
+     this.ws = null;
+@@ -597,7 +598,7 @@ var WebSocketShard = class extends import_node_events.EventEmitter {
+   sendHeartbeat() {
+     if (!this.lastHeartbeatAck && this.seq !== null) {
+       this.debug("Heartbeat ack missed; reconnecting");
+-      this.ws?.close(1e3);
++      this.ws?.close(4e3);
+       return;
+     }
+     this.lastHeartbeatAck = false;
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 3d613258e043157739a2016825143f6b28198692..702aa52b0610d38bd9dc632ddfd5734b5f06e4c1 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -402,14 +402,15 @@ var WebSocketShard = class extends EventEmitter {
+           this.seq = null;
+           void this.persistSession(null);
+         }
+-        this.ws?.close(1e3);
++        this.ws?.close(4e3);
+         break;
+       }
+       case GatewayOpcodes.Reconnect:
+         this.debug("Reconnect requested");
+-        this.ws?.close(1e3);
++        this.ws?.close(4e3);
+         break;
+       case GatewayOpcodes.Heartbeat:
++        this.lastHeartbeatAck = true;
+         this.sendHeartbeat();
+         break;
+       case GatewayOpcodes.GatewayError: {
+@@ -478,7 +479,7 @@ var WebSocketShard = class extends EventEmitter {
+     if (this.phase === Phase.Destroyed || !this.ws) return;
+     this.phase = Phase.Idle;
+     try {
+-      this.ws.close(1e3);
++      this.ws.close(4e3);
+     } catch {
+     }
+     this.ws = null;
+@@ -550,7 +551,7 @@ var WebSocketShard = class extends EventEmitter {
+   sendHeartbeat() {
+     if (!this.lastHeartbeatAck && this.seq !== null) {
+       this.debug("Heartbeat ack missed; reconnecting");
+-      this.ws?.close(1e3);
++      this.ws?.close(4e3);
+       return;
+     }
+     this.lastHeartbeatAck = false;
+diff --git a/dist/worker/ShardWorker.js b/dist/worker/ShardWorker.js
+index 53e0566949d1947f973725ada96320bf6c2e56ee..e97392c1ab3e9f6234b5149ff8a7b033ee6df238 100644
+--- a/dist/worker/ShardWorker.js
++++ b/dist/worker/ShardWorker.js
+@@ -309,14 +309,15 @@ var WebSocketShard = class extends import_node_events.EventEmitter {
+           this.seq = null;
+           void this.persistSession(null);
+         }
+-        this.ws?.close(1e3);
++        this.ws?.close(4e3);
+         break;
+       }
+       case import_types.GatewayOpcodes.Reconnect:
+         this.debug("Reconnect requested");
+-        this.ws?.close(1e3);
++        this.ws?.close(4e3);
+         break;
+       case import_types.GatewayOpcodes.Heartbeat:
++        this.lastHeartbeatAck = true;
+         this.sendHeartbeat();
+         break;
+       case import_types.GatewayOpcodes.GatewayError: {
+@@ -385,7 +386,7 @@ var WebSocketShard = class extends import_node_events.EventEmitter {
+     if (this.phase === Phase.Destroyed || !this.ws) return;
+     this.phase = Phase.Idle;
+     try {
+-      this.ws.close(1e3);
++      this.ws.close(4e3);
+     } catch {
+     }
+     this.ws = null;
+@@ -457,7 +458,7 @@ var WebSocketShard = class extends import_node_events.EventEmitter {
+   sendHeartbeat() {
+     if (!this.lastHeartbeatAck && this.seq !== null) {
+       this.debug("Heartbeat ack missed; reconnecting");
+-      this.ws?.close(1e3);
++      this.ws?.close(4e3);
+       return;
+     }
+     this.lastHeartbeatAck = false;
+diff --git a/dist/worker/ShardWorker.mjs b/dist/worker/ShardWorker.mjs
+index 82ca4b978c0ea387d3c433e835f920b77a7c8aab..cc0f19cb79838174e8120c7e08b952d3387f6e52 100644
+--- a/dist/worker/ShardWorker.mjs
++++ b/dist/worker/ShardWorker.mjs
+@@ -292,14 +292,15 @@ var WebSocketShard = class extends EventEmitter {
+           this.seq = null;
+           void this.persistSession(null);
+         }
+-        this.ws?.close(1e3);
++        this.ws?.close(4e3);
+         break;
+       }
+       case GatewayOpcodes.Reconnect:
+         this.debug("Reconnect requested");
+-        this.ws?.close(1e3);
++        this.ws?.close(4e3);
+         break;
+       case GatewayOpcodes.Heartbeat:
++        this.lastHeartbeatAck = true;
+         this.sendHeartbeat();
+         break;
+       case GatewayOpcodes.GatewayError: {
+@@ -368,7 +369,7 @@ var WebSocketShard = class extends EventEmitter {
+     if (this.phase === Phase.Destroyed || !this.ws) return;
+     this.phase = Phase.Idle;
+     try {
+-      this.ws.close(1e3);
++      this.ws.close(4e3);
+     } catch {
+     }
+     this.ws = null;
+@@ -440,7 +441,7 @@ var WebSocketShard = class extends EventEmitter {
+   sendHeartbeat() {
+     if (!this.lastHeartbeatAck && this.seq !== null) {
+       this.debug("Heartbeat ack missed; reconnecting");
+-      this.ws?.close(1e3);
++      this.ws?.close(4e3);
+       return;
+     }
+     this.lastHeartbeatAck = false;

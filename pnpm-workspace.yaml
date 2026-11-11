@@ -16,6 +16,7 @@ allowedDeprecatedVersions:
 patchedDependencies:
   prism-media@1.3.5: patches/prism-media@1.3.5.patch
   '@projectdysnomia/dysnomia@0.2.3': patches/@projectdysnomia__dysnomia@0.2.3.patch
+  '@fluxerjs/ws@3.1.0': patches/@fluxerjs__ws@3.1.0.patch
 
 peerDependencyRules:
   allowedVersions:

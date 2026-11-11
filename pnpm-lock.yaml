@@ -167,6 +167,7 @@ overrides:
   tough-cookie@<4.1.3: '>=4.1.3'
 
 patchedDependencies:
+  '@fluxerjs/ws@3.1.0': f6e1bc2852d14f60aa8600467674e5abc6adcfba4076b2b7fde00ed5d4fe90b1
   '@projectdysnomia/dysnomia@0.2.3': 3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3
   prism-media@1.3.5: 282b25f9b3e88e63883a8ee37364a5444e2318b86010d13bac1d290e55287a27
 
@@ -2196,7 +2197,7 @@ snapshots:
       '@fluxerjs/rest': 3.1.0
       '@fluxerjs/types': 3.1.0
       '@fluxerjs/util': 3.1.0
-      '@fluxerjs/ws': 3.1.0(bufferutil@4.0.9)
+      '@fluxerjs/ws': 3.1.0(patch_hash=f6e1bc2852d14f60aa8600467674e5abc6adcfba4076b2b7fde00ed5d4fe90b1)(bufferutil@4.0.9)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -2218,7 +2219,7 @@ snapshots:
     dependencies:
       '@fluxerjs/types': 3.1.0
 
-  '@fluxerjs/ws@3.1.0(bufferutil@4.0.9)':
+  '@fluxerjs/ws@3.1.0(patch_hash=f6e1bc2852d14f60aa8600467674e5abc6adcfba4076b2b7fde00ed5d4fe90b1)(bufferutil@4.0.9)':
     dependencies:
       '@fluxerjs/types': 3.1.0
       '@fluxerjs/util': 3.1.0
