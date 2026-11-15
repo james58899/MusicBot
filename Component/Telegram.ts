@@ -1,5 +1,5 @@
 import { ObjectId, WithId } from "mongodb";
-import TelegramBot, { CallbackQuery, EditMessageTextOptions, InlineKeyboardButton, Message, User } from "node-telegram-bot-api";
+import { Bot, CallbackQuery, EditMessageTextParams, InlineKeyboardButton, Message, ReplyMarkup, SendMessageParams } from "node-telegram-bot-api";
 import { basename } from "path";
 import Queue from "promise-queue";
 import { parse, URL } from "url";
@@ -20,10 +20,11 @@ export class Telegram {
     private audio: AudioManager;
     private user: UserManager;
     private list: ListManager;
-    private bot: TelegramBot;
-    private me!: User;
+    private bot: Bot;
     private messageQueue = new Queue(1);
     private audioAddSession = new Map<number, ObjectId>();
+    private replyListeners = new Map<string, (reply: Message) => unknown>();
+    private callbackListeners = new Set<(query: CallbackQuery) => unknown>();
 
     constructor(core: Core) {
         if (!core.config.telegram.token) throw ERR_MISSING_TOKEN;
@@ -33,132 +34,153 @@ export class Telegram {
         this.list = core.listManager;
 
         // Create bot
-        this.bot = new TelegramBot(core.config.telegram.token as string, {
-            polling: true,
-            baseApiUrl: core.config.telegram.endpoint
-        });
+        const token = core.config.telegram.token as string;
+        const apiRoot = (core.config.telegram.endpoint as string | undefined) || "https://api.telegram.org";
+        this.bot = new Bot(token, { apiRoot });
 
-        // Register URLParser
-        this.audio.urlParser.registerURLHandler("^tg://", this.getFile.bind(this));
-        this.audio.urlParser.registerMetadataProvider("^tg://", this.getMetadata.bind(this));
-
-        // Register listener
-        void this.bot.getMe().then(me => {
-            this.me = me;
-            this.listener();
+        // Register URLParser, v2 has no getFileLink so build the download URL here
+        const getFile = (fileId: string) => retry(async () => {
+            const file = await this.bot.api.getFile({ file_id: fileId.replace("tg://", "") });
+            return `${apiRoot}/file/bot${token}/${file.file_path}`;
         });
+        this.audio.urlParser.registerURLHandler("^tg://", getFile);
+        this.audio.urlParser.registerMetadataProvider("^tg://", async fileId => this.audio.urlParser.getMetadata(await getFile(fileId)));
+
+        // Register listener, polling fetches getMe() before the first update
+        this.listener();
+        // Retry so a network blip at boot (getMe) doesn't leave Telegram dead
+        void retry(() => this.bot.startPolling(undefined, { onError: err => console.error(err) })).catch(err => console.error("[Telegram] Polling stopped:", err));
+    }
+
+    private get me() {
+        return this.bot.botInfo!;
     }
 
     private listener() {
-        // Handle command
-        this.bot.onText(/^\/(\w+)@?(\w*)/i, (msg, match) => {
-            if (!match || msg.chat.type !== "private" && match[2] !== this.me.username) return;
-            switch (match[1]) {
-                case "register":
-                    void this.commandRegister(msg);
-                    break;
-                case "bind":
-                    void this.commandBind(msg);
-                    break;
-                case "info":
-                    void this.commandInfo(msg);
-                    break;
-                case "list":
-                    void this.commandShowList(msg);
-                    break;
+        // Updates are dispatched one by one, so never await here (sendNeedTitle waits for a later update)
+        this.bot.on("message", ctx => {
+            const msg = ctx.message!;
+            const replyTo = msg.reply_to_message && this.replyListeners.get(`${msg.chat.id}/${msg.reply_to_message.message_id}`);
+            if (replyTo) void replyTo(msg);
+            if (msg.text) {
+                const command = /^\/(\w+)@?(\w*)/i.exec(msg.text);
+                if (command) this.onCommand(msg, command);
+                const audioID = /^([0-9a-f]{24})$/i.exec(msg.text);
+                if (audioID) void this.onAudioID(msg, audioID);
+                void this.onText(msg);
             }
+            if (msg.audio) void this.checkSessionPermission(msg).then(() => this.processAudio(msg));
+            if (msg.document) void this.checkSessionPermission(msg).then(() => this.processFile(msg));
         });
 
-        // Audio
-        this.bot.on("audio", async (msg: Message) => {
+        this.bot.on("callback_query", ctx => {
+            const query = ctx.callbackQuery!;
+            this.callbackListeners.forEach(listener => void listener(query));
+            void this.onCallbackQuery(query);
+        });
+    }
+
+    private onReply(message: Message, listener: (reply: Message) => unknown) {
+        this.replyListeners.set(`${message.chat.id}/${message.message_id}`, listener);
+    }
+
+    private offReply(message: Message) {
+        this.replyListeners.delete(`${message.chat.id}/${message.message_id}`);
+    }
+
+    private onCommand(msg: Message, match: RegExpExecArray) {
+        if (msg.chat.type !== "private" && match[2] !== this.me.username) return;
+        switch (match[1]) {
+            case "register":
+                void this.commandRegister(msg);
+                break;
+            case "bind":
+                void this.commandBind(msg);
+                break;
+            case "info":
+                void this.commandInfo(msg);
+                break;
+            case "list":
+                void this.commandShowList(msg);
+                break;
+        }
+    }
+
+    // Link
+    private async onText(msg: Message) {
+        if (msg.entities && msg.entities.some(entity => entity.type.match(/url|text_link/ig) != null)) {
             await this.checkSessionPermission(msg);
-            void this.processAudio(msg);
-        });
+            void this.sendProcessing(msg);
+            for (const entity of msg.entities) {
+                if (entity.type === "url" && msg.text) {
+                    void this.processLink(msg, msg.text.substr(entity.offset, entity.length));
+                }
 
-        // File
-        this.bot.on("document", async (msg: Message) => {
-            await this.checkSessionPermission(msg);
-            void this.processFile(msg);
-        });
-
-        // Link
-        this.bot.on("text", async (msg: Message) => {
-            if (msg.entities && msg.entities.some(entity => entity.type.match(/url|text_link/ig) != null)) {
-                await this.checkSessionPermission(msg);
-                void this.sendProcessing(msg);
-                for (const entity of msg.entities) {
-                    if (entity.type === "url" && msg.text) {
-                        void this.processLink(msg, msg.text.substr(entity.offset, entity.length));
-                    }
-
-                    if (entity.type === "text_link" && entity.url) {
-                        void this.processLink(msg, entity.url);
-                    }
+                if (entity.type === "text_link" && entity.url) {
+                    void this.processLink(msg, entity.url);
                 }
             }
-        });
+        }
+    }
 
-        // Audio ID
-        this.bot.onText(/^([0-9a-f]{24})$/i, async (msg, match) => {
-            await this.checkSessionPermission(msg);
-            const session = this.audioAddSession.get(msg.chat.id);
-            if (!session || !match) return;
+    // Audio ID
+    private async onAudioID(msg: Message, match: RegExpExecArray) {
+        await this.checkSessionPermission(msg);
+        const session = this.audioAddSession.get(msg.chat.id);
+        if (!session) return;
 
-            const audio = await this.audio.get(new ObjectId(match[1]));
-            if (!audio) {
-                void this.queueSendMessage(msg.chat.id, "Sound ID not found in database", { reply_to_message_id: msg.message_id });
-                return;
-            }
+        const audio = await this.audio.get(new ObjectId(match[1]));
+        if (!audio) {
+            void this.queueSendMessage(msg.chat.id, "Sound ID not found in database", { reply_parameters: { message_id: msg.message_id } });
+            return;
+        }
 
-            await this.list.addAudio(session, audio._id);
-            void this.queueSendMessage(msg.chat.id, "Added to list!", { reply_to_message_id: msg.message_id });
-        });
+        await this.list.addAudio(session, audio._id);
+        void this.queueSendMessage(msg.chat.id, "Added to list!", { reply_parameters: { message_id: msg.message_id } });
+    }
 
-        // Inline button
-        this.bot.on("callback_query", async (query: CallbackQuery) => {
-            void this.bot.answerCallbackQuery(query.id);
+    // Inline button
+    private async onCallbackQuery(query: CallbackQuery) {
+        void this.bot.api.answerCallbackQuery({ callback_query_id: query.id });
 
-            if (!query.data) return;
-            const data = query.data.split(" ");
+        if (!query.data) return;
+        const data = query.data.split(" ");
 
-            switch (data[0]) {
-                case "AudioInfo":
-                    await this.audioInfoCallback(query, data);
-                    break;
-                case "List":
-                    await this.playlistCallback(query, data);
-                    break;
-                case "ListInfo":
-                    await this.listInfoCallback(query, data);
-                    break;
-                case "ListCreate":
-                    await this.listCreateCallback(query, data);
-                    break;
-                case "ListAudioAdd":
-                    await this.listAudioAddCallback(query, data);
-                    break;
-                case "ListAudioDel":
-                    await this.listAudioDeleteCallback(query, data);
-                    break;
-                case "ListAudio":
-                    await this.listAudioCallback(query, data);
-                    break;
-                case "AddAdmin":
-                    await this.AddAdminCallback(query, data);
-                    break;
-                case "RemoveAdmin":
-                    await this.RemoveAdminCallback(query, data);
-                    break;
-                case "ListRename":
-                    await this.listRenameCallback(query, data);
-                    break;
-                case "ListDelete":
-                    await this.listDeleteCallback(query, data);
-                    break;
-            }
-        });
-
-        this.bot.on("error", err => console.error(err));
+        switch (data[0]) {
+            case "AudioInfo":
+                await this.audioInfoCallback(query, data);
+                break;
+            case "List":
+                await this.playlistCallback(query, data);
+                break;
+            case "ListInfo":
+                await this.listInfoCallback(query, data);
+                break;
+            case "ListCreate":
+                await this.listCreateCallback(query, data);
+                break;
+            case "ListAudioAdd":
+                await this.listAudioAddCallback(query, data);
+                break;
+            case "ListAudioDel":
+                await this.listAudioDeleteCallback(query, data);
+                break;
+            case "ListAudio":
+                await this.listAudioCallback(query, data);
+                break;
+            case "AddAdmin":
+                await this.AddAdminCallback(query, data);
+                break;
+            case "RemoveAdmin":
+                await this.RemoveAdminCallback(query, data);
+                break;
+            case "ListRename":
+                await this.listRenameCallback(query, data);
+                break;
+            case "ListDelete":
+                await this.listDeleteCallback(query, data);
+                break;
+        }
     }
 
     private async commandRegister(msg: Message) {
@@ -255,7 +277,7 @@ export class Telegram {
 
         const view = await ((data[1]) ? this.genPlaylistView(parseInt(data[2], 10), new ObjectId(data[1])) : this.genPlaylistView(parseInt(data[2], 10)));
 
-        void this.bot.editMessageText(view.text, {
+        void this.bot.api.editMessageText({ text: view.text,
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
             reply_markup: { inline_keyboard: view.button }
@@ -267,13 +289,13 @@ export class Telegram {
         const user = await this.getUser(query.from.id);
         if (!user) return;
         const view = await this.genListInfoView(new ObjectId(data[1]), user._id);
-        const options: EditMessageTextOptions = {
+        const options: EditMessageTextParams = {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
             reply_markup: { inline_keyboard: view.button }
         };
 
-        void this.bot.editMessageText(view.text, options);
+        void this.bot.api.editMessageText({ text: view.text, ...options });
     }
 
     private async listCreateCallback(query: CallbackQuery, data: string[]) {
@@ -288,21 +310,19 @@ export class Telegram {
             }
         });
 
-        if (message instanceof Error) throw message;
-
-        this.bot.onReplyToMessage(message.chat.id, message.message_id, async reply => {
+        this.onReply(message, async reply => {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
                 await this.list.create(reply.text, user._id);
                 void this.queueSendMessage(reply.chat.id, "Success!", {
-                    reply_to_message_id: reply.message_id
+                    reply_parameters: { message_id: reply.message_id }
                 });
             } else {
                 void this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
-            this.bot.removeReplyListener(message.message_id);
+            this.offReply(message);
         });
     }
 
@@ -314,10 +334,7 @@ export class Telegram {
 
         if (data[2] === "done") {
             this.audioAddSession.delete(query.message.chat.id);
-            void this.bot.editMessageText(
-                "Now this list have " + list.audio.length.toString() + " sounds!",
-                { chat_id: query.message.chat.id, message_id: query.message.message_id }
-            );
+            void this.bot.api.editMessageText({ text: "Now this list have " + list.audio.length.toString() + " sounds!", chat_id: query.message.chat.id, message_id: query.message.message_id });
         } else {
             this.audioAddSession.set(query.message.chat.id, list._id);
             void this.queueSendMessage(query.message.chat.id, "Send me audio file or sound ID you want add to list " + list.name, {
@@ -336,10 +353,7 @@ export class Telegram {
                 await this.list.delAudio(new ObjectId(data[1]), new ObjectId(data[2]));
                 text = "Deleted";
             }
-            void this.bot.editMessageReplyMarkup(
-                { inline_keyboard: [[{ text, callback_data: "dummy" }]] },
-                { chat_id: query.message.chat.id, message_id: query.message.message_id }
-            );
+            void this.bot.api.editMessageReplyMarkup({ chat_id: query.message.chat.id, message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text, callback_data: "dummy" }]] } });
         } else {
             const audioID = new ObjectId(data[2]);
             const list = await this.list.get(new ObjectId(data[1]));
@@ -365,13 +379,13 @@ export class Telegram {
         if (!view) return;
 
         if (view.button) {
-            void this.bot.editMessageText(view.text, {
+            void this.bot.api.editMessageText({ text: view.text,
                 chat_id: query.message.chat.id,
                 message_id: query.message.message_id,
                 reply_markup: { inline_keyboard: view.button }
             });
         } else {
-            void this.bot.editMessageText(view.text, {
+            void this.bot.api.editMessageText({ text: view.text,
                 chat_id: query.message.chat.id,
                 message_id: query.message.message_id
             });
@@ -391,9 +405,7 @@ export class Telegram {
             }
         });
 
-        if (message instanceof Error) throw message;
-
-        this.bot.onReplyToMessage(message.chat.id, message.message_id, async reply => {
+        this.onReply(message, async reply => {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
@@ -408,7 +420,7 @@ export class Telegram {
                     } else {
                         await this.list.addAdmin(list._id, userToAdd._id);
                         void this.queueSendMessage(reply.chat.id, "Success!", {
-                            reply_to_message_id: reply.message_id
+                            reply_parameters: { message_id: reply.message_id }
                         });
                     }
                 }
@@ -416,7 +428,7 @@ export class Telegram {
                 void this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
-            this.bot.removeReplyListener(message.message_id);
+            this.offReply(message);
         });
     }
 
@@ -433,9 +445,7 @@ export class Telegram {
             }
         });
 
-        if (message instanceof Error) throw message;
-
-        this.bot.onReplyToMessage(message.chat.id, message.message_id, async reply => {
+        this.onReply(message, async reply => {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
@@ -450,7 +460,7 @@ export class Telegram {
                     } else {
                         await this.list.removeAdmin(list._id, userToRemove._id);
                         void this.queueSendMessage(reply.chat.id, "Success!", {
-                            reply_to_message_id: reply.message_id
+                            reply_parameters: { message_id: reply.message_id }
                         });
                     }
                 }
@@ -458,7 +468,7 @@ export class Telegram {
                 void this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
-            this.bot.removeReplyListener(message.message_id);
+            this.offReply(message);
         });
     }
 
@@ -475,21 +485,19 @@ export class Telegram {
             }
         });
 
-        if (message instanceof Error) throw message;
-
-        this.bot.onReplyToMessage(message.chat.id, message.message_id, async reply => {
+        this.onReply(message, async reply => {
             if (!reply.from || reply.from.id !== query.from.id) return;
 
             if (reply.text) {
                 await this.list.rename(list._id, reply.text);
                 void this.queueSendMessage(reply.chat.id, "Success!", {
-                    reply_to_message_id: reply.message_id
+                    reply_parameters: { message_id: reply.message_id }
                 });
             } else {
                 void this.queueSendMessage(reply.chat.id, "Invalid name!");
             }
 
-            this.bot.removeReplyListener(message.message_id);
+            this.offReply(message);
         });
     }
 
@@ -501,10 +509,7 @@ export class Telegram {
 
         if (data[2]) {
             await this.list.delete(new ObjectId(data[1]));
-            void this.bot.editMessageReplyMarkup(
-                { inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] },
-                { chat_id: query.message.chat.id, message_id: query.message.message_id }
-            );
+            void this.bot.api.editMessageReplyMarkup({ chat_id: query.message.chat.id, message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: "Deleted", callback_data: "dummy" }]] } });
         } else {
             void this.queueSendMessage(query.message.chat.id, `Are you sure delete list ${list.name}?`, {
                 reply_markup: { inline_keyboard: [[{ text: "Yes", callback_data: `ListDelete ${data[1]} y` }]] }
@@ -752,7 +757,7 @@ export class Telegram {
 
     private async sendProcessing(msg: Message) {
         return this.queueSendMessage(msg.chat.id, "Processing...", {
-            reply_to_message_id: msg.message_id
+            reply_parameters: { message_id: msg.message_id }
         });
     }
 
@@ -760,15 +765,15 @@ export class Telegram {
         if (!msg.from) return;
 
         if (msg.from.id === this.me.id) {
-            void this.bot.editMessageText(errorMessage, {
+            void this.bot.api.editMessageText({ text: errorMessage,
                 chat_id: msg.chat.id,
-                disable_web_page_preview: true,
+                link_preview_options: { is_disabled: true },
                 message_id: msg.message_id
             });
         } else {
             void this.queueSendMessage(msg.chat.id, errorMessage, {
-                disable_web_page_preview: true,
-                reply_to_message_id: msg.message_id
+                link_preview_options: { is_disabled: true },
+                reply_parameters: { message_id: msg.message_id }
             });
         }
     }
@@ -778,10 +783,11 @@ export class Telegram {
         const needTitle = await this.queueSendMessage(msg.chat.id, "The music doesn't have a title.\nPlease add one for it!", {
             reply_markup: {
                 force_reply: true,
+                // Same mixed markup v1 sent; v2 types only allow one kind
                 inline_keyboard: (filename) ? [[{ text: "Use filename", callback_data: `setTitle/${msg.message_id}/${filename}` }]] : undefined,
                 selective: true,
-            },
-            reply_to_message_id: msg.message_id
+            } as unknown as ReplyMarkup,
+            reply_parameters: { message_id: msg.message_id }
         });
 
         return new Promise<string>((resolve, reject) => {
@@ -793,27 +799,27 @@ export class Telegram {
 
                 resolve(data[2]);
 
-                void this.bot.deleteMessage(needTitle.chat.id, needTitle.message_id);
-                this.bot.removeReplyListener(needTitle.message_id);
-                this.bot.removeListener("callback_query", callbackListener);
+                void this.bot.api.deleteMessage({ chat_id: needTitle.chat.id, message_id: needTitle.message_id });
+                this.offReply(needTitle);
+                this.callbackListeners.delete(callbackListener);
             };
 
-            this.bot.on("callback_query", callbackListener);
+            this.callbackListeners.add(callbackListener);
 
-            this.bot.onReplyToMessage(msg.chat.id, needTitle.message_id, reply => {
+            this.onReply(needTitle, reply => {
                 // If not origin sender
                 if (!reply.from || !msg.from || reply.from.id !== msg.from.id) return;
 
                 if (reply.text) {
-                    void this.queueSendMessage(reply.chat.id, "Title set", { reply_to_message_id: reply.message_id });
+                    void this.queueSendMessage(reply.chat.id, "Title set", { reply_parameters: { message_id: reply.message_id } });
                     resolve(reply.text);
                 } else {
-                    void this.queueSendMessage(reply.chat.id, "It doesn't look like a title.", { reply_to_message_id: reply.message_id, });
+                    void this.queueSendMessage(reply.chat.id, "It doesn't look like a title.", { reply_parameters: { message_id: reply.message_id }, });
                     reject(ERR_NOT_VALID_TITLE);
                 }
 
-                this.bot.removeReplyListener(needTitle.message_id);
-                this.bot.removeListener("callback_query", callbackListener);
+                this.offReply(needTitle);
+                this.callbackListeners.delete(callbackListener);
             });
         });
     }
@@ -824,13 +830,13 @@ export class Telegram {
 
         const message = `ID: ${audio._id}\nTitle: ${audio.title}${(session) ? "\n\nAdded to list!" : ""}`;
         if (msg.from && msg.from.id === this.me.id) {
-            return this.bot.editMessageText(message, {
+            return this.bot.api.editMessageText({ text: message,
                 chat_id: msg.chat.id,
                 message_id: msg.message_id
             });
         } else {
             return this.queueSendMessage(msg.chat.id, message, {
-                reply_to_message_id: msg.message_id
+                reply_parameters: { message_id: msg.message_id }
             });
         }
     }
@@ -838,16 +844,6 @@ export class Telegram {
     // Misc
     private getUser(id: number) {
         return this.user.getFromBind(BIND_TYPE, id);
-    }
-
-    private getFile(fileId: string) {
-        fileId = fileId.replace("tg://", "");
-        return retry(() => this.bot.getFileLink(fileId));
-    }
-
-    private async getMetadata(fileId: string) {
-        const file = await this.getFile(fileId);
-        return this.audio.urlParser.getMetadata(file);
     }
 
     private async checkSessionPermission(msg: Message) {
@@ -865,9 +861,9 @@ export class Telegram {
     }
 
     // TODO rewrite message cool down
-    private queueSendMessage(chatId: number | string, text: string, options?: TelegramBot.SendMessageOptions) {
+    private queueSendMessage(chatId: number | string, text: string, options?: Omit<SendMessageParams, "chat_id" | "text">) {
         return this.messageQueue.add(async () => {
-            const callback = this.bot.sendMessage(chatId, text, options);
+            const callback = this.bot.api.sendMessage({ chat_id: chatId, text, ...options });
             await sleep(1000);
             return callback;
         });

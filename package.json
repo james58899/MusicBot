@@ -16,7 +16,7 @@
     "@projectdysnomia/dysnomia": "github:projectdysnomia/dysnomia#3b354c30b255b892e75860bc60df6a9ed7495386",
     "fluent-ffmpeg": "^2.1.3",
     "mongodb": "^7.9.0",
-    "node-telegram-bot-api": "^0.66.0",
+    "node-telegram-bot-api": "^2.4.0",
     "prism-media": "1.3.5",
     "promise-queue": "^2.2.5",
     "shuffle-array": "^1.0.1",
@@ -27,7 +27,6 @@
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.28",
     "@types/node": "^26.6.6",
-    "@types/node-telegram-bot-api": "^0.64.15",
     "@types/promise-queue": "^2.2.3",
     "@types/shuffle-array": "^1.0.5",
     "@types/ws": "^8.18.2",
