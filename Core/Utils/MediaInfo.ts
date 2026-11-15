@@ -26,7 +26,8 @@ export async function getMediaInfo(file: string) {
     return new Promise<IAudioMetadata>((resolve, reject) => {
         execFile(ffprobe, ffprobeOption, execOption, (err, stdout) => {
             if (err) {
-                reject(err as Error);
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- ExecFileException is an Error, rule misses Omit<> type
+                reject(err);
                 return;
             }
 
