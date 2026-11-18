@@ -175,8 +175,8 @@ importers:
         specifier: 3.3.0
         version: 3.3.0(bufferutil@4.2.0)
       '@livekit/protocol':
-        specifier: 1.54.0
-        version: 1.54.0
+        specifier: 1.54.1
+        version: 1.54.1
       '@projectdysnomia/dysnomia':
         specifier: github:projectdysnomia/dysnomia#3b354c30b255b892e75860bc60df6a9ed7495386
         version: https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(bufferutil@4.2.0)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.4)(pako@3.0.3)(sodium-native@5.2.1(bare-events@2.9.2))
@@ -463,8 +463,8 @@ packages:
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
 
-  '@livekit/protocol@1.54.0':
-    resolution: {integrity: sha512-981RI+N+cZl52IYIUfW2F2gBLOvPHY2fpROADxJlLLuZ1n/cBZsza142lRpn2U08YLfeI4totefzJuq24+/nIQ==}
+  '@livekit/protocol@1.54.1':
+    resolution: {integrity: sha512-eW6iAeKQdljAD4aDmANnV2SE0iQ06Atw2F1F4kIiy4lXaD5bNTlfAnH27B+ZKgu49Nrnn172JnRQ3WxXVBhlBQ==}
 
   '@mongodb-js/saslprep@1.6.3':
     resolution: {integrity: sha512-aHGFvT95c82CoQ7hb6qXpz8Hcc5PJb3ZtQ+P01QDBbyQday0mjcrJPeNJOHCgWe0pGX0zKmKP+1mWi/I/BCX9Q==}
@@ -1685,7 +1685,7 @@ snapshots:
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
-  '@livekit/protocol@1.54.0':
+  '@livekit/protocol@1.54.1':
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
