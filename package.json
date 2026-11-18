@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@fluxerjs/core": "3.3.0",
-    "@livekit/protocol": "1.54.0",
+    "@livekit/protocol": "1.54.1",
     "@projectdysnomia/dysnomia": "github:projectdysnomia/dysnomia#3b354c30b255b892e75860bc60df6a9ed7495386",
     "fluent-ffmpeg": "^2.1.3",
     "mongodb": "^7.9.0",
