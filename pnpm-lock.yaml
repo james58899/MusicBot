@@ -179,7 +179,7 @@ importers:
         version: 1.54.0
       '@projectdysnomia/dysnomia':
         specifier: github:projectdysnomia/dysnomia#3b354c30b255b892e75860bc60df6a9ed7495386
-        version: https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(bufferutil@4.2.0)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.4)(pako@3.0.3)(sodium-native@5.2.1(bare-events@2.9.2))
+        version: https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(bufferutil@4.2.0)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.4)(pako@3.0.3)(sodium-native@5.2.2(bare-events@2.9.2))
       fluent-ffmpeg:
         specifier: ^2.1.3
         version: 2.1.3
@@ -264,8 +264,8 @@ importers:
         specifier: ^3.0.3
         version: 3.0.3
       sodium-native:
-        specifier: ^5.2.1
-        version: 5.2.1(bare-events@2.9.2)
+        specifier: ^5.2.2
+        version: 5.2.2(bare-events@2.9.2)
 
 packages:
 
@@ -1340,8 +1340,8 @@ packages:
   shuffle-array@1.0.1:
     resolution: {integrity: sha512-0TFRU8zVQaLatWKr0/czo19VyPNgb/a3sBc1GAjVfivfzEGaS54vueNgtAu/8/pW7EM/VF5fwq9zgpLdGyRmVw==}
 
-  sodium-native@5.2.1:
-    resolution: {integrity: sha512-F/8A2cvcWF1cxFa8Ipv39fWKx/DMmAfOXQETF0b4X2sdBtgZlR+E0Lqj3cFeZU9Z78Au20TFfJc2MUcqBR9eJA==}
+  sodium-native@5.2.2:
+    resolution: {integrity: sha512-SYlJY+iPXoVJKxYjiuQtItBDseqMmeVDWCnda18ogPfg4oOlDjKnwXtKJBYgF3l6xwX2rxT1GbgV0BdTadSjoA==}
     engines: {bare: '>=1.16.0'}
 
   source-map@0.8.0:
@@ -1712,7 +1712,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.3
 
-  '@projectdysnomia/dysnomia@https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(bufferutil@4.2.0)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.4)(pako@3.0.3)(sodium-native@5.2.1(bare-events@2.9.2))':
+  '@projectdysnomia/dysnomia@https://codeload.github.com/projectdysnomia/dysnomia/tar.gz/3b354c30b255b892e75860bc60df6a9ed7495386(patch_hash=3925c990433157f8d32863bd210f906c6c06086cbc99bf1d1d585115daa2dfd3)(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(bufferutil@4.2.0)(erlpack@https://codeload.github.com/discord/erlpack/tar.gz/2a4c0e832f3cd4e07c92d4baec326a631ed50f59)(eventemitter3@5.0.4)(pako@3.0.3)(sodium-native@5.2.2(bare-events@2.9.2))':
     dependencies:
       ws: 8.23.0(bufferutil@4.2.0)
     optionalDependencies:
@@ -1722,7 +1722,7 @@ snapshots:
       eventemitter3: 5.0.4
       opusscript: 0.1.1
       pako: 3.0.3
-      sodium-native: 5.2.1(bare-events@2.9.2)
+      sodium-native: 5.2.2(bare-events@2.9.2)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -2541,7 +2541,7 @@ snapshots:
 
   shuffle-array@1.0.1: {}
 
-  sodium-native@5.2.1(bare-events@2.9.2):
+  sodium-native@5.2.2(bare-events@2.9.2):
     dependencies:
       bare-assert: 1.3.0(bare-events@2.9.2)
       require-addon: 1.3.0

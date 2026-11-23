@@ -45,7 +45,7 @@
     "erlpack": "github:discord/erlpack",
     "eventemitter3": "^5.0.4",
     "pako": "^3.0.3",
-    "sodium-native": "^5.2.1"
+    "sodium-native": "^5.2.2"
   },
   "packageManager": "pnpm@12.18.0"
 }
