@@ -199,8 +199,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       werift:
-        specifier: 0.27.0
-        version: 0.27.0
+        specifier: 0.28.0
+        version: 0.28.0
       ws:
         specifier: 8.23.0
         version: 8.23.0(bufferutil@4.2.0)
@@ -1435,8 +1435,8 @@ packages:
     resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
     engines: {node: '>=12'}
 
-  werift@0.27.0:
-    resolution: {integrity: sha512-JgFfqVXZ4s3A+VE2DxMo5QympNAnravCuQdNqQeBiKIrojtpjghYahgnl5Vc+sh0Porsx/LHODNMdZKM/JbksA==}
+  werift@0.28.0:
+    resolution: {integrity: sha512-Ro4r5OOtcLgx4VbrXGRS80sNZHptLIyJ2o/EGOj6dyRksTbiTLbtP/u2psDIpsXUOYl3vW+aK3YBPsKPl9SxJw==}
     engines: {node: '>=22'}
 
   whatwg-url@14.2.0:
@@ -2648,7 +2648,7 @@ snapshots:
 
   webidl-conversions@7.0.0: {}
 
-  werift@0.27.0:
+  werift@0.28.0:
     dependencies:
       buffer: 6.0.3
       mediabunny: 1.66.0
